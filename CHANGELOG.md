@@ -5,6 +5,17 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6] - 2026-01-25
+
+### Fixed
+- Resolved all ESLint warnings across the codebase
+- Added proper ESLint disable comments for external image URLs (CDN icons, weather API icons, favicons)
+- Fixed useEffect dependency warnings in weather-widget.tsx and changelog-dialog.tsx with intentional omission comments
+
+### Code Quality
+- Cleaned up code consistency across 10 component files
+- Improved code documentation with explanatory comments for ESLint suppressions
+
 ## [0.5.5] - 2026-01-23
 
 ### Added

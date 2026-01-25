@@ -17,6 +17,8 @@ export function ChangelogDialog({ open, onOpenChange }: ChangelogDialogProps) {
     if (open && !changelog) {
       fetchChangelog()
     }
+    // changelog is intentionally omitted - we only want to fetch once when dialog opens and changelog is empty
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   const fetchChangelog = async () => {

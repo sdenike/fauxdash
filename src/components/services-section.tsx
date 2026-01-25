@@ -181,6 +181,7 @@ export function ServicesSection({
               </div>
             )}
             {(faviconPath || selfhstPath) && (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={faviconPath || selfhstPath || ''}
                 alt={service.name}

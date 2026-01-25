@@ -115,6 +115,7 @@ function SortableServiceItem({ service, onEdit, onDelete, isSelected, onToggleSe
           </svg>
         </div>
         {IconComponent && <IconComponent className="h-5 w-5 text-primary" />}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         {(faviconPath || selfhstPath) && <img src={faviconPath || selfhstPath || ''} alt="" className="h-5 w-5 object-contain" />}
         <div className="flex-1 min-w-0">
           <div className="font-medium truncate">{service.name}</div>
@@ -839,6 +840,7 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
                       }
                       return (
                         <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={previewPath}
                             alt="Favicon"
@@ -853,6 +855,7 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
                       const selfhstPath = `https://cdn.jsdelivr.net/gh/selfhst/icons@latest/png/${selfhstId}.png`
                       return (
                         <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={selfhstPath}
                             alt="Selfhst Icon"

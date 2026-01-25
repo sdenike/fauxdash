@@ -227,6 +227,7 @@ export function IconSelector({ value, onChange, trigger }: IconSelectorProps) {
               </>
             ) : isSelfhstIcon && selfhstId ? (
               <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`https://cdn.jsdelivr.net/gh/selfhst/icons@latest/png/${selfhstId}.png`}
                   alt={selfhstId}
@@ -408,6 +409,7 @@ export function IconSelector({ value, onChange, trigger }: IconSelectorProps) {
                       title={icon.name}
                     >
                       <div className="flex items-center justify-center h-6 w-6">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={`https://cdn.jsdelivr.net/gh/selfhst/icons@latest/png/${icon.id}.png`}
                           alt={icon.name}

@@ -33,6 +33,8 @@ export function WeatherWidget() {
     if (enabled && locations.length > 0) {
       fetchWeather()
     }
+    // fetchWeather is intentionally omitted - we only want to refetch when enabled or locations change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, locations])
 
   useEffect(() => {
@@ -98,6 +100,7 @@ export function WeatherWidget() {
 
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {current.icon && (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={current.icon}
                 alt={current.condition}

@@ -152,6 +152,7 @@ function SortableContentItem({ item, onEdit, onDelete, onConvert, isSelected, on
           <div className="flex items-center justify-center flex-shrink-0 text-primary w-8 h-8">
             {ItemIcon && <ItemIcon className="w-6 h-6" />}
             {(faviconPath || selfhstPath) && (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={faviconPath || selfhstPath || ''}
                 alt={item.name}
@@ -1446,6 +1447,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                           return (
                             <div className="flex items-center gap-2 mt-2">
                               <span className="text-sm text-muted-foreground">Preview:</span>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={previewSrc}
                                 alt="Favicon preview"

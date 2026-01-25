@@ -57,6 +57,7 @@ function CompactWeather() {
     <div className={showPopup ? "relative group" : ""}>
       <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
         {showIcon && weather.icon && (
+          /* eslint-disable-next-line @next/next/no-img-element */
           <img src={weather.icon} alt="" className="w-6 h-6" />
         )}
         {showTemp && (
@@ -68,6 +69,7 @@ function CompactWeather() {
         <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-4 py-3 bg-popover border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 min-w-[180px]">
           <div className="flex items-center gap-3 mb-2">
             {weather.icon && (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img src={weather.icon} alt={weather.condition} className="w-10 h-10" />
             )}
             <div>

@@ -136,6 +136,7 @@ export function CategorySection({ category, onBookmarkClick, iconSize = 32, font
                       </div>
                     )}
                     {(faviconPath || selfhstPath) && (
+                      /* eslint-disable-next-line @next/next/no-img-element */
                       <img
                         src={faviconPath || selfhstPath || ''}
                         alt={bookmark.name}
