@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
@@ -8,9 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { CheckCircle2, AlertCircle, Loader2, Mail } from 'lucide-react'
+import { AlertMessage } from '@/components/ui/alert-message'
+import { ErrorBoundary } from '@/components/error-boundary'
+import { Loader2, Mail } from 'lucide-react'
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,25 +28,53 @@ export default function LoginPage() {
   const [forgotError, setForgotError] = useState('')
 
   useEffect(() => {
-    // Check if OIDC is enabled
-    fetch('/api/settings')
-      .then(res => res.json())
-      .then(data => {
-        setOidcEnabled(data.oidcEnabled || false)
-        setOidcProviderName(data.oidcProviderName || 'OIDC')
-      })
-      .catch(err => console.error('Failed to fetch settings:', err))
+    const controller = new AbortController()
 
-    // Check if SMTP is configured (for forgot password)
-    fetch('/api/auth/smtp-status')
-      .then(res => res.json())
-      .then(data => {
-        setSmtpConfigured(data.configured || false)
+    // Fetch both settings in parallel
+    Promise.all([
+      fetch('/api/settings', { signal: controller.signal }).then(res => res.json()),
+      fetch('/api/auth/smtp-status', { signal: controller.signal }).then(res => res.json()),
+    ])
+      .then(([settingsData, smtpData]) => {
+        setOidcEnabled(settingsData.oidcEnabled || false)
+        setOidcProviderName(settingsData.oidcProviderName || 'OIDC')
+        setSmtpConfigured(smtpData.configured || false)
       })
-      .catch(err => console.error('Failed to fetch SMTP status:', err))
+      .catch(err => {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to fetch settings:', err)
+        }
+      })
+
+    return () => controller.abort()
   }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value)
+  }, [])
+
+  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value)
+  }, [])
+
+  const handleForgotEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setForgotEmail(e.target.value)
+  }, [])
+
+  const resetForgotPasswordState = useCallback(() => {
+    setForgotEmail('')
+    setForgotError('')
+    setForgotMessage('')
+  }, [])
+
+  const handleDialogOpenChange = useCallback((open: boolean) => {
+    setShowForgotPassword(open)
+    if (!open) {
+      resetForgotPasswordState()
+    }
+  }, [resetForgotPasswordState])
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
@@ -62,25 +92,25 @@ export default function LoginPage() {
         router.push('/')
         router.refresh()
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)
     }
-  }
+  }, [email, password, router])
 
-  const handleOidcLogin = async () => {
+  const handleOidcLogin = useCallback(async () => {
     setError('')
     setLoading(true)
     try {
       await signIn('oidc', { callbackUrl: '/' })
-    } catch (error) {
+    } catch {
       setError('OIDC login failed. Please try again.')
       setLoading(false)
     }
-  }
+  }, [])
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleForgotPassword = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setForgotError('')
     setForgotMessage('')
@@ -101,12 +131,17 @@ export default function LoginPage() {
         setForgotMessage(data.message)
         setForgotEmail('')
       }
-    } catch (error) {
+    } catch {
       setForgotError('An error occurred. Please try again.')
     } finally {
       setForgotLoading(false)
     }
-  }
+  }, [forgotEmail])
+
+  const handleCloseDialog = useCallback(() => {
+    setShowForgotPassword(false)
+    resetForgotPasswordState()
+  }, [resetForgotPasswordState])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -117,14 +152,9 @@ export default function LoginPage() {
             Enter your credentials to access Faux|Dash
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} aria-busy={loading}>
           <CardContent className="space-y-4">
-            {error && (
-              <div className="flex items-center gap-2 p-3 text-sm text-destructive-foreground bg-destructive rounded-md animate-in fade-in slide-in-from-top-1 duration-200">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
+            {error && <AlertMessage variant="error" message={error} />}
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -133,8 +163,9 @@ export default function LoginPage() {
                 type="email"
                 placeholder="admin@fauxdash.local"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 required
+                autoComplete="email"
               />
             </div>
 
@@ -144,8 +175,9 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 required
+                autoComplete="current-password"
               />
             </div>
 
@@ -166,8 +198,16 @@ export default function LoginPage() {
               type="submit"
               className="w-full"
               disabled={loading}
+              aria-busy={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
             </Button>
 
             {oidcEnabled && (
@@ -193,6 +233,7 @@ export default function LoginPage() {
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -210,21 +251,11 @@ export default function LoginPage() {
       </Card>
 
       {/* Forgot Password Dialog */}
-      <Dialog
-        open={showForgotPassword}
-        onOpenChange={(open) => {
-          setShowForgotPassword(open)
-          if (!open) {
-            setForgotEmail('')
-            setForgotError('')
-            setForgotMessage('')
-          }
-        }}
-      >
+      <Dialog open={showForgotPassword} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-muted-foreground" />
+              <Mail className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
               Reset Password
             </DialogTitle>
             <DialogDescription>
@@ -233,19 +264,8 @@ export default function LoginPage() {
           </DialogHeader>
           <form onSubmit={handleForgotPassword}>
             <div className="space-y-4 py-4">
-              {forgotError && (
-                <div className="flex items-center gap-2 p-3 text-sm text-destructive-foreground bg-destructive rounded-md animate-in fade-in slide-in-from-top-1 duration-200">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                  <span>{forgotError}</span>
-                </div>
-              )}
-
-              {forgotMessage && (
-                <div className="flex items-center gap-2 p-3 text-sm text-green-800 bg-green-100 dark:text-green-200 dark:bg-green-900/50 border border-green-200 dark:border-green-800 rounded-md animate-in fade-in slide-in-from-top-1 duration-200">
-                  <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-                  <span>{forgotMessage}</span>
-                </div>
-              )}
+              {forgotError && <AlertMessage variant="error" message={forgotError} />}
+              {forgotMessage && <AlertMessage variant="success" message={forgotMessage} />}
 
               {!forgotMessage && (
                 <div className="space-y-2">
@@ -255,34 +275,22 @@ export default function LoginPage() {
                     type="email"
                     placeholder="your@email.com"
                     value={forgotEmail}
-                    onChange={(e) => setForgotEmail(e.target.value)}
+                    onChange={handleForgotEmailChange}
                     required
-                    autoFocus
+                    autoComplete="email"
                   />
                 </div>
               )}
             </div>
             <DialogFooter className="flex gap-3 sm:gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowForgotPassword(false)
-                  setForgotEmail('')
-                  setForgotError('')
-                  setForgotMessage('')
-                }}
-              >
+              <Button type="button" variant="outline" onClick={handleCloseDialog}>
                 {forgotMessage ? 'Close' : 'Cancel'}
               </Button>
               {!forgotMessage && (
-                <Button
-                  type="submit"
-                  disabled={forgotLoading}
-                >
+                <Button type="submit" disabled={forgotLoading} aria-busy={forgotLoading}>
                   {forgotLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                       Sending...
                     </>
                   ) : (
@@ -295,5 +303,13 @@ export default function LoginPage() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <ErrorBoundary>
+      <LoginContent />
+    </ErrorBoundary>
   )
 }

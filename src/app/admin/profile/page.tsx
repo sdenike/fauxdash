@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
@@ -10,9 +10,12 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/components/ui/use-toast'
 import { PasswordStrength } from '@/components/ui/password-strength'
-import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
+import { PasswordConfirmInput } from '@/components/ui/password-confirm-input'
+import { AlertMessage } from '@/components/ui/alert-message'
+import { ErrorBoundary } from '@/components/error-boundary'
+import { Loader2 } from 'lucide-react'
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { data: session, status, update } = useSession()
   const router = useRouter()
   const { toast } = useToast()
@@ -39,6 +42,15 @@ export default function ProfilePage() {
     confirmPassword: '',
   })
   const [savingPassword, setSavingPassword] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+
+  // Client-side only callback URL (avoids hydration mismatch)
+  const [callbackUrl, setCallbackUrl] = useState('/api/auth/callback/oidc')
+
+  useEffect(() => {
+    // Set callback URL on client side only
+    setCallbackUrl(`${window.location.origin}/api/auth/callback/oidc`)
+  }, [])
 
   // Real-time password match validation
   const passwordsMatch = useMemo(() => {
@@ -52,6 +64,24 @@ export default function ProfilePage() {
     }
   }, [status, router])
 
+  const fetchOidcSettings = useCallback(async () => {
+    try {
+      const response = await fetch('/api/settings')
+      const data = await response.json()
+      setOidcSettings({
+        oidcEnabled: data.oidcEnabled || false,
+        oidcProviderName: data.oidcProviderName || '',
+        oidcClientId: data.oidcClientId || '',
+        oidcClientSecret: '', // Don't expose secret in UI
+        oidcIssuerUrl: data.oidcIssuerUrl || '',
+      })
+    } catch (error) {
+      console.error('Failed to fetch OIDC settings:', error)
+    } finally {
+      setLoadingOidc(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (session) {
       setFormData({
@@ -63,27 +93,41 @@ export default function ProfilePage() {
       setLoading(false)
       fetchOidcSettings()
     }
-  }, [session])
+  }, [session, fetchOidcSettings])
 
-  const fetchOidcSettings = async () => {
-    try {
-      const response = await fetch('/api/settings')
-      const data = await response.json()
-      setOidcSettings({
-        oidcEnabled: data.oidcEnabled || false,
-        oidcProviderName: data.oidcProviderName || '',
-        oidcClientId: data.oidcClientId || '',
-        oidcClientSecret: data.oidcClientSecret || '',
-        oidcIssuerUrl: data.oidcIssuerUrl || '',
-      })
-    } catch (error) {
-      console.error('Failed to fetch OIDC settings:', error)
-    } finally {
-      setLoadingOidc(false)
+  // Form data handlers with useCallback
+  const handleFormChange = useCallback((field: keyof typeof formData) => {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData(prev => ({ ...prev, [field]: e.target.value }))
     }
-  }
+  }, [])
 
-  const handleSave = async () => {
+  // Password data handlers
+  const handlePasswordChange = useCallback((field: keyof typeof passwordData) => {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      setPasswordData(prev => ({ ...prev, [field]: e.target.value }))
+      setPasswordError('')
+    }
+  }, [])
+
+  const handleConfirmPasswordChange = useCallback((value: string) => {
+    setPasswordData(prev => ({ ...prev, confirmPassword: value }))
+    setPasswordError('')
+  }, [])
+
+  // OIDC settings handlers
+  const handleOidcChange = useCallback((field: keyof typeof oidcSettings) => {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      setOidcSettings(prev => ({ ...prev, [field]: e.target.value }))
+    }
+  }, [])
+
+  const handleOidcEnabledChange = useCallback((checked: boolean) => {
+    setOidcSettings(prev => ({ ...prev, oidcEnabled: checked }))
+  }, [])
+
+  const handleSaveProfile = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
     setSaving(true)
     try {
       const response = await fetch('/api/user/profile', {
@@ -96,7 +140,6 @@ export default function ProfilePage() {
         throw new Error('Failed to update profile')
       }
 
-      // Trigger session refresh to get updated data
       await update()
 
       toast({
@@ -114,9 +157,10 @@ export default function ProfilePage() {
     } finally {
       setSaving(false)
     }
-  }
+  }, [formData, update, toast])
 
-  const handleSaveOidc = async () => {
+  const handleSaveOidc = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
     setSavingOidc(true)
     try {
       await fetch('/api/settings', {
@@ -140,24 +184,19 @@ export default function ProfilePage() {
     } finally {
       setSavingOidc(false)
     }
-  }
+  }, [oidcSettings, toast])
 
-  const handleChangePassword = async () => {
+  const handleChangePassword = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError('')
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'New passwords do not match.',
-      })
+      setPasswordError('Passwords do not match')
       return
     }
 
     if (passwordData.newPassword.length < 8) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'New password must be at least 8 characters.',
-      })
+      setPasswordError('New password must be at least 8 characters')
       return
     }
 
@@ -184,7 +223,6 @@ export default function ProfilePage() {
         description: 'Your password has been updated successfully.',
       })
 
-      // Clear form
       setPasswordData({
         currentPassword: '',
         newPassword: '',
@@ -192,20 +230,19 @@ export default function ProfilePage() {
       })
     } catch (error: any) {
       console.error('Failed to change password:', error)
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to change password. Please try again.',
-      })
+      setPasswordError(error.message || 'Failed to change password. Please try again.')
     } finally {
       setSavingPassword(false)
     }
-  }
+  }, [passwordData, toast])
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center" role="status" aria-live="polite">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+          <span>Loading...</span>
+        </div>
       </div>
     )
   }
@@ -225,7 +262,8 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      <div className="max-w-2xl">
+      <div className="max-w-2xl space-y-6">
+        {/* Account Information Form */}
         <Card>
           <CardHeader>
             <CardTitle>Account Information</CardTitle>
@@ -233,255 +271,268 @@ export default function ProfilePage() {
               Update your personal information
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="your@email.com"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Your email address for login
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="username">Display Name</Label>
-              <Input
-                id="username"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                placeholder="Your Name"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Used for {'{{username}}'} template variable
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSaveProfile}>
+            <CardContent className="space-y-6">
               <div>
-                <Label htmlFor="firstname">First Name</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="firstname"
-                  value={formData.firstname}
-                  onChange={(e) => setFormData({ ...formData, firstname: e.target.value })}
-                  placeholder="John"
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleFormChange('email')}
+                  placeholder="your@email.com"
+                  autoComplete="email"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Used for {'{{firstname}}'} template variable
+                  Your email address for login
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="lastname">Last Name</Label>
+                <Label htmlFor="username">Display Name</Label>
                 <Input
-                  id="lastname"
-                  value={formData.lastname}
-                  onChange={(e) => setFormData({ ...formData, lastname: e.target.value })}
-                  placeholder="Doe"
+                  id="username"
+                  value={formData.username}
+                  onChange={handleFormChange('username')}
+                  placeholder="Your Name"
+                  autoComplete="name"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Used for {'{{lastname}}'} template variable
+                  Used for {'{{username}}'} template variable
                 </p>
               </div>
-            </div>
 
-            <div className="pt-4 flex justify-end">
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-          </CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstname">First Name</Label>
+                  <Input
+                    id="firstname"
+                    value={formData.firstname}
+                    onChange={handleFormChange('firstname')}
+                    placeholder="John"
+                    autoComplete="given-name"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Used for {'{{firstname}}'} template variable
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="lastname">Last Name</Label>
+                  <Input
+                    id="lastname"
+                    value={formData.lastname}
+                    onChange={handleFormChange('lastname')}
+                    placeholder="Doe"
+                    autoComplete="family-name"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Used for {'{{lastname}}'} template variable
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-4 flex justify-end">
+                <Button type="submit" disabled={saving} aria-busy={saving}>
+                  {saving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </form>
         </Card>
 
-        <Card className="mt-6">
+        {/* Change Password Form */}
+        <Card>
           <CardHeader>
             <CardTitle>Change Password</CardTitle>
             <CardDescription>
               Update your account password
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <Label htmlFor="currentPassword">Current Password</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                value={passwordData.currentPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                placeholder="Enter your current password"
-              />
-            </div>
+          <form onSubmit={handleChangePassword}>
+            <CardContent className="space-y-6">
+              {passwordError && (
+                <AlertMessage variant="error" message={passwordError} />
+              )}
 
-            <div>
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={passwordData.newPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                placeholder="Enter new password"
-              />
-              <PasswordStrength password={passwordData.newPassword} />
-              <p className="text-xs text-muted-foreground mt-1">
-                Must be at least 8 characters
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <div className="relative">
+              <div>
+                <Label htmlFor="currentPassword">Current Password</Label>
                 <Input
-                  id="confirmPassword"
+                  id="currentPassword"
                   type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                  placeholder="Confirm new password"
-                  className={passwordData.confirmPassword ? (passwordsMatch ? 'pr-10 border-green-500 focus-visible:ring-green-500' : 'pr-10 border-red-500 focus-visible:ring-red-500') : ''}
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordChange('currentPassword')}
+                  placeholder="Enter your current password"
+                  autoComplete="current-password"
                 />
-                {passwordData.confirmPassword && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {passwordsMatch ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500 animate-in zoom-in duration-200" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-500 animate-in zoom-in duration-200" />
-                    )}
-                  </div>
-                )}
               </div>
-              {passwordData.confirmPassword && !passwordsMatch && (
-                <p className="text-xs text-red-500 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                  Passwords do not match
-                </p>
-              )}
-              {passwordData.confirmPassword && passwordsMatch && (
-                <p className="text-xs text-green-500 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                  Passwords match
-                </p>
-              )}
-            </div>
 
-            <div className="pt-4 flex justify-end">
-              <Button
-                onClick={handleChangePassword}
-                disabled={savingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword || passwordsMatch === false}
-              >
-                {savingPassword ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Changing...
-                  </>
-                ) : (
-                  'Change Password'
-                )}
-              </Button>
-            </div>
-          </CardContent>
+              <div>
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordChange('newPassword')}
+                  placeholder="Enter new password"
+                  autoComplete="new-password"
+                  aria-describedby="new-password-strength"
+                />
+                <PasswordStrength password={passwordData.newPassword} id="new-password-strength" />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Must be at least 8 characters with uppercase, lowercase, and numbers
+                </p>
+              </div>
+
+              <PasswordConfirmInput
+                password={passwordData.newPassword}
+                confirmPassword={passwordData.confirmPassword}
+                onConfirmPasswordChange={handleConfirmPasswordChange}
+                label="Confirm New Password"
+                placeholder="Confirm new password"
+              />
+
+              <div className="pt-4 flex justify-end">
+                <Button
+                  type="submit"
+                  disabled={savingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword || passwordsMatch === false}
+                  aria-busy={savingPassword}
+                >
+                  {savingPassword ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                      Changing...
+                    </>
+                  ) : (
+                    'Change Password'
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </form>
         </Card>
 
-        <Card className="mt-6">
+        {/* OIDC Settings Form */}
+        <Card>
           <CardHeader>
             <CardTitle>OIDC Authentication</CardTitle>
             <CardDescription>
               Configure OpenID Connect (OIDC) authentication provider
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="oidcEnabled">Enable OIDC</Label>
-                <p className="text-sm text-muted-foreground">
-                  Allow users to authenticate with an OIDC provider
-                </p>
+          <form onSubmit={handleSaveOidc}>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="oidcEnabled">Enable OIDC</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Allow users to authenticate with an OIDC provider
+                  </p>
+                </div>
+                <Switch
+                  id="oidcEnabled"
+                  checked={oidcSettings.oidcEnabled}
+                  onCheckedChange={handleOidcEnabledChange}
+                />
               </div>
-              <Switch
-                id="oidcEnabled"
-                checked={oidcSettings.oidcEnabled}
-                onCheckedChange={(checked) => setOidcSettings({ ...oidcSettings, oidcEnabled: checked })}
-              />
-            </div>
 
-            {oidcSettings.oidcEnabled && (
-              <>
-                <div>
-                  <Label htmlFor="oidcProviderName">Provider Name</Label>
-                  <Input
-                    id="oidcProviderName"
-                    value={oidcSettings.oidcProviderName}
-                    onChange={(e) => setOidcSettings({ ...oidcSettings, oidcProviderName: e.target.value })}
-                    placeholder="Authentik, Keycloak, Okta, etc."
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Display name for the OIDC provider (shown on login button)
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="oidcClientId">Client ID</Label>
-                  <Input
-                    id="oidcClientId"
-                    value={oidcSettings.oidcClientId}
-                    onChange={(e) => setOidcSettings({ ...oidcSettings, oidcClientId: e.target.value })}
-                    placeholder="your-client-id"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    OAuth Client ID from your OIDC provider
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="oidcClientSecret">Client Secret</Label>
-                  <Input
-                    id="oidcClientSecret"
-                    type="password"
-                    value={oidcSettings.oidcClientSecret}
-                    onChange={(e) => setOidcSettings({ ...oidcSettings, oidcClientSecret: e.target.value })}
-                    placeholder="your-client-secret"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    OAuth Client Secret from your OIDC provider
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="oidcIssuerUrl">Issuer URL</Label>
-                  <Input
-                    id="oidcIssuerUrl"
-                    type="url"
-                    value={oidcSettings.oidcIssuerUrl}
-                    onChange={(e) => setOidcSettings({ ...oidcSettings, oidcIssuerUrl: e.target.value })}
-                    placeholder="https://auth.example.com/application/o/your-app/"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    The issuer URL from your OIDC provider (should end with a trailing slash)
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
-                    <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Callback URL</h4>
-                    <p className="text-xs text-blue-800 dark:text-blue-200 mb-2">
-                      Configure this callback URL in your OIDC provider:
+              {oidcSettings.oidcEnabled && (
+                <>
+                  <div>
+                    <Label htmlFor="oidcProviderName">Provider Name</Label>
+                    <Input
+                      id="oidcProviderName"
+                      value={oidcSettings.oidcProviderName}
+                      onChange={handleOidcChange('oidcProviderName')}
+                      placeholder="Authentik, Keycloak, Okta, etc."
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Display name for the OIDC provider (shown on login button)
                     </p>
-                    <code className="block bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 px-3 py-2 rounded text-xs font-mono">
-                      {typeof window !== 'undefined' ? `${window.location.origin}/api/auth/callback/oidc` : '/api/auth/callback/oidc'}
-                    </code>
                   </div>
-                </div>
-              </>
-            )}
 
-            <div className="pt-4 flex justify-end">
-              <Button onClick={handleSaveOidc} disabled={savingOidc || loadingOidc}>
-                {savingOidc ? 'Saving...' : 'Save OIDC Settings'}
-              </Button>
-            </div>
-          </CardContent>
+                  <div>
+                    <Label htmlFor="oidcClientId">Client ID</Label>
+                    <Input
+                      id="oidcClientId"
+                      value={oidcSettings.oidcClientId}
+                      onChange={handleOidcChange('oidcClientId')}
+                      placeholder="your-client-id"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      OAuth Client ID from your OIDC provider
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="oidcClientSecret">Client Secret</Label>
+                    <Input
+                      id="oidcClientSecret"
+                      type="password"
+                      value={oidcSettings.oidcClientSecret}
+                      onChange={handleOidcChange('oidcClientSecret')}
+                      placeholder="Enter new secret to change"
+                      autoComplete="off"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      OAuth Client Secret (leave blank to keep existing)
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="oidcIssuerUrl">Issuer URL</Label>
+                    <Input
+                      id="oidcIssuerUrl"
+                      type="url"
+                      value={oidcSettings.oidcIssuerUrl}
+                      onChange={handleOidcChange('oidcIssuerUrl')}
+                      placeholder="https://auth.example.com/application/o/your-app/"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      The issuer URL from your OIDC provider (should end with a trailing slash)
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <AlertMessage
+                      variant="info"
+                      message={`Configure this callback URL in your OIDC provider: ${callbackUrl}`}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="pt-4 flex justify-end">
+                <Button type="submit" disabled={savingOidc || loadingOidc} aria-busy={savingOidc}>
+                  {savingOidc ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save OIDC Settings'
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </form>
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function ProfilePage() {
+  return (
+    <ErrorBoundary>
+      <ProfileContent />
+    </ErrorBoundary>
   )
 }

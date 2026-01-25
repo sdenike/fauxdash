@@ -3,8 +3,18 @@ import { getDb } from '@/db'
 import { users, passwordResetTokens } from '@/db/schema'
 import { eq, and, gt } from 'drizzle-orm'
 import * as argon2 from 'argon2'
+import { validatePassword } from '@/lib/validation/password'
+import { checkRateLimit, getClientIp, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
+  // Rate limiting
+  const clientIp = getClientIp(request)
+  const rateLimitResult = checkRateLimit(clientIp, RATE_LIMITS.passwordReset)
+
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult)
+  }
+
   const body = await request.json()
   const { token, newPassword } = body
 
@@ -15,9 +25,19 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (newPassword.length < 8) {
+  // Validate password complexity
+  const validation = validatePassword(newPassword)
+  if (!validation.valid) {
     return NextResponse.json(
-      { error: 'Password must be at least 8 characters' },
+      { error: validation.errors[0] },
+      { status: 400 }
+    )
+  }
+
+  // Validate token format (should be 64 hex characters)
+  if (!/^[a-f0-9]{64}$/i.test(token)) {
+    return NextResponse.json(
+      { error: 'Invalid token format' },
       { status: 400 }
     )
   }
@@ -100,6 +120,14 @@ export async function GET(request: NextRequest) {
       { valid: false, error: 'Token is required' },
       { status: 400 }
     )
+  }
+
+  // Validate token format
+  if (!/^[a-f0-9]{64}$/i.test(token)) {
+    return NextResponse.json({
+      valid: false,
+      error: 'Invalid token format',
+    })
   }
 
   const db = getDb()

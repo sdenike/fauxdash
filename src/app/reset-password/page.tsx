@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense, useMemo } from 'react'
+import { useState, useEffect, Suspense, useMemo, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
@@ -8,7 +8,10 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { PasswordStrength } from '@/components/ui/password-strength'
-import { Loader2, CheckCircle2, AlertCircle, XCircle, KeyRound, ShieldAlert } from 'lucide-react'
+import { PasswordConfirmInput } from '@/components/ui/password-confirm-input'
+import { AlertMessage } from '@/components/ui/alert-message'
+import { ErrorBoundary } from '@/components/error-boundary'
+import { Loader2, CheckCircle2, KeyRound, ShieldAlert } from 'lucide-react'
 
 function ResetPasswordContent() {
   const router = useRouter()
@@ -38,8 +41,12 @@ function ResetPasswordContent() {
       return
     }
 
+    const controller = new AbortController()
+
     // Validate token
-    fetch(`/api/auth/reset-password?token=${token}`)
+    fetch(`/api/auth/reset-password?token=${encodeURIComponent(token)}`, {
+      signal: controller.signal,
+    })
       .then(res => res.json())
       .then(data => {
         setTokenValid(data.valid)
@@ -47,15 +54,27 @@ function ResetPasswordContent() {
           setTokenError(data.error || 'Invalid or expired reset link')
         }
       })
-      .catch(() => {
-        setTokenError('Failed to validate token')
+      .catch(err => {
+        if (err.name !== 'AbortError') {
+          setTokenError('Failed to validate token')
+        }
       })
       .finally(() => {
         setValidatingToken(false)
       })
+
+    return () => controller.abort()
   }, [token])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleNewPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewPassword(e.target.value)
+  }, [])
+
+  const handleConfirmPasswordChange = useCallback((value: string) => {
+    setConfirmPassword(value)
+  }, [])
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
@@ -85,20 +104,20 @@ function ResetPasswordContent() {
       } else {
         setSuccess(true)
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)
     }
-  }
+  }, [token, newPassword, confirmPassword])
 
   if (validatingToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
-            <div className="flex flex-col items-center justify-center gap-3 py-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex flex-col items-center justify-center gap-3 py-4" role="status" aria-live="polite">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
               <p className="text-sm text-muted-foreground">Validating reset link...</p>
             </div>
           </CardContent>
@@ -113,7 +132,7 @@ function ResetPasswordContent() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <div className="flex items-center gap-2 text-destructive mb-2">
-              <ShieldAlert className="h-6 w-6" />
+              <ShieldAlert className="h-6 w-6" aria-hidden="true" />
             </div>
             <CardTitle>Reset Link Invalid</CardTitle>
             <CardDescription>
@@ -121,10 +140,10 @@ function ResetPasswordContent() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2 p-3 text-sm text-destructive-foreground bg-destructive rounded-md mb-4">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
-              <span>This password reset link is invalid or has expired. Please request a new password reset.</span>
-            </div>
+            <AlertMessage
+              variant="error"
+              message="This password reset link is invalid or has expired. Please request a new password reset."
+            />
           </CardContent>
           <CardFooter>
             <Link href="/login" className="w-full">
@@ -145,7 +164,7 @@ function ResetPasswordContent() {
           <CardHeader>
             <div className="flex items-center justify-center mb-4">
               <div className="rounded-full bg-green-100 dark:bg-green-900/50 p-3 animate-in zoom-in duration-300">
-                <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+                <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" aria-hidden="true" />
               </div>
             </div>
             <CardTitle className="text-center">Password Reset Successful</CardTitle>
@@ -154,10 +173,10 @@ function ResetPasswordContent() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2 p-3 text-sm text-green-800 bg-green-100 dark:text-green-200 dark:bg-green-900/50 border border-green-200 dark:border-green-800 rounded-md animate-in fade-in slide-in-from-top-1 duration-200">
-              <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-              <span>You can now log in with your new password.</span>
-            </div>
+            <AlertMessage
+              variant="success"
+              message="You can now log in with your new password."
+            />
           </CardContent>
           <CardFooter>
             <Link href="/login" className="w-full">
@@ -176,21 +195,16 @@ function ResetPasswordContent() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <div className="flex items-center gap-2 mb-2">
-            <KeyRound className="h-5 w-5 text-muted-foreground" />
+            <KeyRound className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
           </div>
           <CardTitle>Reset Password</CardTitle>
           <CardDescription>
             Enter your new password below.
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} aria-busy={loading}>
           <CardContent className="space-y-4">
-            {error && (
-              <div className="flex items-center gap-2 p-3 text-sm text-destructive-foreground bg-destructive rounded-md animate-in fade-in slide-in-from-top-1 duration-200">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
+            {error && <AlertMessage variant="error" message={error} />}
 
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
@@ -198,60 +212,36 @@ function ResetPasswordContent() {
                 id="newPassword"
                 type="password"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={handleNewPasswordChange}
                 placeholder="Enter new password"
                 required
-                autoFocus
+                autoComplete="new-password"
+                aria-describedby="password-strength"
               />
-              <PasswordStrength password={newPassword} />
+              <PasswordStrength password={newPassword} id="password-strength" />
               <p className="text-xs text-muted-foreground">
                 Must be at least 8 characters
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
-                  required
-                  className={confirmPassword ? (passwordsMatch ? 'pr-10 border-green-500 focus-visible:ring-green-500' : 'pr-10 border-red-500 focus-visible:ring-red-500') : ''}
-                />
-                {confirmPassword && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {passwordsMatch ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500 animate-in zoom-in duration-200" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-500 animate-in zoom-in duration-200" />
-                    )}
-                  </div>
-                )}
-              </div>
-              {confirmPassword && !passwordsMatch && (
-                <p className="text-xs text-red-500 animate-in fade-in slide-in-from-top-1 duration-200">
-                  Passwords do not match
-                </p>
-              )}
-              {confirmPassword && passwordsMatch && (
-                <p className="text-xs text-green-500 animate-in fade-in slide-in-from-top-1 duration-200">
-                  Passwords match
-                </p>
-              )}
-            </div>
+            <PasswordConfirmInput
+              password={newPassword}
+              confirmPassword={confirmPassword}
+              onConfirmPasswordChange={handleConfirmPasswordChange}
+              label="Confirm New Password"
+              placeholder="Confirm new password"
+            />
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
             <Button
               type="submit"
               className="w-full"
               disabled={loading || passwordsMatch === false}
+              aria-busy={loading}
             >
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                   Resetting...
                 </>
               ) : (
@@ -275,8 +265,8 @@ function LoadingFallback() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center gap-3 py-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center justify-center gap-3 py-4" role="status" aria-live="polite">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
             <p className="text-sm text-muted-foreground">Loading...</p>
           </div>
         </CardContent>
@@ -287,8 +277,10 @@ function LoadingFallback() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <ResetPasswordContent />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<LoadingFallback />}>
+        <ResetPasswordContent />
+      </Suspense>
+    </ErrorBoundary>
   )
 }

@@ -5,12 +5,22 @@ import { getDb } from '@/db'
 import { users } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import * as argon2 from 'argon2'
+import { validatePassword } from '@/lib/validation/password'
+import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Rate limiting by user ID
+  const userId = (session.user as any).id
+  const rateLimitResult = checkRateLimit(userId, RATE_LIMITS.passwordChange)
+
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult)
   }
 
   const body = await request.json()
@@ -23,15 +33,16 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (newPassword.length < 8) {
+  // Validate password complexity
+  const validation = validatePassword(newPassword)
+  if (!validation.valid) {
     return NextResponse.json(
-      { error: 'New password must be at least 8 characters' },
+      { error: validation.errors[0] },
       { status: 400 }
     )
   }
 
   const db = getDb()
-  const userId = (session.user as any).id
 
   try {
     // Get current user with password hash

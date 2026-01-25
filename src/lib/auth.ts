@@ -24,10 +24,11 @@ const providers: any[] = [
       }
 
       const db = getDb();
+      // Normalize email to lowercase for consistent comparison
       const user = await db
         .select()
         .from(users)
-        .where(eq(users.email, credentials.email))
+        .where(eq(users.email, credentials.email.toLowerCase().trim()))
         .limit(1);
 
       if (!user || user.length === 0) {
@@ -189,7 +190,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 2 * 24 * 60 * 60, // 2 days (reduced from 30 for security)
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

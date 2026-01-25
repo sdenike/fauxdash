@@ -4,8 +4,17 @@ import { users, passwordResetTokens } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { randomBytes } from 'crypto'
 import { sendEmail, isSmtpConfigured } from '@/lib/email'
+import { checkRateLimit, getClientIp, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
+  // Rate limiting
+  const clientIp = getClientIp(request)
+  const rateLimitResult = checkRateLimit(clientIp, RATE_LIMITS.passwordReset)
+
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult)
+  }
+
   const body = await request.json()
   const { email } = body
 
@@ -31,11 +40,11 @@ export async function POST(request: NextRequest) {
   const db = getDb()
 
   try {
-    // Find user by email
+    // Find user by email (normalize to lowercase)
     const [user] = await db
       .select()
       .from(users)
-      .where(eq(users.email, email.toLowerCase()))
+      .where(eq(users.email, email.toLowerCase().trim()))
       .limit(1)
 
     if (!user) {

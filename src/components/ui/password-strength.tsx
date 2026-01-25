@@ -1,10 +1,11 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useId } from 'react'
 import { CheckCircle2, AlertCircle, ShieldAlert, ShieldCheck, Shield } from 'lucide-react'
 
 interface PasswordStrengthProps {
   password: string
+  id?: string
 }
 
 interface StrengthResult {
@@ -36,24 +37,26 @@ function calculateStrength(password: string): StrengthResult {
   // Penalize common patterns
   if (/^[a-zA-Z]+$/.test(password)) score-- // Only letters
   if (/^[0-9]+$/.test(password)) score-- // Only numbers
-  if (/(.)\1{2,}/.test(password)) score-- // Repeated characters
+  if (/(.)\\1{2,}/.test(password)) score-- // Repeated characters
   if (/^(password|123456|qwerty|admin|letmein)/i.test(password)) score -= 2 // Common passwords
 
   // Normalize to 0-4 scale
   const normalizedScore = Math.max(0, Math.min(4, Math.floor(score / 2)))
 
   const strengthLevels: StrengthResult[] = [
-    { score: 0, label: 'Very Weak', color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-500', icon: <ShieldAlert className="h-3.5 w-3.5" /> },
-    { score: 1, label: 'Weak', color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-500', icon: <AlertCircle className="h-3.5 w-3.5" /> },
-    { score: 2, label: 'Fair', color: 'text-yellow-600 dark:text-yellow-400', bgColor: 'bg-yellow-500', icon: <Shield className="h-3.5 w-3.5" /> },
-    { score: 3, label: 'Good', color: 'text-lime-600 dark:text-lime-400', bgColor: 'bg-lime-500', icon: <ShieldCheck className="h-3.5 w-3.5" /> },
-    { score: 4, label: 'Strong', color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-500', icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+    { score: 0, label: 'Very Weak', color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-500', icon: <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" /> },
+    { score: 1, label: 'Weak', color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-500', icon: <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" /> },
+    { score: 2, label: 'Fair', color: 'text-yellow-600 dark:text-yellow-400', bgColor: 'bg-yellow-500', icon: <Shield className="h-3.5 w-3.5" aria-hidden="true" /> },
+    { score: 3, label: 'Good', color: 'text-lime-600 dark:text-lime-400', bgColor: 'bg-lime-500', icon: <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> },
+    { score: 4, label: 'Strong', color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-500', icon: <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> },
   ]
 
   return strengthLevels[normalizedScore]
 }
 
-export function PasswordStrength({ password }: PasswordStrengthProps) {
+export function PasswordStrength({ password, id }: PasswordStrengthProps) {
+  const generatedId = useId()
+  const componentId = id || generatedId
   const strength = useMemo(() => calculateStrength(password), [password])
 
   if (!password) {
@@ -61,9 +64,18 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
   }
 
   return (
-    <div className="mt-2 space-y-1.5 animate-in fade-in duration-200">
-      {/* Strength bars */}
-      <div className="flex gap-1">
+    <div
+      id={componentId}
+      role="meter"
+      aria-label="Password strength"
+      aria-valuenow={strength.score}
+      aria-valuemin={0}
+      aria-valuemax={4}
+      aria-valuetext={strength.label}
+      className="mt-2 space-y-1.5 animate-in fade-in duration-200"
+    >
+      {/* Strength bars - decorative */}
+      <div className="flex gap-1" aria-hidden="true">
         {[0, 1, 2, 3, 4].map((level) => (
           <div
             key={level}
@@ -80,7 +92,11 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
       </div>
 
       {/* Label with icon */}
-      <div className={`flex items-center gap-1.5 text-xs font-medium transition-colors duration-200 ${strength.color}`}>
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        className={`flex items-center gap-1.5 text-xs font-medium transition-colors duration-200 ${strength.color}`}
+      >
         {strength.icon}
         <span>{strength.label}</span>
       </div>
