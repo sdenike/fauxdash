@@ -1,0 +1,254 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { getDb } from '@/db';
+import { settings } from '@/db/schema';
+import { eq, and } from 'drizzle-orm';
+
+export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const db = getDb();
+  const userId = (session.user as any).id;
+
+  // Fetch all settings for this user
+  const userSettings = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.userId, parseInt(userId)));
+
+  // Convert to key-value object
+  const settingsObj: Record<string, string> = {};
+  userSettings.forEach((setting: any) => {
+    settingsObj[setting.key] = setting.value || '';
+  });
+
+  // Return with defaults
+  return NextResponse.json({
+    searchEnabled: settingsObj.searchEnabled === 'false' ? false : true,
+    searchInHeader: settingsObj.searchInHeader === 'true' || false,
+    searchEngine: settingsObj.searchEngine || process.env.DEFAULT_SEARCH_ENGINE || 'duckduckgo',
+    customSearchName: settingsObj.customSearchName || '',
+    customSearchUrl: settingsObj.customSearchUrl || '',
+    defaultTheme: settingsObj.defaultTheme || process.env.DEFAULT_THEME || 'system',
+    themeColor: settingsObj.themeColor || 'Slate',
+    siteTitle: settingsObj.siteTitle || 'Faux|Dash',
+    siteTitleEnabled: settingsObj.siteTitleEnabled === 'false' ? false : true,
+    welcomeMessage: settingsObj.welcomeMessage || 'Welcome back',
+    welcomeMessageEnabled: settingsObj.welcomeMessageEnabled === 'false' ? false : true,
+    welcomeMessageTimeBased: settingsObj.welcomeMessageTimeBased === 'true' || false,
+    welcomeMessageMorning: settingsObj.welcomeMessageMorning || 'Good Morning',
+    welcomeMessageAfternoon: settingsObj.welcomeMessageAfternoon || 'Good Afternoon',
+    welcomeMessageEvening: settingsObj.welcomeMessageEvening || 'Good Evening',
+    dateTimeEnabled: settingsObj.dateTimeEnabled === 'true' || false,
+    dateTimePosition: settingsObj.dateTimePosition || 'left',
+    dateTimeDisplayMode: settingsObj.dateTimeDisplayMode || 'text',
+    dateFormat: settingsObj.dateFormat || 'EEEE, MMMM d, yyyy',
+    timeEnabled: settingsObj.timeEnabled === 'true' || false,
+    timeFormat: settingsObj.timeFormat || '12',
+    showSeconds: settingsObj.showSeconds === 'true' || false,
+    servicesPosition: settingsObj.servicesPosition || 'above',
+    servicesIconSize: parseInt(settingsObj.servicesIconSize || '32'),
+    servicesFontSize: parseInt(settingsObj.servicesFontSize || '16'),
+    servicesDescriptionSpacing: parseInt(settingsObj.servicesDescriptionSpacing || '4'),
+    servicesItemSpacing: parseInt(settingsObj.servicesItemSpacing || '8'),
+    bookmarksIconSize: parseInt(settingsObj.bookmarksIconSize || '32'),
+    bookmarksFontSize: parseInt(settingsObj.bookmarksFontSize || '14'),
+    descriptionSpacing: parseInt(settingsObj.descriptionSpacing || '2'),
+    itemSpacing: parseInt(settingsObj.itemSpacing || '4'),
+    servicesColumns: parseInt(settingsObj.servicesColumns || '4'),
+    bookmarksColumns: parseInt(settingsObj.bookmarksColumns || settingsObj.mainColumns || '4'),
+    sectionOrder: settingsObj.sectionOrder || 'services-first',
+    weatherEnabled: settingsObj.weatherEnabled === 'true' || false,
+    weatherDisplayMode: settingsObj.weatherDisplayMode || 'both',
+    weatherShowPopup: settingsObj.weatherShowPopup !== 'false',
+    weatherProvider: settingsObj.weatherProvider || process.env.WEATHER_PROVIDER || 'weatherapi',
+    weatherLocations: settingsObj.weatherLocations || process.env.WEATHER_LOCATIONS || '90210',
+    weatherLatitude: settingsObj.weatherLatitude || '',
+    weatherLongitude: settingsObj.weatherLongitude || '',
+    weatherAutoRotate: parseInt(settingsObj.weatherAutoRotate || process.env.WEATHER_AUTO_ROTATE_SECONDS || '30'),
+    tempestApiKey: settingsObj.tempestApiKey || process.env.TEMPEST_API_KEY || '',
+    tempestStationId: settingsObj.tempestStationId || process.env.TEMPEST_STATION_ID || '',
+    weatherapiKey: settingsObj.weatherapiKey || process.env.WEATHERAPI_KEY || '',
+    openweatherKey: settingsObj.openweatherKey || process.env.OPENWEATHER_KEY || '',
+    oidcEnabled: settingsObj.oidcEnabled === 'true' || false,
+    oidcProviderName: settingsObj.oidcProviderName || '',
+    oidcClientId: settingsObj.oidcClientId || process.env.OIDC_CLIENT_ID || '',
+    oidcClientSecret: settingsObj.oidcClientSecret || process.env.OIDC_CLIENT_SECRET || '',
+    oidcIssuerUrl: settingsObj.oidcIssuerUrl || process.env.OIDC_ISSUER_URL || '',
+    // GeoIP settings
+    geoipEnabled: settingsObj.geoipEnabled === 'true' || false,
+    geoipProvider: settingsObj.geoipProvider || 'maxmind',
+    geoipMaxmindPath: settingsObj.geoipMaxmindPath || process.env.GEOIP_MAXMIND_PATH || './data/GeoLite2-City.mmdb',
+    geoipMaxmindLicenseKey: settingsObj.geoipMaxmindLicenseKey || process.env.GEOIP_MAXMIND_LICENSE_KEY || '',
+    geoipMaxmindAccountId: settingsObj.geoipMaxmindAccountId || process.env.GEOIP_MAXMIND_ACCOUNT_ID || '',
+    geoipIpinfoToken: settingsObj.geoipIpinfoToken || process.env.GEOIP_IPINFO_TOKEN || '',
+    geoipCacheDuration: parseInt(settingsObj.geoipCacheDuration || '86400'),
+    // Defaults for new items
+    defaultBookmarkCategoryEnabled: settingsObj.defaultBookmarkCategoryEnabled !== 'false',
+    defaultBookmarkCategoryRequiresAuth: settingsObj.defaultBookmarkCategoryRequiresAuth === 'true',
+    defaultBookmarkCategoryItemsToShow: settingsObj.defaultBookmarkCategoryItemsToShow ? parseInt(settingsObj.defaultBookmarkCategoryItemsToShow) : null,
+    defaultBookmarkCategoryShowItemCount: settingsObj.defaultBookmarkCategoryShowItemCount === 'true',
+    defaultBookmarkCategoryAutoExpanded: settingsObj.defaultBookmarkCategoryAutoExpanded === 'true',
+    defaultBookmarkCategorySortBy: settingsObj.defaultBookmarkCategorySortBy || 'order',
+    defaultServiceCategoryEnabled: settingsObj.defaultServiceCategoryEnabled !== 'false',
+    defaultServiceCategoryRequiresAuth: settingsObj.defaultServiceCategoryRequiresAuth === 'true',
+    defaultServiceCategoryItemsToShow: settingsObj.defaultServiceCategoryItemsToShow ? parseInt(settingsObj.defaultServiceCategoryItemsToShow) : null,
+    defaultServiceCategoryShowItemCount: settingsObj.defaultServiceCategoryShowItemCount === 'true',
+    defaultServiceCategoryAutoExpanded: settingsObj.defaultServiceCategoryAutoExpanded === 'true',
+    defaultServiceCategorySortBy: settingsObj.defaultServiceCategorySortBy || 'order',
+    defaultBookmarkEnabled: settingsObj.defaultBookmarkEnabled !== 'false',
+    defaultBookmarkRequiresAuth: settingsObj.defaultBookmarkRequiresAuth === 'true',
+    defaultServiceEnabled: settingsObj.defaultServiceEnabled !== 'false',
+    defaultServiceRequiresAuth: settingsObj.defaultServiceRequiresAuth === 'true',
+    // SMTP settings
+    smtpProvider: settingsObj.smtpProvider || process.env.SMTP_PROVIDER || 'none',
+    smtpHost: settingsObj.smtpHost || process.env.SMTP_HOST || '',
+    smtpPort: parseInt(settingsObj.smtpPort || process.env.SMTP_PORT || '587'),
+    smtpUsername: settingsObj.smtpUsername || process.env.SMTP_USERNAME || '',
+    smtpPassword: settingsObj.smtpPassword || process.env.SMTP_PASSWORD || '',
+    smtpEncryption: settingsObj.smtpEncryption || process.env.SMTP_ENCRYPTION || 'tls',
+    smtpFromEmail: settingsObj.smtpFromEmail || process.env.SMTP_FROM_EMAIL || '',
+    smtpFromName: settingsObj.smtpFromName || process.env.SMTP_FROM_NAME || 'Faux|Dash',
+  });
+}
+
+export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const db = getDb();
+  const userId = (session.user as any).id;
+
+  // Build settings array from provided fields only
+  const settingsToSave: { key: string; value: string }[] = [];
+
+  // Add each field if it exists in the body
+  if (body.searchEnabled !== undefined) settingsToSave.push({ key: 'searchEnabled', value: body.searchEnabled.toString() });
+  if (body.searchInHeader !== undefined) settingsToSave.push({ key: 'searchInHeader', value: body.searchInHeader.toString() });
+  if (body.searchEngine !== undefined) settingsToSave.push({ key: 'searchEngine', value: body.searchEngine });
+  if (body.customSearchName !== undefined) settingsToSave.push({ key: 'customSearchName', value: body.customSearchName || '' });
+  if (body.customSearchUrl !== undefined) settingsToSave.push({ key: 'customSearchUrl', value: body.customSearchUrl || '' });
+  if (body.defaultTheme !== undefined) settingsToSave.push({ key: 'defaultTheme', value: body.defaultTheme });
+  if (body.themeColor !== undefined) settingsToSave.push({ key: 'themeColor', value: body.themeColor || 'Slate' });
+  if (body.siteTitle !== undefined) settingsToSave.push({ key: 'siteTitle', value: body.siteTitle || 'Faux|Dash' });
+  if (body.siteTitleEnabled !== undefined) settingsToSave.push({ key: 'siteTitleEnabled', value: body.siteTitleEnabled.toString() });
+  if (body.welcomeMessage !== undefined) settingsToSave.push({ key: 'welcomeMessage', value: body.welcomeMessage || 'Welcome back' });
+  if (body.welcomeMessageEnabled !== undefined) settingsToSave.push({ key: 'welcomeMessageEnabled', value: body.welcomeMessageEnabled.toString() });
+  if (body.welcomeMessageTimeBased !== undefined) settingsToSave.push({ key: 'welcomeMessageTimeBased', value: body.welcomeMessageTimeBased.toString() });
+  if (body.welcomeMessageMorning !== undefined) settingsToSave.push({ key: 'welcomeMessageMorning', value: body.welcomeMessageMorning || 'Good Morning' });
+  if (body.welcomeMessageAfternoon !== undefined) settingsToSave.push({ key: 'welcomeMessageAfternoon', value: body.welcomeMessageAfternoon || 'Good Afternoon' });
+  if (body.welcomeMessageEvening !== undefined) settingsToSave.push({ key: 'welcomeMessageEvening', value: body.welcomeMessageEvening || 'Good Evening' });
+  if (body.dateTimeEnabled !== undefined) settingsToSave.push({ key: 'dateTimeEnabled', value: body.dateTimeEnabled.toString() });
+  if (body.dateTimePosition !== undefined) settingsToSave.push({ key: 'dateTimePosition', value: body.dateTimePosition || 'left' });
+  if (body.dateTimeDisplayMode !== undefined) settingsToSave.push({ key: 'dateTimeDisplayMode', value: body.dateTimeDisplayMode || 'text' });
+  if (body.dateFormat !== undefined) settingsToSave.push({ key: 'dateFormat', value: body.dateFormat || 'EEEE, MMMM d, yyyy' });
+  if (body.timeEnabled !== undefined) settingsToSave.push({ key: 'timeEnabled', value: body.timeEnabled.toString() });
+  if (body.timeFormat !== undefined) settingsToSave.push({ key: 'timeFormat', value: body.timeFormat || '12' });
+  if (body.showSeconds !== undefined) settingsToSave.push({ key: 'showSeconds', value: body.showSeconds.toString() });
+  if (body.servicesPosition !== undefined) settingsToSave.push({ key: 'servicesPosition', value: body.servicesPosition || 'above' });
+  if (body.servicesIconSize !== undefined) settingsToSave.push({ key: 'servicesIconSize', value: body.servicesIconSize.toString() });
+  if (body.servicesFontSize !== undefined) settingsToSave.push({ key: 'servicesFontSize', value: body.servicesFontSize.toString() });
+  if (body.servicesDescriptionSpacing !== undefined) settingsToSave.push({ key: 'servicesDescriptionSpacing', value: body.servicesDescriptionSpacing.toString() });
+  if (body.servicesItemSpacing !== undefined) settingsToSave.push({ key: 'servicesItemSpacing', value: body.servicesItemSpacing.toString() });
+  if (body.bookmarksIconSize !== undefined) settingsToSave.push({ key: 'bookmarksIconSize', value: body.bookmarksIconSize.toString() });
+  if (body.bookmarksFontSize !== undefined) settingsToSave.push({ key: 'bookmarksFontSize', value: body.bookmarksFontSize.toString() });
+  if (body.descriptionSpacing !== undefined) settingsToSave.push({ key: 'descriptionSpacing', value: body.descriptionSpacing.toString() });
+  if (body.itemSpacing !== undefined) settingsToSave.push({ key: 'itemSpacing', value: body.itemSpacing.toString() });
+  if (body.servicesColumns !== undefined) settingsToSave.push({ key: 'servicesColumns', value: body.servicesColumns.toString() });
+  if (body.bookmarksColumns !== undefined) settingsToSave.push({ key: 'bookmarksColumns', value: body.bookmarksColumns.toString() });
+  if (body.sectionOrder !== undefined) settingsToSave.push({ key: 'sectionOrder', value: body.sectionOrder });
+  if (body.weatherEnabled !== undefined) settingsToSave.push({ key: 'weatherEnabled', value: body.weatherEnabled.toString() });
+  if (body.weatherDisplayMode !== undefined) settingsToSave.push({ key: 'weatherDisplayMode', value: body.weatherDisplayMode || 'both' });
+  if (body.weatherShowPopup !== undefined) settingsToSave.push({ key: 'weatherShowPopup', value: body.weatherShowPopup.toString() });
+  if (body.weatherProvider !== undefined) settingsToSave.push({ key: 'weatherProvider', value: body.weatherProvider });
+  if (body.weatherLocations !== undefined) settingsToSave.push({ key: 'weatherLocations', value: body.weatherLocations });
+  if (body.weatherLatitude !== undefined) settingsToSave.push({ key: 'weatherLatitude', value: body.weatherLatitude || '' });
+  if (body.weatherLongitude !== undefined) settingsToSave.push({ key: 'weatherLongitude', value: body.weatherLongitude || '' });
+  if (body.weatherAutoRotate !== undefined) settingsToSave.push({ key: 'weatherAutoRotate', value: body.weatherAutoRotate.toString() });
+  if (body.tempestApiKey !== undefined) settingsToSave.push({ key: 'tempestApiKey', value: body.tempestApiKey });
+  if (body.tempestStationId !== undefined) settingsToSave.push({ key: 'tempestStationId', value: body.tempestStationId });
+  if (body.weatherapiKey !== undefined) settingsToSave.push({ key: 'weatherapiKey', value: body.weatherapiKey });
+  if (body.openweatherKey !== undefined) settingsToSave.push({ key: 'openweatherKey', value: body.openweatherKey });
+  if (body.oidcEnabled !== undefined) settingsToSave.push({ key: 'oidcEnabled', value: body.oidcEnabled.toString() });
+  if (body.oidcProviderName !== undefined) settingsToSave.push({ key: 'oidcProviderName', value: body.oidcProviderName || '' });
+  if (body.oidcClientId !== undefined) settingsToSave.push({ key: 'oidcClientId', value: body.oidcClientId || '' });
+  if (body.oidcClientSecret !== undefined) settingsToSave.push({ key: 'oidcClientSecret', value: body.oidcClientSecret || '' });
+  if (body.oidcIssuerUrl !== undefined) settingsToSave.push({ key: 'oidcIssuerUrl', value: body.oidcIssuerUrl || '' });
+  // GeoIP settings
+  if (body.geoipEnabled !== undefined) settingsToSave.push({ key: 'geoipEnabled', value: body.geoipEnabled.toString() });
+  if (body.geoipProvider !== undefined) settingsToSave.push({ key: 'geoipProvider', value: body.geoipProvider || 'maxmind' });
+  if (body.geoipMaxmindPath !== undefined) settingsToSave.push({ key: 'geoipMaxmindPath', value: body.geoipMaxmindPath || '' });
+  if (body.geoipMaxmindLicenseKey !== undefined) settingsToSave.push({ key: 'geoipMaxmindLicenseKey', value: body.geoipMaxmindLicenseKey || '' });
+  if (body.geoipMaxmindAccountId !== undefined) settingsToSave.push({ key: 'geoipMaxmindAccountId', value: body.geoipMaxmindAccountId || '' });
+  if (body.geoipIpinfoToken !== undefined) settingsToSave.push({ key: 'geoipIpinfoToken', value: body.geoipIpinfoToken || '' });
+  if (body.geoipCacheDuration !== undefined) settingsToSave.push({ key: 'geoipCacheDuration', value: body.geoipCacheDuration.toString() });
+  // Defaults for new items
+  if (body.defaultBookmarkCategoryEnabled !== undefined) settingsToSave.push({ key: 'defaultBookmarkCategoryEnabled', value: body.defaultBookmarkCategoryEnabled.toString() });
+  if (body.defaultBookmarkCategoryRequiresAuth !== undefined) settingsToSave.push({ key: 'defaultBookmarkCategoryRequiresAuth', value: body.defaultBookmarkCategoryRequiresAuth.toString() });
+  if (body.defaultBookmarkCategoryItemsToShow !== undefined) settingsToSave.push({ key: 'defaultBookmarkCategoryItemsToShow', value: body.defaultBookmarkCategoryItemsToShow?.toString() || '' });
+  if (body.defaultBookmarkCategoryShowItemCount !== undefined) settingsToSave.push({ key: 'defaultBookmarkCategoryShowItemCount', value: body.defaultBookmarkCategoryShowItemCount.toString() });
+  if (body.defaultBookmarkCategoryAutoExpanded !== undefined) settingsToSave.push({ key: 'defaultBookmarkCategoryAutoExpanded', value: body.defaultBookmarkCategoryAutoExpanded.toString() });
+  if (body.defaultBookmarkCategorySortBy !== undefined) settingsToSave.push({ key: 'defaultBookmarkCategorySortBy', value: body.defaultBookmarkCategorySortBy || 'order' });
+  if (body.defaultServiceCategoryEnabled !== undefined) settingsToSave.push({ key: 'defaultServiceCategoryEnabled', value: body.defaultServiceCategoryEnabled.toString() });
+  if (body.defaultServiceCategoryRequiresAuth !== undefined) settingsToSave.push({ key: 'defaultServiceCategoryRequiresAuth', value: body.defaultServiceCategoryRequiresAuth.toString() });
+  if (body.defaultServiceCategoryItemsToShow !== undefined) settingsToSave.push({ key: 'defaultServiceCategoryItemsToShow', value: body.defaultServiceCategoryItemsToShow?.toString() || '' });
+  if (body.defaultServiceCategoryShowItemCount !== undefined) settingsToSave.push({ key: 'defaultServiceCategoryShowItemCount', value: body.defaultServiceCategoryShowItemCount.toString() });
+  if (body.defaultServiceCategoryAutoExpanded !== undefined) settingsToSave.push({ key: 'defaultServiceCategoryAutoExpanded', value: body.defaultServiceCategoryAutoExpanded.toString() });
+  if (body.defaultServiceCategorySortBy !== undefined) settingsToSave.push({ key: 'defaultServiceCategorySortBy', value: body.defaultServiceCategorySortBy || 'order' });
+  if (body.defaultBookmarkEnabled !== undefined) settingsToSave.push({ key: 'defaultBookmarkEnabled', value: body.defaultBookmarkEnabled.toString() });
+  if (body.defaultBookmarkRequiresAuth !== undefined) settingsToSave.push({ key: 'defaultBookmarkRequiresAuth', value: body.defaultBookmarkRequiresAuth.toString() });
+  if (body.defaultServiceEnabled !== undefined) settingsToSave.push({ key: 'defaultServiceEnabled', value: body.defaultServiceEnabled.toString() });
+  if (body.defaultServiceRequiresAuth !== undefined) settingsToSave.push({ key: 'defaultServiceRequiresAuth', value: body.defaultServiceRequiresAuth.toString() });
+  // SMTP settings
+  if (body.smtpProvider !== undefined) settingsToSave.push({ key: 'smtpProvider', value: body.smtpProvider });
+  if (body.smtpHost !== undefined) settingsToSave.push({ key: 'smtpHost', value: body.smtpHost || '' });
+  if (body.smtpPort !== undefined) settingsToSave.push({ key: 'smtpPort', value: body.smtpPort.toString() });
+  if (body.smtpUsername !== undefined) settingsToSave.push({ key: 'smtpUsername', value: body.smtpUsername || '' });
+  if (body.smtpPassword !== undefined) settingsToSave.push({ key: 'smtpPassword', value: body.smtpPassword || '' });
+  if (body.smtpEncryption !== undefined) settingsToSave.push({ key: 'smtpEncryption', value: body.smtpEncryption });
+  if (body.smtpFromEmail !== undefined) settingsToSave.push({ key: 'smtpFromEmail', value: body.smtpFromEmail || '' });
+  if (body.smtpFromName !== undefined) settingsToSave.push({ key: 'smtpFromName', value: body.smtpFromName || 'Faux|Dash' });
+
+  for (const setting of settingsToSave) {
+    // Check if setting exists
+    const existing = await db
+      .select()
+      .from(settings)
+      .where(and(
+        eq(settings.userId, parseInt(userId)),
+        eq(settings.key, setting.key)
+      ))
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Update
+      await db
+        .update(settings)
+        .set({ value: setting.value, updatedAt: new Date() })
+        .where(and(
+          eq(settings.userId, parseInt(userId)),
+          eq(settings.key, setting.key)
+        ));
+    } else {
+      // Insert
+      await db
+        .insert(settings)
+        .values({
+          userId: parseInt(userId),
+          key: setting.key,
+          value: setting.value,
+        });
+    }
+  }
+
+  return NextResponse.json({ success: true });
+}
