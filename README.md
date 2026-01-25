@@ -1,18 +1,53 @@
-# FauxDash Homepage
+# Faux|Dash
 
-A modern, self-hosted bookmark dashboard homepage with admin management, search, and weather widgets.
+A modern, self-hosted homepage dashboard for managing bookmarks and services. Built as a replacement for [Flame](https://github.com/pawelmalak/flame) with additional features and a modern tech stack.
+
+---
+
+## About This Project
+
+**This project was entirely programmed with AI assistance and "vibe coded."** It was built as a personal replacement for [Flame Dashboard](https://github.com/pawelmalak/flame), which is outdated and was missing some specific features I wanted.
+
+**Suggestions and contributions are welcome!** If you have ideas for improvements or find bugs, please open an issue or submit a pull request.
+
+---
 
 ## Features
 
-- **Bookmark Management**: Organize bookmarks into categories with drag-and-drop reordering
-- **Search Integration**: Configurable search engines (DuckDuckGo, Google, Brave, Kagi, Startpage)
-- **Weather Widget**: Multi-location weather display with auto-rotation
-- **Authentication**: Local user authentication with admin access control
-- **Theme Support**: Light/Dark/System theme modes
-- **Privacy-Focused**: Optional authentication requirements for categories and bookmarks
-- **Multi-Database**: Support for SQLite, PostgreSQL, and MySQL
+### Core Features
+- **Bookmarks & Services**: Organize your links into two distinct sections - Bookmarks and Services
+- **Categories**: Group items into customizable categories with icons
+- **Drag & Drop**: Reorder categories, bookmarks, and services with intuitive drag-and-drop
+- **Search Integration**: Built-in search bar with support for DuckDuckGo, Google, Brave, Kagi, Startpage, or custom search engines
+- **Weather Widget**: Display weather for multiple locations with auto-rotation
+- **Click Analytics**: Track which bookmarks and services you use most
+
+### Authentication & Privacy
+- **User Authentication**: Local user authentication with admin access control
+- **Auth-Required Items**: Mark specific bookmarks/services as requiring login to view
+- **Password Reset**: Email-based password reset with SMTP configuration
+
+### Customization
+- **Theme Support**: Light, Dark, or System-based themes
+- **Color Themes**: Multiple color accent options (Slate, Red, Orange, Green, Blue, Purple, Pink)
+- **Welcome Messages**: Customizable greeting with time-based variants
+- **Date/Time Display**: Configurable date and time formats
+- **Layout Options**: Adjustable icon sizes, font sizes, spacing, and column counts
+
+### Technical Features
+- **Multi-Database Support**: SQLite (default), PostgreSQL, or MySQL
 - **Redis Caching**: Optional Redis for improved performance
-- **Analytics**: Track bookmark click counts
+- **GeoIP Lookup**: Optional visitor location analytics with MaxMind or ipinfo.io
+- **Favicon Auto-Fetch**: Automatically fetch and store favicons from URLs
+- **Icon Libraries**: 7,000+ Material Design Icons plus selfh.st icon library support
+
+---
+
+## Screenshots
+
+*Coming soon*
+
+---
 
 ## Quick Start
 
@@ -23,9 +58,10 @@ A modern, self-hosted bookmark dashboard homepage with admin management, search,
 
 ### Installation
 
-1. **Clone or download this repository**
+1. **Clone the repository**
 
 ```bash
+git clone https://github.com/yourusername/fauxdash.git
 cd fauxdash
 ```
 
@@ -47,7 +83,7 @@ Add this to your `.env` file as `NEXTAUTH_SECRET`.
 
 Edit `.env` and set at minimum:
 - `NEXTAUTH_SECRET` (from step 3)
-- `WEATHERAPI_KEY` (get free key from https://www.weatherapi.com/)
+- `NEXTAUTH_URL` (your deployment URL, e.g., `http://localhost:8080`)
 
 5. **Start the application**
 
@@ -63,63 +99,140 @@ Open http://localhost:8080 in your browser.
 - Email: `admin@fauxdash.local`
 - Password: `admin`
 
-**⚠️ CHANGE THESE IMMEDIATELY!**
+**IMPORTANT: Change these immediately after first login!**
 
-### First Steps
+---
 
-1. Log in with the default admin credentials
-2. Click the settings icon to access the Admin Panel
-3. Add categories and bookmarks
-4. Customize your homepage
+## Configuration Guide
 
-## Building & Development
+All settings can be configured through the Admin Panel at `/admin/settings`. Below is a detailed explanation of each configuration section.
 
-### Build Scripts
+### General Settings
 
-Two helper scripts are provided for building the application:
+| Setting | Description |
+|---------|-------------|
+| **Search Enabled** | Enable/disable the search bar on the homepage |
+| **Search Engine** | Choose from DuckDuckGo, Google, Brave, Kagi, Startpage, or Custom |
+| **Custom Search Name** | Display name for custom search engine |
+| **Custom Search URL** | URL template for custom search (use `%s` as query placeholder) |
+| **Search in Header** | Show search bar in the header vs. main content area |
 
-**Fast Build (with cache):**
-```bash
-./scripts/docker-build.sh
-```
-Use this for regular development. It uses Docker cache to speed up builds.
+### Greeting Settings
 
-**Clean Build (without cache):**
-```bash
-./scripts/docker-rebuild.sh
-```
-Use this when you need to ensure a completely fresh build. This clears all Docker build cache and rebuilds from scratch. **Recommended when updating dependencies or experiencing build issues.**
+| Setting | Description |
+|---------|-------------|
+| **Welcome Message** | The greeting displayed on the homepage |
+| **Welcome Message Enabled** | Show/hide the welcome message |
+| **Time-Based Messages** | Use different messages for morning, afternoon, and evening |
+| **Morning Message** | Greeting shown before noon (default: "Good morning") |
+| **Afternoon Message** | Greeting shown noon to 5 PM (default: "Good afternoon") |
+| **Evening Message** | Greeting shown after 5 PM (default: "Good evening") |
 
-### Manual Build Commands
+### Date & Time Settings
 
-If you prefer to run commands manually:
+| Setting | Description |
+|---------|-------------|
+| **Date/Time Enabled** | Show date and time on the homepage |
+| **Position** | Left, Center, or Right alignment |
+| **Display Mode** | Text or Icon format |
+| **Date Format** | Custom date format (e.g., "MMMM d, yyyy" for "January 25, 2026") |
+| **Time Enabled** | Show/hide the time display |
+| **Time Format** | 12-hour or 24-hour format |
+| **Show Seconds** | Include seconds in time display |
 
-```bash
-# Regular build
-docker-compose down
-docker-compose build
-docker-compose up -d
+### Weather Settings
 
-# Clean build (recommended for production deployments)
-docker-compose down
-docker builder prune -f
-docker-compose build --no-cache
-docker-compose up -d
-```
+| Setting | Description |
+|---------|-------------|
+| **Weather Enabled** | Enable/disable weather widget |
+| **Display Mode** | Icon only, Temperature only, or Both |
+| **Show Popup** | Show detailed weather on hover |
+| **Weather Provider** | WeatherAPI.com, Tempest, or OpenWeatherMap |
+| **Locations** | Comma-separated list of ZIP codes or city names |
+| **Auto-Rotate** | Seconds between location changes (for multiple locations) |
 
-## Configuration
+**Weather Provider Configuration:**
 
-### Database Options
+- **WeatherAPI.com** (Recommended): Get a free API key at https://www.weatherapi.com/
+- **Tempest Weather**: Requires station ID and API key from your Tempest device
+- **OpenWeatherMap**: Get a free API key at https://openweathermap.org/
 
-FauxDash supports three database backends:
+### GeoIP Settings
 
-#### SQLite (Default)
+GeoIP lookup enriches your pageview analytics with visitor location data.
+
+| Setting | Description |
+|---------|-------------|
+| **GeoIP Enabled** | Enable/disable geographic location lookup |
+| **Provider** | MaxMind (local database), ipinfo.io (API), or Chain (MaxMind with ipinfo fallback) |
+| **MaxMind Database Path** | Path to GeoLite2-City.mmdb file |
+| **MaxMind Account ID** | For automatic database updates |
+| **MaxMind License Key** | Get free at https://www.maxmind.com/en/geolite2/signup |
+| **ipinfo.io Token** | Get free at https://ipinfo.io/signup (50,000 lookups/month) |
+| **Cache Duration** | How long to cache lookups (default: 86400 seconds / 24 hours) |
+
+### Email / SMTP Settings
+
+Configure email for password reset functionality.
+
+| Setting | Description |
+|---------|-------------|
+| **Email Provider** | Disabled, Google/Gmail, or Custom SMTP |
+| **SMTP Host** | Mail server hostname (auto-filled for Gmail) |
+| **SMTP Port** | Mail server port (587 for TLS, 465 for SSL) |
+| **Encryption** | TLS (recommended), SSL, or None |
+| **Username** | SMTP authentication username |
+| **Password** | SMTP authentication password (use App Password for Gmail) |
+| **From Email** | Sender email address |
+| **From Name** | Sender display name |
+
+**Gmail Setup:**
+1. Enable 2-Step Verification on your Google Account
+2. Generate an App Password at https://myaccount.google.com/apppasswords
+3. Use your Gmail address as username and the 16-character App Password
+
+### Appearance Settings
+
+| Setting | Description |
+|---------|-------------|
+| **Default Theme** | Light, Dark, or System |
+| **Theme Color** | Accent color (Slate, Red, Orange, Green, Blue, Purple, Pink) |
+| **Site Title** | Browser tab title and header text |
+| **Site Title Enabled** | Show/hide the site title |
+| **Section Order** | Services First or Bookmarks First |
+| **Services Columns** | Number of columns for services section (1-6) |
+| **Bookmarks Columns** | Number of columns for bookmarks section (1-6) |
+| **Icon Size** | Size of bookmark/service icons in pixels |
+| **Font Size** | Size of item text in pixels |
+| **Description Spacing** | Gap between title and description |
+| **Item Spacing** | Gap between items |
+
+### Default Settings for New Items
+
+Configure default values when creating new categories, bookmarks, and services:
+
+- **Default Enabled State**: Whether new items are visible by default
+- **Default Requires Auth**: Whether new items require login by default
+- **Items to Show**: Default collapsed view limit for categories
+- **Show Item Count**: Display count badge on category headers
+- **Auto Expanded**: Whether categories start expanded
+- **Sort By**: Default sort order (manual order, name, or click count)
+
+---
+
+## Database Configuration
+
+### SQLite (Default)
+
 ```env
 DB_PROVIDER=sqlite
 SQLITE_FILE=/data/fauxdash.db
 ```
 
-#### PostgreSQL
+Best for single-user deployments and simple setups.
+
+### PostgreSQL
+
 ```env
 DB_PROVIDER=postgres
 DB_URL=postgresql://user:password@postgres:5432/fauxdash
@@ -127,7 +240,8 @@ DB_URL=postgresql://user:password@postgres:5432/fauxdash
 
 Uncomment the postgres service in `docker-compose.yml`.
 
-#### MySQL
+### MySQL
+
 ```env
 DB_PROVIDER=mysql
 DB_URL=mysql://user:password@mysql:3306/fauxdash
@@ -135,69 +249,17 @@ DB_URL=mysql://user:password@mysql:3306/fauxdash
 
 Uncomment the mysql service in `docker-compose.yml`.
 
-### Redis Configuration
+---
 
-Redis is enabled by default for caching. To disable:
+## Redis Configuration
+
+Redis caching is enabled by default for improved performance. To disable:
 
 ```env
 REDIS_ENABLED=false
 ```
 
-### Weather Configuration
-
-Choose a weather provider:
-
-```env
-WEATHER_PROVIDER=weatherapi  # or tempest, openweather
-WEATHERAPI_KEY=your_key_here
-WEATHER_LOCATIONS=90210,10001  # Comma-separated ZIP codes
-WEATHER_AUTO_ROTATE_SECONDS=30
-```
-
-**Providers:**
-- **WeatherAPI.com** (recommended): Free tier available at https://www.weatherapi.com/
-- **Tempest Weather**: Requires station ID and API key
-- **OpenWeatherMap**: Free tier available at https://openweathermap.org/
-
-### Search Engine
-
-Set your default search engine:
-
-```env
-DEFAULT_SEARCH_ENGINE=duckduckgo  # or google, brave, kagi, startpage
-```
-
-## Upgrade Guide
-
-### Upgrading to a New Version
-
-1. **Backup your data**
-
-```bash
-docker compose down
-cp -r /path/to/docker/volumes/fauxdash-data /path/to/backup/
-```
-
-2. **Pull the latest changes**
-
-```bash
-git pull origin main
-```
-
-3. **Rebuild and restart**
-
-```bash
-docker compose build
-docker compose up -d
-```
-
-4. **Run migrations**
-
-Migrations run automatically on container start. Check logs:
-
-```bash
-docker compose logs app
-```
+---
 
 ## Development
 
@@ -233,6 +295,46 @@ npm run db:migrate
 
 Open http://localhost:3000
 
+### Build Scripts
+
+**Fast Build (with cache):**
+```bash
+./scripts/docker-build.sh
+```
+
+**Clean Build (without cache):**
+```bash
+./scripts/docker-rebuild.sh
+```
+
+---
+
+## Upgrading
+
+1. **Backup your data**
+
+```bash
+docker compose down
+cp -r /path/to/docker/volumes/fauxdash-data /path/to/backup/
+```
+
+2. **Pull the latest changes**
+
+```bash
+git pull origin main
+```
+
+3. **Rebuild and restart**
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+Migrations run automatically on container start.
+
+---
+
 ## Project Structure
 
 ```
@@ -240,55 +342,47 @@ fauxdash/
 ├── src/
 │   ├── app/                 # Next.js app directory
 │   │   ├── api/            # API routes
-│   │   ├── admin/          # Admin panel
-│   │   ├── login/          # Login page
+│   │   ├── admin/          # Admin panel pages
+│   │   ├── login/          # Authentication pages
 │   │   └── page.tsx        # Homepage
 │   ├── components/         # React components
 │   │   ├── admin/          # Admin-specific components
-│   │   └── ui/             # Reusable UI components
+│   │   ├── settings/       # Settings tab components
+│   │   └── ui/             # Reusable UI components (shadcn/ui)
 │   ├── db/                 # Database layer
-│   │   ├── schema.ts       # Database schema
-│   │   ├── index.ts        # DB connection
+│   │   ├── schema.ts       # Drizzle ORM schema
+│   │   ├── index.ts        # Database connection
 │   │   └── migrate.ts      # Migration runner
-│   ├── lib/                # Utility libraries
-│   │   ├── auth.ts         # Authentication config
-│   │   ├── redis.ts        # Redis client
-│   │   ├── weather.ts      # Weather providers
-│   │   └── utils.ts        # Utility functions
-│   └── types/              # TypeScript types
+│   └── lib/                # Utility libraries
+│       ├── auth.ts         # NextAuth configuration
+│       ├── redis.ts        # Redis client
+│       ├── weather.ts      # Weather provider integrations
+│       └── icons.ts        # Icon library utilities
 ├── docker-compose.yml      # Docker services
 ├── Dockerfile              # Container definition
+├── CHANGELOG.md            # Version history
 └── README.md               # This file
 ```
 
-## Admin Panel
+---
 
-Access the admin panel at `/admin` (requires admin privileges).
+## Tech Stack
 
-### Managing Categories
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui (Radix primitives)
+- **Database ORM**: Drizzle ORM
+- **Authentication**: NextAuth.js
+- **Icons**: Heroicons, Material Design Icons, selfh.st
+- **Drag & Drop**: dnd-kit
 
-- **Add Category**: Click "Add Category" button
-- **Edit Category**: Click pencil icon
-- **Delete Category**: Click trash icon
-- **Reorder**: Drag and drop categories
-
-### Managing Bookmarks
-
-- **Add Bookmark**: Click "Add Bookmark" button
-- **Edit Bookmark**: Click pencil icon
-- **Delete Bookmark**: Click trash icon
-- **Reorder**: Drag and drop bookmarks within categories
-
-### Visibility & Authentication
-
-- **Visible**: Toggle whether items appear on homepage
-- **Requires Auth**: Make items visible only to logged-in users
+---
 
 ## Troubleshooting
 
 ### Container won't start
 
-Check logs:
 ```bash
 docker compose logs app
 ```
@@ -299,35 +393,56 @@ Verify your `DB_PROVIDER` and connection string in `.env`.
 
 ### Weather widget not showing
 
-Ensure you've set a valid API key for your chosen provider.
+Ensure you've set a valid API key for your chosen weather provider.
 
 ### Can't log in
 
-Reset admin password by connecting to the database and updating the users table, or recreate the container to reinitialize with default credentials.
+Reset by recreating the container (this reinitializes with default credentials) or connect to your database and update the users table directly.
+
+### Favicon fetch fails
+
+Some websites block favicon requests. Use the Icon Selector to manually enter a favicon URL or choose from the icon libraries.
+
+---
 
 ## Security Notes
 
-- Change default admin credentials immediately
-- Use strong, unique `NEXTAUTH_SECRET`
-- Keep sensitive data in `.env` (not in version control)
-- Consider placing behind a reverse proxy (nginx, Caddy) with HTTPS
-- Regularly update to latest version for security patches
+- Change default admin credentials immediately after first login
+- Use a strong, unique `NEXTAUTH_SECRET`
+- Keep sensitive data in `.env` (never commit to version control)
+- Consider placing behind a reverse proxy (nginx, Caddy, Traefik) with HTTPS
+- Regularly update to the latest version for security patches
+
+---
 
 ## Contributing
 
-This is a self-hosted project. Feel free to fork and customize for your needs.
+Suggestions and contributions are welcome! This project was built for personal use but I'm happy to consider improvements.
+
+- **Bug Reports**: Open an issue with details about your setup and the problem
+- **Feature Requests**: Open an issue describing the feature and use case
+- **Pull Requests**: Fork the repo, make your changes, and submit a PR
+
+---
 
 ## License
 
 MIT License - See LICENSE file for details
 
-## Credits
+---
 
-Inspired by [Flame Dashboard](https://github.com/pawelmalak/flame) but built with modern tech stack.
+## Acknowledgments
+
+- Inspired by [Flame Dashboard](https://github.com/pawelmalak/flame)
+- UI components from [shadcn/ui](https://ui.shadcn.com/)
+- Icons from [Heroicons](https://heroicons.com/), [MDI](https://materialdesignicons.com/), and [selfh.st](https://selfh.st/icons/)
+- Built with assistance from Claude AI
+
+---
 
 ## Support
 
 For issues and questions:
-- Check the documentation
-- Review existing issues
-- Open a new issue with details about your setup and the problem
+1. Check this documentation
+2. Search existing issues
+3. Open a new issue with details about your setup and the problem
