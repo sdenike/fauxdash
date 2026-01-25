@@ -5,6 +5,19 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.7] - 2026-01-25
+
+### Fixed
+- **Critical**: Fixed favicon conversion features (Convert to Theme Color, Monotone, Invert) that were completely broken due to parameter mismatches between frontend and API
+- **Security**: Added path traversal protection to all favicon API routes to prevent unauthorized file access
+- Fixed API response handling - frontend now correctly uses `data.filename` instead of `data.path`
+- Convert-color API now accepts both hex colors and theme color names (Slate, Blue, etc.)
+- Added file existence checks to conversion routes to provide better error messages
+
+### Changed
+- Standardized favicon conversion API parameters across all components
+- Improved error handling in favicon conversion routes
+
 ## [0.5.6] - 2026-01-25
 
 ### Fixed

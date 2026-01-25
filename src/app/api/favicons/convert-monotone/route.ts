@@ -26,6 +26,12 @@ export async function POST(request: NextRequest) {
     if (filename.startsWith('/api/favicons/serve/')) {
       filename = filename.replace('/api/favicons/serve/', '');
     }
+
+    // Validate filename to prevent path traversal
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return NextResponse.json({ error: 'Invalid filename' }, { status: 400 });
+    }
+
     const fullPath = join(process.cwd(), 'public', 'favicons', filename);
 
     // Check if source file exists

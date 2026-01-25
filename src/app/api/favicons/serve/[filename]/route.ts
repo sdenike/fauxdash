@@ -8,6 +8,24 @@ export async function GET(
 ) {
   try {
     const filename = params.filename;
+
+    // Validate filename to prevent path traversal attacks
+    // Only allow alphanumeric, underscore, hyphen, and dot characters
+    if (!filename || !/^[a-zA-Z0-9_\-\.]+$/.test(filename)) {
+      return NextResponse.json(
+        { error: 'Invalid filename' },
+        { status: 400 }
+      );
+    }
+
+    // Additional check: ensure no path traversal attempts
+    if (filename.includes('..')) {
+      return NextResponse.json(
+        { error: 'Invalid filename' },
+        { status: 400 }
+      );
+    }
+
     const filepath = join(process.cwd(), 'public', 'favicons', filename);
 
     // Read the file

@@ -456,22 +456,23 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          iconPath: sourceIcon,
-          themeColor: settings.themeColor || 'Slate',
+          favicon: sourceIcon,
+          color: settings.themeColor || 'Slate',
         }),
       })
 
       const data = await response.json()
 
-      if (data.success) {
-        setFormData({ ...formData, icon: data.path })
+      if (data.success && data.filename) {
+        const newIconPath = `favicon:${data.filename}`
+        setFormData({ ...formData, icon: newIconPath })
 
         // If editing an existing bookmark, update it immediately
         if (editingBookmark) {
           const updateResponse = await fetch(`/api/bookmarks/${editingBookmark.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...formData, icon: data.path }),
+            body: JSON.stringify({ ...formData, icon: newIconPath }),
           })
 
           if (updateResponse.ok) {
@@ -526,21 +527,22 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          iconPath: sourceIcon,
+          favicon: sourceIcon,
         }),
       })
 
       const data = await response.json()
 
-      if (data.success) {
-        setFormData({ ...formData, icon: data.path })
+      if (data.success && data.filename) {
+        const newIconPath = `favicon:${data.filename}`
+        setFormData({ ...formData, icon: newIconPath })
 
         // If editing an existing bookmark, update it immediately
         if (editingBookmark) {
           const updateResponse = await fetch(`/api/bookmarks/${editingBookmark.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...formData, icon: data.path }),
+            body: JSON.stringify({ ...formData, icon: newIconPath }),
           })
 
           if (updateResponse.ok) {
@@ -581,19 +583,20 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
       const response = await fetch('/api/favicons/invert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ iconPath: sourceIcon }),
+        body: JSON.stringify({ favicon: sourceIcon }),
       })
 
       const data = await response.json()
 
-      if (data.success) {
-        setFormData({ ...formData, icon: data.path })
+      if (data.success && data.filename) {
+        const newIconPath = `favicon:${data.filename}`
+        setFormData({ ...formData, icon: newIconPath })
 
         // Update the bookmark in the database
         const updateResponse = await fetch(`/api/bookmarks/${editingBookmark.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...formData, icon: data.path }),
+          body: JSON.stringify({ ...formData, icon: newIconPath }),
         })
 
         if (updateResponse.ok) {

@@ -25,7 +25,18 @@ export async function POST(request: NextRequest) {
     if (filename.startsWith('/api/favicons/serve/')) {
       filename = filename.replace('/api/favicons/serve/', '');
     }
+
+    // Validate filename to prevent path traversal
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return NextResponse.json({ error: 'Invalid filename' }, { status: 400 });
+    }
+
     const fullPath = join(process.cwd(), 'public', 'favicons', filename);
+
+    // Check if file exists
+    if (!existsSync(fullPath)) {
+      return NextResponse.json({ error: 'Favicon file not found' }, { status: 404 });
+    }
 
     // Generate new filename with _inverted suffix
     const nameParts = filename.split('.');

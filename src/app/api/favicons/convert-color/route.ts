@@ -72,10 +72,27 @@ export async function POST(request: NextRequest) {
     if (filename.startsWith('/api/favicons/serve/')) {
       filename = filename.replace('/api/favicons/serve/', '');
     }
+
+    // Validate filename to prevent path traversal
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return NextResponse.json({ error: 'Invalid filename' }, { status: 400 });
+    }
+
     const fullPath = join(process.cwd(), 'public', 'favicons', filename);
 
-    // Get target color (use hex directly if provided, otherwise look up theme color name)
-    const rgb = hexToRgb(color);
+    // Check if file exists
+    if (!existsSync(fullPath)) {
+      return NextResponse.json({ error: 'Favicon file not found' }, { status: 404 });
+    }
+
+    // Get target color - try hex first, then look up theme color name
+    let rgb = hexToRgb(color);
+
+    if (!rgb) {
+      // Try to convert theme color name to hex
+      const hexColor = getThemeColorHex(color);
+      rgb = hexToRgb(hexColor);
+    }
 
     if (!rgb) {
       return NextResponse.json({ error: 'Invalid color' }, { status: 400 });
