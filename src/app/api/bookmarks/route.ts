@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     categoryId: body.categoryId,
     name: body.name,
     url: body.url,
+    description: body.description || null,
     icon: body.icon || null,
     order: body.order || 0,
     isVisible: body.isVisible ?? true,

@@ -9,7 +9,8 @@ import { Label } from '../ui/label'
 import { Textarea } from '../ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Checkbox } from '../ui/checkbox'
-import { PlusIcon, PencilIcon, TrashIcon, ArrowsRightLeftIcon, SparklesIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, PencilIcon, TrashIcon, ArrowsRightLeftIcon, SparklesIcon, ChevronDownIcon, ChevronUpIcon, ArrowPathIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid'
 import { IconSelector } from '../icon-selector'
 import { getIconByName } from '@/lib/icons'
 import { useTheme } from 'next-themes'
@@ -101,12 +102,12 @@ function SortableContentItem({ item, onEdit, onDelete, onConvert, isSelected, on
   const itemIconData = !isFavicon && !isSelfhst && item.icon ? getIconByName(item.icon) : null
   const ItemIcon = itemIconData?.component
 
-  // Handle favicon path with monotone support
+  // Handle favicon path with grayscale/monotone support
   let faviconPath = null
   if (isFavicon && item.icon) {
     let path = item.icon.replace('favicon:', '')
-    // Handle monotone suffix
-    if (path.includes('_monotone')) {
+    // Handle grayscale/monotone suffix
+    if (path.includes('_monotone') || path.includes('_grayscale')) {
       const suffix = theme === 'dark' ? '_white.png' : '_black.png'
       path = path + suffix
     }
@@ -220,8 +221,9 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [fetchingFavicon, setFetchingFavicon] = useState(false)
   const [convertingColor, setConvertingColor] = useState(false)
-  const [convertingMonotone, setConvertingMonotone] = useState(false)
+  const [convertingGrayscale, setConvertingGrayscale] = useState(false)
   const [invertingColors, setInvertingColors] = useState(false)
+  const [revertingOriginal, setRevertingOriginal] = useState(false)
   const [originalFavicon, setOriginalFavicon] = useState<string | null>(null)
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false)
@@ -261,6 +263,47 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
 
   // Get uncategorized items
   const uncategorizedItems = allItems.filter(item => item.categoryId === null)
+
+  // Helper function to ensure an icon is a local favicon (converts selfh.st if needed)
+  const ensureLocalFavicon = async (icon: string, itemId: number, itemType: 'bookmark' | 'service'): Promise<string | null> => {
+    if (icon.startsWith('favicon:')) {
+      return icon
+    }
+
+    if (icon.startsWith('selfhst:')) {
+      // Need to save selfh.st icon locally first
+      const iconId = icon.replace('selfhst:', '')
+      try {
+        const response = await fetch('/api/icons/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            iconType: 'selfhst',
+            iconId,
+            iconName: iconId,
+          }),
+        })
+
+        const data = await response.json()
+        if (data.success) {
+          // Update the item in database with the new local path
+          const endpoint = itemType === 'bookmark' ? `/api/bookmarks/${itemId}` : `/api/services/${itemId}`
+          await fetch(endpoint, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ icon: `favicon:${data.path}` }),
+          })
+          return `favicon:${data.path}`
+        }
+      } catch (error) {
+        console.error('Failed to save selfh.st icon locally:', error)
+      }
+      return null
+    }
+
+    // For HeroIcons or other component-based icons, they can't be converted
+    return null
+  }
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string)
@@ -353,7 +396,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
     })
 
     // Set original favicon if this item has a favicon
-    if (item.icon?.startsWith('favicon:') && !item.icon.includes('_themed_') && !item.icon.includes('_monotone') && !item.icon.includes('_inverted')) {
+    if (item.icon?.startsWith('favicon:') && !item.icon.includes('_themed_') && !(item.icon.includes('_monotone') || item.icon.includes('_grayscale')) && !item.icon.includes('_grayscale') && !item.icon.includes('_inverted')) {
       setOriginalFavicon(item.icon)
     } else {
       setOriginalFavicon(null)
@@ -462,6 +505,50 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
     }
   }
 
+  const handleSelectCategory = (categoryType: 'bookmark' | 'service', categoryId: number | null) => {
+    const categoryItems = allItems.filter(item => {
+      if (categoryId === null) {
+        // Uncategorized items
+        return item.type === categoryType && item.categoryId === null
+      }
+      return item.type === categoryType && item.categoryId === categoryId
+    })
+
+    const categoryItemIds = categoryItems.map(item => `${item.type}-${item.id}`)
+    const allSelected = categoryItemIds.every(id => selectedItems.has(id))
+
+    const newSelected = new Set(selectedItems)
+    if (allSelected) {
+      // Deselect all in this category
+      categoryItemIds.forEach(id => newSelected.delete(id))
+    } else {
+      // Select all in this category
+      categoryItemIds.forEach(id => newSelected.add(id))
+    }
+    setSelectedItems(newSelected)
+  }
+
+  const isCategoryFullySelected = (categoryType: 'bookmark' | 'service', categoryId: number | null) => {
+    const categoryItems = allItems.filter(item => {
+      if (categoryId === null) {
+        return item.type === categoryType && item.categoryId === null
+      }
+      return item.type === categoryType && item.categoryId === categoryId
+    })
+    if (categoryItems.length === 0) return false
+    return categoryItems.every(item => selectedItems.has(`${item.type}-${item.id}`))
+  }
+
+  const getCategorySelectedCount = (categoryType: 'bookmark' | 'service', categoryId: number | null) => {
+    const categoryItems = allItems.filter(item => {
+      if (categoryId === null) {
+        return item.type === categoryType && item.categoryId === null
+      }
+      return item.type === categoryType && item.categoryId === categoryId
+    })
+    return categoryItems.filter(item => selectedItems.has(`${item.type}-${item.id}`)).length
+  }
+
   const handleFetchFavicon = async () => {
     if (!formData.url) {
       toast({
@@ -485,7 +572,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
       if (response.ok && data.filename) {
         const iconPath = `favicon:${data.filename}`
         setFormData({ ...formData, icon: iconPath })
-        if (!iconPath.includes('_themed_') && !iconPath.includes('_monotone') && !iconPath.includes('_inverted')) {
+        if (!iconPath.includes('_themed_') && !iconPath.includes('_monotone') && !iconPath.includes('_grayscale') && !iconPath.includes('_inverted')) {
           setOriginalFavicon(iconPath)
         }
         toast({
@@ -596,7 +683,8 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
       // Get current theme color from settings
       const settingsRes = await fetch('/api/settings')
       const settings = await settingsRes.json()
-      const primaryColor = settings.find((s: any) => s.key === 'primaryColor')?.value || '#3b82f6'
+      // Settings returns an object with themeColor (e.g., 'Slate', 'Blue', etc.)
+      const themeColor = settings.themeColor || 'Slate'
 
       // Use original favicon if available, otherwise use current icon
       const sourceIcon = originalFavicon || formData.icon
@@ -606,7 +694,8 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           favicon: sourceIcon,
-          color: primaryColor,
+          color: themeColor,
+          itemUrl: formData.url,
         }),
       })
 
@@ -638,7 +727,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
     }
   }
 
-  const handleConvertMonotone = async () => {
+  const handleConvertGrayscale = async () => {
     if (!formData.icon || !formData.icon.startsWith('favicon:')) {
       toast({
         variant: 'destructive',
@@ -648,24 +737,24 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
       return
     }
 
-    if (formData.icon.includes('_monotone')) {
+    if (formData.icon.includes('_grayscale')) {
       toast({
         variant: 'destructive',
         title: 'Already converted',
-        description: 'This favicon has already been converted to monotone',
+        description: 'This favicon has already been converted to grayscale',
       })
       return
     }
 
-    setConvertingMonotone(true)
+    setConvertingGrayscale(true)
     try {
       // Use original favicon if available, otherwise use current icon
       const sourceIcon = originalFavicon || formData.icon
 
-      const response = await fetch('/api/favicons/convert-monotone', {
+      const response = await fetch('/api/favicons/convert-grayscale', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ favicon: sourceIcon }),
+        body: JSON.stringify({ favicon: sourceIcon, itemUrl: formData.url }),
       })
 
       const data = await response.json()
@@ -675,24 +764,24 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
         setFormData({ ...formData, icon: newIconPath })
         toast({
           variant: 'success',
-          title: 'Converted to monotone',
-          description: data.message || 'Successfully converted to monotone',
+          title: 'Converted to grayscale',
+          description: data.message || 'Successfully converted to grayscale',
         })
       } else {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: data.error || 'Failed to convert to monotone',
+          description: data.error || 'Failed to convert to grayscale',
         })
       }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to convert to monotone',
+        description: 'Failed to convert to grayscale',
       })
     } finally {
-      setConvertingMonotone(false)
+      setConvertingGrayscale(false)
     }
   }
 
@@ -706,7 +795,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
       const response = await fetch('/api/favicons/invert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ favicon: sourceIcon }),
+        body: JSON.stringify({ favicon: sourceIcon, itemUrl: formData.url }),
       })
 
       const data = await response.json()
@@ -748,182 +837,413 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
     }
   }
 
-  const handleBulkConvertMonotone = async () => {
+  const handleBulkConvertGrayscale = async () => {
+    // Include both favicon: and selfhst: icons
     const itemsToConvert = allItems.filter(item =>
-      selectedItems.has(`${item.type}-${item.id}`) && item.icon?.startsWith('favicon:')
+      selectedItems.has(`${item.type}-${item.id}`) &&
+      (item.icon?.startsWith('favicon:') || item.icon?.startsWith('selfhst:'))
     )
 
     if (itemsToConvert.length === 0) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'No items with favicons selected',
+        description: 'No items with convertible icons selected. Select items with favicons or selfh.st icons.',
       })
       return
     }
 
-    setConvertingMonotone(true)
+    setConvertingGrayscale(true)
+    let successCount = 0
+    let failCount = 0
+
     try {
-      const promises = itemsToConvert.map(async (item) => {
-        // Get original or use current icon
-        const sourceIcon = item.icon!.includes('_themed_') || item.icon!.includes('_monotone') || item.icon!.includes('_inverted')
-          ? item.icon!.replace(/_themed_.*\.png|_monotone|_inverted\.png/, '.png')
-          : item.icon!
+      for (const item of itemsToConvert) {
+        try {
+          // Ensure we have a local favicon (convert selfh.st if needed)
+          let sourceIcon = item.icon!
+          if (sourceIcon.startsWith('selfhst:')) {
+            const localIcon = await ensureLocalFavicon(sourceIcon, item.id, item.type)
+            if (!localIcon) {
+              failCount++
+              continue
+            }
+            sourceIcon = localIcon
+          }
 
-        const response = await fetch('/api/favicons/convert-monotone', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ favicon: sourceIcon }),
-        })
+          // Get original or use current icon - strip any transformation suffixes
+          const cleanedIcon = sourceIcon.includes('_themed_') || sourceIcon.includes('_monotone') || sourceIcon.includes('_grayscale') || sourceIcon.includes('_inverted')
+            ? sourceIcon.replace(/_themed_[^.]+\.png|_monotone(_black|_white)?\.png|_grayscale(_black|_white)?\.png|_inverted\.png/, '.png')
+            : sourceIcon
 
-        const data = await response.json()
-        if (response.ok && data.filename) {
-          const endpoint = item.type === 'bookmark' ? `/api/bookmarks/${item.id}` : `/api/services/${item.id}`
-          await fetch(endpoint, {
-            method: 'PATCH',
+          const response = await fetch('/api/favicons/convert-grayscale', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ icon: `favicon:${data.filename}` }),
+            body: JSON.stringify({ favicon: cleanedIcon, itemUrl: item.url }),
           })
-        }
-      })
 
-      await Promise.all(promises)
+          const data = await response.json()
+          if (response.ok && data.filename) {
+            const endpoint = item.type === 'bookmark' ? `/api/bookmarks/${item.id}` : `/api/services/${item.id}`
+            await fetch(endpoint, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ icon: `favicon:${data.filename}` }),
+            })
+            successCount++
+          } else {
+            console.error('Grayscale conversion failed:', data.error)
+            failCount++
+          }
+        } catch (error) {
+          console.error('Error converting item:', error)
+          failCount++
+        }
+      }
+
       onContentChange()
 
-      toast({
-        variant: 'success',
-        title: 'Converted to monotone',
-        description: `Successfully converted ${itemsToConvert.length} items`,
-      })
+      if (failCount === 0) {
+        toast({
+          variant: 'success',
+          title: 'Converted to grayscale',
+          description: `Successfully converted ${successCount} items`,
+        })
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Partial conversion',
+          description: `Converted ${successCount} items, ${failCount} failed. Some formats may not be supported.`,
+        })
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to convert some items',
+        description: 'Failed to convert items',
       })
     } finally {
-      setConvertingMonotone(false)
+      setConvertingGrayscale(false)
     }
   }
 
   const handleBulkInvert = async () => {
+    // Include both favicon: and selfhst: icons
     const itemsToConvert = allItems.filter(item =>
-      selectedItems.has(`${item.type}-${item.id}`) && item.icon?.startsWith('favicon:')
+      selectedItems.has(`${item.type}-${item.id}`) &&
+      (item.icon?.startsWith('favicon:') || item.icon?.startsWith('selfhst:'))
     )
 
     if (itemsToConvert.length === 0) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'No items with favicons selected',
+        description: 'No items with convertible icons selected. Select items with favicons or selfh.st icons.',
       })
       return
     }
 
     setInvertingColors(true)
+    let successCount = 0
+    let failCount = 0
+
     try {
-      const promises = itemsToConvert.map(async (item) => {
-        // Get original or use current icon
-        const sourceIcon = item.icon!.includes('_themed_') || item.icon!.includes('_monotone') || item.icon!.includes('_inverted')
-          ? item.icon!.replace(/_themed_.*\.png|_monotone|_inverted\.png/, '.png')
-          : item.icon!
+      for (const item of itemsToConvert) {
+        try {
+          // Ensure we have a local favicon (convert selfh.st if needed)
+          let sourceIcon = item.icon!
+          if (sourceIcon.startsWith('selfhst:')) {
+            const localIcon = await ensureLocalFavicon(sourceIcon, item.id, item.type)
+            if (!localIcon) {
+              failCount++
+              continue
+            }
+            sourceIcon = localIcon
+          }
 
-        const response = await fetch('/api/favicons/invert', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ favicon: sourceIcon }),
-        })
+          // Get original or use current icon - strip any transformation suffixes
+          const cleanedIcon = sourceIcon.includes('_themed_') || sourceIcon.includes('_monotone') || sourceIcon.includes('_grayscale') || sourceIcon.includes('_inverted')
+            ? sourceIcon.replace(/_themed_[^.]+\.png|_monotone(_black|_white)?\.png|_grayscale(_black|_white)?\.png|_inverted\.png/, '.png')
+            : sourceIcon
 
-        const data = await response.json()
-        if (response.ok && data.filename) {
-          const endpoint = item.type === 'bookmark' ? `/api/bookmarks/${item.id}` : `/api/services/${item.id}`
-          await fetch(endpoint, {
-            method: 'PATCH',
+          const response = await fetch('/api/favicons/invert', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ icon: `favicon:${data.filename}` }),
+            body: JSON.stringify({ favicon: cleanedIcon, itemUrl: item.url }),
           })
-        }
-      })
 
-      await Promise.all(promises)
+          const data = await response.json()
+          if (response.ok && data.filename) {
+            const endpoint = item.type === 'bookmark' ? `/api/bookmarks/${item.id}` : `/api/services/${item.id}`
+            await fetch(endpoint, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ icon: `favicon:${data.filename}` }),
+            })
+            successCount++
+          } else {
+            console.error('Invert conversion failed:', data.error)
+            failCount++
+          }
+        } catch (error) {
+          console.error('Error inverting item:', error)
+          failCount++
+        }
+      }
+
       onContentChange()
 
-      toast({
-        variant: 'success',
-        title: 'Colors inverted',
-        description: `Successfully inverted ${itemsToConvert.length} items`,
-      })
+      if (failCount === 0) {
+        toast({
+          variant: 'success',
+          title: 'Colors inverted',
+          description: `Successfully inverted ${successCount} items`,
+        })
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Partial conversion',
+          description: `Inverted ${successCount} items, ${failCount} failed. Some formats may not be supported.`,
+        })
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to invert some items',
+        description: 'Failed to invert items',
       })
     } finally {
       setInvertingColors(false)
     }
   }
 
+  const handleBulkDelete = async () => {
+    const itemsToDelete = allItems.filter(item =>
+      selectedItems.has(`${item.type}-${item.id}`)
+    )
+
+    if (itemsToDelete.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No items selected',
+      })
+      return
+    }
+
+    if (!confirm(`Are you sure you want to delete ${itemsToDelete.length} item${itemsToDelete.length !== 1 ? 's' : ''}? This cannot be undone.`)) {
+      return
+    }
+
+    try {
+      const deletePromises = itemsToDelete.map(async (item) => {
+        const endpoint = item.type === 'bookmark'
+          ? `/api/bookmarks/${item.id}`
+          : `/api/services/${item.id}`
+        return fetch(endpoint, { method: 'DELETE' })
+      })
+
+      await Promise.all(deletePromises)
+
+      // Clear selection
+      setSelectedItems(new Set())
+
+      onContentChange()
+      toast({
+        variant: 'success',
+        title: 'Items deleted',
+        description: `Successfully deleted ${itemsToDelete.length} item${itemsToDelete.length !== 1 ? 's' : ''}`,
+      })
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete some items',
+      })
+    }
+  }
+
   const handleBulkConvertTheme = async () => {
+    // Include both favicon: and selfhst: icons
     const itemsToConvert = allItems.filter(item =>
-      selectedItems.has(`${item.type}-${item.id}`) && item.icon?.startsWith('favicon:')
+      selectedItems.has(`${item.type}-${item.id}`) &&
+      (item.icon?.startsWith('favicon:') || item.icon?.startsWith('selfhst:'))
     )
 
     if (itemsToConvert.length === 0) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'No items with favicons selected',
+        description: 'No items with convertible icons selected. Select items with favicons or selfh.st icons.',
       })
       return
     }
 
     setConvertingColor(true)
+    let successCount = 0
+    let failCount = 0
+
     try {
       // Get theme color
       const settingsRes = await fetch('/api/settings')
       const settings = await settingsRes.json()
-      const primaryColor = settings.find((s: any) => s.key === 'primaryColor')?.value || '#3b82f6'
+      // Settings returns an object with themeColor (e.g., 'Slate', 'Blue', etc.)
+      const themeColor = settings.themeColor || 'Slate'
 
-      const promises = itemsToConvert.map(async (item) => {
-        // Get original or use current icon
-        const sourceIcon = item.icon!.includes('_themed_') || item.icon!.includes('_monotone') || item.icon!.includes('_inverted')
-          ? item.icon!.replace(/_themed_.*\.png|_monotone|_inverted\.png/, '.png')
-          : item.icon!
+      for (const item of itemsToConvert) {
+        try {
+          // Ensure we have a local favicon (convert selfh.st if needed)
+          let sourceIcon = item.icon!
+          if (sourceIcon.startsWith('selfhst:')) {
+            const localIcon = await ensureLocalFavicon(sourceIcon, item.id, item.type)
+            if (!localIcon) {
+              failCount++
+              continue
+            }
+            sourceIcon = localIcon
+          }
 
-        const response = await fetch('/api/favicons/convert-color', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ favicon: sourceIcon, color: primaryColor }),
-        })
+          // Get original or use current icon - strip any transformation suffixes
+          const cleanedIcon = sourceIcon.includes('_themed_') || sourceIcon.includes('_monotone') || sourceIcon.includes('_grayscale') || sourceIcon.includes('_inverted')
+            ? sourceIcon.replace(/_themed_[^.]+\.png|_monotone(_black|_white)?\.png|_grayscale(_black|_white)?\.png|_inverted\.png/, '.png')
+            : sourceIcon
 
-        const data = await response.json()
-        if (response.ok && data.filename) {
-          const endpoint = item.type === 'bookmark' ? `/api/bookmarks/${item.id}` : `/api/services/${item.id}`
-          await fetch(endpoint, {
-            method: 'PATCH',
+          const response = await fetch('/api/favicons/convert-color', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ icon: `favicon:${data.filename}` }),
+            body: JSON.stringify({ favicon: cleanedIcon, color: themeColor, itemUrl: item.url }),
           })
-        }
-      })
 
-      await Promise.all(promises)
+          const data = await response.json()
+          if (response.ok && data.filename) {
+            const endpoint = item.type === 'bookmark' ? `/api/bookmarks/${item.id}` : `/api/services/${item.id}`
+            await fetch(endpoint, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ icon: `favicon:${data.filename}` }),
+            })
+            successCount++
+          } else {
+            console.error('Theme color conversion failed:', data.error)
+            failCount++
+          }
+        } catch (error) {
+          console.error('Error converting item:', error)
+          failCount++
+        }
+      }
+
       onContentChange()
 
-      toast({
-        variant: 'success',
-        title: 'Converted to theme color',
-        description: `Successfully converted ${itemsToConvert.length} items`,
-      })
+      if (failCount === 0) {
+        toast({
+          variant: 'success',
+          title: 'Converted to theme color',
+          description: `Successfully converted ${successCount} items`,
+        })
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Partial conversion',
+          description: `Converted ${successCount} items, ${failCount} failed. Some formats may not be supported.`,
+        })
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to convert some items',
+        description: 'Failed to convert items',
       })
     } finally {
       setConvertingColor(false)
+    }
+  }
+
+  const handleBulkRevertOriginal = async () => {
+    // Only items with transformed favicons can be reverted
+    const itemsToRevert = allItems.filter(item =>
+      selectedItems.has(`${item.type}-${item.id}`) &&
+      item.icon?.startsWith('favicon:') &&
+      (item.icon.includes('_themed_') || (item.icon.includes('_monotone') || item.icon.includes('_grayscale')) || item.icon.includes('_inverted'))
+    )
+
+    if (itemsToRevert.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No transformed favicons selected. Select items that have been converted to theme color, grayscale, or inverted.',
+      })
+      return
+    }
+
+    setRevertingOriginal(true)
+    let successCount = 0
+    let failCount = 0
+
+    try {
+      for (const item of itemsToRevert) {
+        // Extract the base name and construct original path
+        let iconPath = item.icon!.replace('favicon:', '')
+        if (iconPath.startsWith('/api/favicons/serve/')) {
+          iconPath = iconPath.replace('/api/favicons/serve/', '')
+        }
+
+        // Strip transformation suffixes to get base name
+        const baseName = iconPath
+          .replace(/_themed_[^.]+\.png$/, '')
+          .replace(/_monotone_black\.png$/, '')
+          .replace(/_monotone_white\.png$/, '')
+          .replace(/_monotone$/, '')
+          .replace(/_grayscale_black\.png$/, '')
+          .replace(/_grayscale_white\.png$/, '')
+          .replace(/_grayscale$/, '')
+          .replace(/_inverted\.png$/, '')
+          .replace(/\.png$/, '')
+
+        // The original should be baseName.png (the active copy) or baseName_original.png
+        const originalPath = `favicon:/api/favicons/serve/${baseName}.png`
+
+        try {
+          const endpoint = item.type === 'bookmark' ? `/api/bookmarks/${item.id}` : `/api/services/${item.id}`
+          const response = await fetch(endpoint, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ icon: originalPath }),
+          })
+
+          if (response.ok) {
+            successCount++
+          } else {
+            failCount++
+          }
+        } catch (e) {
+          failCount++
+        }
+      }
+
+      onContentChange()
+
+      if (failCount === 0) {
+        toast({
+          variant: 'success',
+          title: 'Reverted to original',
+          description: `Successfully reverted ${successCount} items to original`,
+        })
+      } else {
+        toast({
+          variant: 'default',
+          title: 'Partially completed',
+          description: `Reverted ${successCount} items, ${failCount} failed`,
+        })
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to revert some items',
+      })
+    } finally {
+      setRevertingOriginal(false)
     }
   }
 
@@ -1051,11 +1371,11 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleBulkConvertMonotone}
-                  disabled={convertingMonotone}
+                  onClick={handleBulkConvertGrayscale}
+                  disabled={convertingGrayscale}
                 >
                   <SparklesIcon className="h-4 w-4 mr-1" />
-                  {convertingMonotone ? 'Converting...' : 'Monotone Selected'}
+                  {convertingGrayscale ? 'Converting...' : 'Grayscale Selected'}
                 </Button>
                 <Button
                   variant="outline"
@@ -1074,6 +1394,24 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                 >
                   <SparklesIcon className="h-4 w-4 mr-1" />
                   {convertingColor ? 'Converting...' : 'Theme Color Selected'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBulkRevertOriginal}
+                  disabled={revertingOriginal}
+                >
+                  <ArrowPathIcon className="h-4 w-4 mr-1" />
+                  {revertingOriginal ? 'Reverting...' : 'Revert to Original'}
+                </Button>
+                <div className="h-6 w-px bg-border" />
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                >
+                  <TrashIcon className="h-4 w-4 mr-1" />
+                  Delete Selected ({selectedItems.size})
                 </Button>
               </>
             )}
@@ -1102,6 +1440,29 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                     {uncategorizedItems.length} item{uncategorizedItems.length !== 1 ? 's' : ''} without a category - drag them into a category below
                   </p>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => {
+                    const uncategorizedIds = uncategorizedItems.map(item => `${item.type}-${item.id}`)
+                    const allSelected = uncategorizedIds.every(id => selectedItems.has(id))
+                    const newSelected = new Set(selectedItems)
+                    if (allSelected) {
+                      uncategorizedIds.forEach(id => newSelected.delete(id))
+                    } else {
+                      uncategorizedIds.forEach(id => newSelected.add(id))
+                    }
+                    setSelectedItems(newSelected)
+                  }}
+                  title={uncategorizedItems.every(item => selectedItems.has(`${item.type}-${item.id}`)) ? 'Deselect all uncategorized' : 'Select all uncategorized'}
+                >
+                  {uncategorizedItems.every(item => selectedItems.has(`${item.type}-${item.id}`)) ? (
+                    <CheckCircleSolidIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  ) : (
+                    <CheckCircleIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  )}
+                </Button>
               </div>
               <SortableContext
                 items={uncategorizedItems.map(item => `${item.type}-${item.id}`)}
@@ -1162,15 +1523,32 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                     <span className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
                       {category.columns} col{category.columns !== 1 ? 's' : ''}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 ml-auto"
-                      onClick={() => convertCategory(category.id, 'bookmark')}
-                      title="Convert to Service Category"
-                    >
-                      <ArrowsRightLeftIcon className="h-4 w-4" />
-                    </Button>
+                    <div className="ml-auto flex items-center gap-1">
+                      {categoryItems.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => handleSelectCategory('bookmark', category.id)}
+                          title={isCategoryFullySelected('bookmark', category.id) ? 'Deselect all in category' : 'Select all in category'}
+                        >
+                          {isCategoryFullySelected('bookmark', category.id) ? (
+                            <CheckCircleSolidIcon className="h-4 w-4 text-primary" />
+                          ) : (
+                            <CheckCircleIcon className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => convertCategory(category.id, 'bookmark')}
+                        title="Convert to Service Category"
+                      >
+                        <ArrowsRightLeftIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   {!isCollapsed && (
                     <SortableContext
@@ -1241,15 +1619,32 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                     <span className="text-xs px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
                       {category.columns} col{category.columns !== 1 ? 's' : ''}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 ml-auto"
-                      onClick={() => convertCategory(category.id, 'service')}
-                      title="Convert to Bookmark Category"
-                    >
-                      <ArrowsRightLeftIcon className="h-4 w-4" />
-                    </Button>
+                    <div className="ml-auto flex items-center gap-1">
+                      {categoryItems.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => handleSelectCategory('service', category.id)}
+                          title={isCategoryFullySelected('service', category.id) ? 'Deselect all in category' : 'Select all in category'}
+                        >
+                          {isCategoryFullySelected('service', category.id) ? (
+                            <CheckCircleSolidIcon className="h-4 w-4 text-primary" />
+                          ) : (
+                            <CheckCircleIcon className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => convertCategory(category.id, 'service')}
+                        title="Convert to Bookmark Category"
+                      >
+                        <ArrowsRightLeftIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   {!isCollapsed && (
                     <SortableContext
@@ -1383,6 +1778,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                     <IconSelector
                       value={formData.icon}
                       onChange={(icon) => setFormData({ ...formData, icon })}
+                      defaultTab={editingItem?.type === 'service' ? 'selfhst' : 'heroicons'}
                     />
 
                     {/* Favicon Operations */}
@@ -1404,11 +1800,11 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={handleConvertMonotone}
-                            disabled={convertingMonotone}
+                            onClick={handleConvertGrayscale}
+                            disabled={convertingGrayscale}
                           >
                             <SparklesIcon className="h-4 w-4 mr-2" />
-                            {convertingMonotone ? 'Converting...' : 'Convert to Monotone'}
+                            {convertingGrayscale ? 'Converting...' : 'Convert to Grayscale'}
                           </Button>
                           <Button
                             type="button"
@@ -1435,8 +1831,8 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                         {/* Preview */}
                         {(() => {
                           let path = formData.icon.replace('favicon:', '')
-                          // Handle monotone suffix
-                          if (path.includes('_monotone')) {
+                          // Handle grayscale/monotone suffix
+                          if (path.includes('_monotone') || path.includes('_grayscale')) {
                             const suffix = theme === 'dark' ? '_white.png' : '_black.png'
                             path = path + suffix
                           }

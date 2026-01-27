@@ -104,6 +104,7 @@ export async function POST(request: NextRequest) {
     itemsToShow: body.itemsToShow ?? 5,
     showItemCount: body.showItemCount ?? true,
     autoExpanded: body.autoExpanded ?? false,
+    showOpenAll: body.showOpenAll ?? false,
   }).returning();
 
   // Invalidate cache

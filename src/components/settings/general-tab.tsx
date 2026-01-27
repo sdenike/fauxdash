@@ -100,6 +100,35 @@ export function GeneralTab({ settings, onSettingsChange }: SettingsTabProps) {
           />
         </div>
       </CardContent>
+
+      <CardHeader className="border-t">
+        <CardTitle>Logging</CardTitle>
+        <CardDescription>
+          Configure application logging verbosity
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <Label htmlFor="logLevel">Log Level</Label>
+          <Select
+            value={settings.logLevel}
+            onValueChange={(value: 'error' | 'warn' | 'info' | 'debug') => updateSetting('logLevel', value)}
+          >
+            <SelectTrigger id="logLevel">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="error">Errors Only</SelectItem>
+              <SelectItem value="warn">Warnings & Errors</SelectItem>
+              <SelectItem value="info">Info, Warnings & Errors</SelectItem>
+              <SelectItem value="debug">Debug (All Messages)</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            Controls which messages are written to the application log file. More verbose levels include all less verbose levels.
+          </p>
+        </div>
+      </CardContent>
     </Card>
   )
 }

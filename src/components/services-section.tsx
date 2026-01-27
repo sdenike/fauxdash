@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { getIconByName } from '@/lib/icons'
-import { ServerIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
+import { ServerIcon, ChevronDownIcon, ChevronUpIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline'
 import { useTheme } from 'next-themes'
 
 interface Service {
@@ -25,6 +25,7 @@ interface ServiceCategory {
   itemsToShow: number | null
   showItemCount: boolean
   autoExpanded: boolean
+  showOpenAll: boolean
   sortBy: string | null
 }
 
@@ -64,6 +65,38 @@ function ServiceCategoryWithAccordion({
     ? category.services.slice(0, category.itemsToShow)
     : category.services
 
+  const handleOpenAll = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+
+    const urls = category.services?.map(s => s.url) || []
+    let blockedCount = 0
+
+    // Open tabs using window.open - browsers allow multiple opens from a single user gesture
+    // if done synchronously, though some browsers may still limit this
+    for (let i = 0; i < urls.length; i++) {
+      const newWindow = window.open(urls[i], '_blank', 'noopener,noreferrer')
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        blockedCount++
+      }
+    }
+
+    // If tabs were blocked, show a warning
+    if (blockedCount > 0) {
+      // Create a toast-like notification
+      const notification = document.createElement('div')
+      notification.innerHTML = `
+        <div style="position: fixed; bottom: 20px; right: 20px; background: #ef4444; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; font-family: system-ui, sans-serif; font-size: 14px;">
+          ${blockedCount} tab${blockedCount > 1 ? 's' : ''} blocked. Please allow popups for this site.
+        </div>
+      `
+      document.body.appendChild(notification)
+      setTimeout(() => {
+        notification.remove()
+      }, 4000)
+    }
+  }
+
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3 px-1">
@@ -79,6 +112,15 @@ function ServiceCategoryWithAccordion({
           <span className="text-sm text-muted-foreground opacity-60">
             ({totalItems})
           </span>
+        )}
+        {category.showOpenAll && category.services && category.services.length > 0 && (
+          <button
+            onClick={handleOpenAll}
+            className="p-1 text-muted-foreground hover:text-primary transition-colors"
+            title="Open all in new tabs"
+          >
+            <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+          </button>
         )}
         {shouldShowExpandButton && (
           <button
@@ -143,11 +185,11 @@ export function ServicesSection({
     const serviceIconData = !isFavicon && !isSelfhst && service.icon ? getIconByName(service.icon) : null
     const ServiceIcon = serviceIconData?.component
 
-    // Handle favicon path with monotone support
+    // Handle favicon path with grayscale support
     let faviconPath = isFavicon && service.icon ? service.icon.replace('favicon:', '') : null
     if (faviconPath) {
-      // Handle monotone suffix
-      if (faviconPath.includes('_monotone')) {
+      // Handle grayscale suffix
+      if (faviconPath.includes('_grayscale')) {
         const suffix = theme === 'dark' ? '_white.png' : '_black.png'
         faviconPath = faviconPath + suffix
       }

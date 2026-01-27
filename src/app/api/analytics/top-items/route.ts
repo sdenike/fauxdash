@@ -3,9 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getDb } from '@/db'
 import { bookmarks, services, bookmarkClicks, serviceClicks } from '@/db/schema'
-import { sql, gte, eq, desc } from 'drizzle-orm'
+import { sql, desc, inArray } from 'drizzle-orm'
 import { TopItemsQuerySchema } from '@/lib/validation/analytics'
-import { subDays, subWeeks, subMonths, subYears } from 'date-fns'
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -47,9 +46,10 @@ export async function GET(request: NextRequest) {
         periodMs = 7 * 24 * 60 * 60 * 1000
     }
 
-    const currentStart = new Date(now.getTime() - periodMs)
-    const previousStart = new Date(now.getTime() - periodMs * 2)
-    const previousEnd = currentStart
+    // Convert to epoch seconds for SQLite comparison (timestamps stored as integers)
+    const currentStartEpoch = Math.floor((now.getTime() - periodMs) / 1000)
+    const previousStartEpoch = Math.floor((now.getTime() - periodMs * 2) / 1000)
+    const previousEndEpoch = currentStartEpoch
 
     let items: { id: number; name: string; clicks: number; trend: number }[]
 
@@ -64,33 +64,37 @@ export async function GET(request: NextRequest) {
         .from(bookmarks)
         .leftJoin(
           bookmarkClicks,
-          sql`${bookmarkClicks.bookmarkId} = ${bookmarks.id} AND ${bookmarkClicks.clickedAt} >= ${currentStart}`
+          sql`${bookmarkClicks.bookmarkId} = ${bookmarks.id} AND ${bookmarkClicks.clickedAt} >= ${currentStartEpoch}`
         )
         .groupBy(bookmarks.id, bookmarks.name)
         .orderBy(desc(sql`count(${bookmarkClicks.id})`))
         .limit(limit)
 
       // Get previous period clicks for trend calculation
-      const previousClicks = await db
-        .select({
-          id: bookmarks.id,
-          clicks: sql<number>`count(${bookmarkClicks.id})`,
-        })
-        .from(bookmarks)
-        .leftJoin(
-          bookmarkClicks,
-          sql`${bookmarkClicks.bookmarkId} = ${bookmarks.id}
-              AND ${bookmarkClicks.clickedAt} >= ${previousStart}
-              AND ${bookmarkClicks.clickedAt} < ${previousEnd}`
-        )
-        .where(
-          sql`${bookmarks.id} IN (${currentClicks.map((c: { id: number }) => c.id).join(',') || '0'})`
-        )
-        .groupBy(bookmarks.id)
+      const currentIds = currentClicks.map((c: { id: number }) => c.id)
 
-      const previousClicksMap = new Map<number, number>(
-        previousClicks.map((c: { id: number; clicks: number }) => [c.id, Number(c.clicks)] as [number, number])
-      )
+      let previousClicksMap = new Map<number, number>()
+
+      if (currentIds.length > 0) {
+        const previousClicks = await db
+          .select({
+            id: bookmarks.id,
+            clicks: sql<number>`count(${bookmarkClicks.id})`,
+          })
+          .from(bookmarks)
+          .leftJoin(
+            bookmarkClicks,
+            sql`${bookmarkClicks.bookmarkId} = ${bookmarks.id}
+                AND ${bookmarkClicks.clickedAt} >= ${previousStartEpoch}
+                AND ${bookmarkClicks.clickedAt} < ${previousEndEpoch}`
+          )
+          .where(inArray(bookmarks.id, currentIds))
+          .groupBy(bookmarks.id)
+
+        previousClicksMap = new Map<number, number>(
+          previousClicks.map((c: { id: number; clicks: number }) => [c.id, Number(c.clicks)] as [number, number])
+        )
+      }
 
       items = currentClicks.map((item: { id: number; name: string; clicks: number }) => {
         const currentCount = Number(item.clicks)
@@ -117,33 +121,37 @@ export async function GET(request: NextRequest) {
         .from(services)
         .leftJoin(
           serviceClicks,
-          sql`${serviceClicks.serviceId} = ${services.id} AND ${serviceClicks.clickedAt} >= ${currentStart}`
+          sql`${serviceClicks.serviceId} = ${services.id} AND ${serviceClicks.clickedAt} >= ${currentStartEpoch}`
         )
         .groupBy(services.id, services.name)
         .orderBy(desc(sql`count(${serviceClicks.id})`))
         .limit(limit)
 
       // Get previous period clicks for trend calculation
-      const previousClicks = await db
-        .select({
-          id: services.id,
-          clicks: sql<number>`count(${serviceClicks.id})`,
-        })
-        .from(services)
-        .leftJoin(
-          serviceClicks,
-          sql`${serviceClicks.serviceId} = ${services.id}
-              AND ${serviceClicks.clickedAt} >= ${previousStart}
-              AND ${serviceClicks.clickedAt} < ${previousEnd}`
-        )
-        .where(
-          sql`${services.id} IN (${currentClicks.map((c: { id: number }) => c.id).join(',') || '0'})`
-        )
-        .groupBy(services.id)
+      const currentIds = currentClicks.map((c: { id: number }) => c.id)
 
-      const previousClicksMap = new Map<number, number>(
-        previousClicks.map((c: { id: number; clicks: number }) => [c.id, Number(c.clicks)] as [number, number])
-      )
+      let previousClicksMap = new Map<number, number>()
+
+      if (currentIds.length > 0) {
+        const previousClicks = await db
+          .select({
+            id: services.id,
+            clicks: sql<number>`count(${serviceClicks.id})`,
+          })
+          .from(services)
+          .leftJoin(
+            serviceClicks,
+            sql`${serviceClicks.serviceId} = ${services.id}
+                AND ${serviceClicks.clickedAt} >= ${previousStartEpoch}
+                AND ${serviceClicks.clickedAt} < ${previousEndEpoch}`
+          )
+          .where(inArray(services.id, currentIds))
+          .groupBy(services.id)
+
+        previousClicksMap = new Map<number, number>(
+          previousClicks.map((c: { id: number; clicks: number }) => [c.id, Number(c.clicks)] as [number, number])
+        )
+      }
 
       items = currentClicks.map((item: { id: number; name: string; clicks: number }) => {
         const currentCount = Number(item.clicks)

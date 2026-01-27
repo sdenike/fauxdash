@@ -22,6 +22,15 @@ try {
         path TEXT NOT NULL,
         user_agent TEXT,
         ip_address TEXT,
+        ip_hash TEXT,
+        country TEXT,
+        country_name TEXT,
+        city TEXT,
+        region TEXT,
+        latitude INTEGER,
+        longitude INTEGER,
+        timezone TEXT,
+        geo_enriched INTEGER DEFAULT 0,
         timestamp INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
       );
     `);
@@ -34,6 +43,30 @@ try {
     console.log('✓ Pageviews table created successfully');
   } else {
     console.log('✓ Pageviews table already exists');
+
+    // Check for and add missing columns
+    const columns = db.prepare("PRAGMA table_info(pageviews)").all();
+    const columnNames = columns.map(c => c.name);
+
+    const columnsToAdd = [
+      { name: 'ip_hash', type: 'TEXT' },
+      { name: 'country', type: 'TEXT' },
+      { name: 'country_name', type: 'TEXT' },
+      { name: 'city', type: 'TEXT' },
+      { name: 'region', type: 'TEXT' },
+      { name: 'latitude', type: 'INTEGER' },
+      { name: 'longitude', type: 'INTEGER' },
+      { name: 'timezone', type: 'TEXT' },
+      { name: 'geo_enriched', type: 'INTEGER DEFAULT 0' },
+    ];
+
+    for (const col of columnsToAdd) {
+      if (!columnNames.includes(col.name)) {
+        console.log(`Adding column ${col.name}...`);
+        db.exec(`ALTER TABLE pageviews ADD COLUMN ${col.name} ${col.type}`);
+        console.log(`✓ Added ${col.name} column`);
+      }
+    }
   }
 } catch (error) {
   console.error('Migration failed:', error);

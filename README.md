@@ -34,12 +34,19 @@ A modern, self-hosted homepage dashboard for managing bookmarks and services. Bu
 - **Date/Time Display**: Configurable date and time formats
 - **Layout Options**: Adjustable icon sizes, font sizes, spacing, and column counts
 
+### Data Management
+- **Backup & Restore**: Full backup to ZIP file including all data and analytics
+- **Import/Export**: CSV import/export for bookmarks, services, and categories
+- **Settings Export**: Export and restore all application settings
+
 ### Technical Features
 - **Multi-Database Support**: SQLite (default), PostgreSQL, or MySQL
 - **Redis Caching**: Optional Redis for improved performance
 - **GeoIP Lookup**: Optional visitor location analytics with MaxMind or ipinfo.io
 - **Favicon Auto-Fetch**: Automatically fetch and store favicons from URLs
+- **SVG to PNG Conversion**: Automatic conversion for consistent icon handling
 - **Icon Libraries**: 7,000+ Material Design Icons plus selfh.st icon library support
+- **Icon Transformations**: Convert icons to theme colors, monotone, or inverted
 
 ---
 
@@ -56,12 +63,33 @@ A modern, self-hosted homepage dashboard for managing bookmarks and services. Bu
 - Docker and Docker Compose
 - (Optional) Node.js 20+ for local development
 
-### Installation
+### Quick Install with Docker
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/sdenike/fauxdash:latest
+
+# Download the sample compose file
+curl -O https://raw.githubusercontent.com/sdenike/fauxdash/master/docker-compose.sample.yml
+mv docker-compose.sample.yml docker-compose.yml
+
+# Create environment file
+curl -O https://raw.githubusercontent.com/sdenike/fauxdash/master/.env.example
+mv .env.example .env
+
+# Generate and add secret to .env
+echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> .env
+
+# Start
+docker compose up -d
+```
+
+### Installation from Source
 
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/fauxdash.git
+git clone https://github.com/sdenike/fauxdash.git
 cd fauxdash
 ```
 
@@ -95,11 +123,7 @@ docker compose up -d
 
 Open http://localhost:8080 in your browser.
 
-**Default admin credentials:**
-- Email: `admin@fauxdash.local`
-- Password: `admin`
-
-**IMPORTANT: Change these immediately after first login!**
+On first run, you'll be guided through a setup wizard to create your admin account.
 
 ---
 
@@ -258,6 +282,72 @@ Redis caching is enabled by default for improved performance. To disable:
 ```env
 REDIS_ENABLED=false
 ```
+
+---
+
+## Docker Volumes
+
+Faux|Dash uses several Docker volumes for persistent data:
+
+| Volume | Mount Point | Purpose |
+|--------|-------------|---------|
+| `fauxdash-data` | `/data` | Database file (SQLite), settings, and configuration |
+| `fauxdash-favicons` | `/app/public/favicons` | Downloaded and processed favicon files |
+| `fauxdash-logs` | `/data/logs` | Application logs (viewable in Admin > Logs) |
+| `redis-data` | `/data` | Redis persistence (if enabled) |
+
+### Backup & Restore
+
+Faux|Dash provides a built-in backup system accessible from **Admin > Tools > Backup & Import**.
+
+**In-App Backup (Recommended):**
+- Creates a ZIP file containing:
+  - `bookmarks.csv` - All bookmarks with categories
+  - `services.csv` - All services with categories
+  - `bookmark-categories.csv` - Bookmark category settings
+  - `service-categories.csv` - Service category settings
+  - `settings.json` - Application settings (excludes sensitive keys)
+  - `analytics.json` - Pageviews, clicks, and analytics data
+  - `metadata.json` - Backup info and counts
+- Shows last backup date
+- Supports selective restore (full or individual sections)
+
+**Manual Volume Backup:**
+
+```bash
+# Stop containers
+docker compose down
+
+# Backup volumes
+docker run --rm -v fauxdash-data:/data -v $(pwd):/backup alpine tar cvf /backup/fauxdash-data.tar /data
+docker run --rm -v fauxdash-favicons:/favicons -v $(pwd):/backup alpine tar cvf /backup/fauxdash-favicons.tar /favicons
+
+# Restart containers
+docker compose up -d
+```
+
+### Log Management
+
+Application logs are stored in the `fauxdash-logs` volume and can be viewed through:
+- **Admin Panel**: Navigate to Admin > Logs for real-time log viewing with color-coded levels
+- **Command Line**: `docker exec fauxdash-app-1 cat /data/logs/fauxdash.log`
+
+Logs are automatically rotated when they exceed 10MB.
+
+### System Tools
+
+Access maintenance tools at **Admin > Tools**:
+
+| Tool | Description |
+|------|-------------|
+| **Create Backup** | Download complete backup as ZIP file |
+| **Restore/Import** | Restore from backup or import CSV files |
+| **Reprocess Originals** | Ensure all favicons have original copies saved |
+| **Download Remote Icons** | Download selfh.st and HeroIcon icons locally |
+| **Repair Favicons** | Fix invalid or corrupted favicon files |
+| **Prune Orphans** | Remove unused favicon files to free space |
+| **Database Optimization** | Run VACUUM to reclaim space and improve performance |
+| **MaxMind Check** | Verify GeoIP database status and get updates |
 
 ---
 

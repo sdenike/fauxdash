@@ -71,6 +71,7 @@ const createCategoriesTable = () => {
       itemsToShow: integer('items_to_show'),
       showItemCount: boolean('show_item_count').notNull().default(false),
       autoExpanded: boolean('auto_expanded').notNull().default(false),
+      showOpenAll: boolean('show_open_all').notNull().default(false),
       createdAt: timestamp('created_at').notNull().defaultNow(),
       updatedAt: timestamp('updated_at').notNull().defaultNow(),
     });
@@ -89,6 +90,7 @@ const createCategoriesTable = () => {
       itemsToShow: int('items_to_show'),
       showItemCount: boolean('show_item_count').notNull().default(false),
       autoExpanded: boolean('auto_expanded').notNull().default(false),
+      showOpenAll: boolean('show_open_all').notNull().default(false),
       createdAt: timestamp('created_at').notNull().defaultNow(),
       updatedAt: timestamp('updated_at').notNull().defaultNow(),
     });
@@ -105,6 +107,7 @@ const createCategoriesTable = () => {
     itemsToShow: integer('items_to_show').default(5),
     showItemCount: integer('show_item_count', { mode: 'boolean' }).notNull().default(true),
     autoExpanded: integer('auto_expanded', { mode: 'boolean' }).notNull().default(false),
+    showOpenAll: integer('show_open_all', { mode: 'boolean' }).notNull().default(false),
     sortBy: text('sort_by').default('order'),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
@@ -310,6 +313,7 @@ const createServiceCategoriesTable = () => {
       itemsToShow: integer('items_to_show'),
       showItemCount: boolean('show_item_count').notNull().default(false),
       autoExpanded: boolean('auto_expanded').notNull().default(false),
+      showOpenAll: boolean('show_open_all').notNull().default(false),
       createdAt: timestamp('created_at').notNull().defaultNow(),
       updatedAt: timestamp('updated_at').notNull().defaultNow(),
     });
@@ -328,6 +332,7 @@ const createServiceCategoriesTable = () => {
       itemsToShow: int('items_to_show'),
       showItemCount: boolean('show_item_count').notNull().default(false),
       autoExpanded: boolean('auto_expanded').notNull().default(false),
+      showOpenAll: boolean('show_open_all').notNull().default(false),
       createdAt: timestamp('created_at').notNull().defaultNow(),
       updatedAt: timestamp('updated_at').notNull().defaultNow(),
     });
@@ -344,6 +349,7 @@ const createServiceCategoriesTable = () => {
     itemsToShow: integer('items_to_show').default(5),
     showItemCount: integer('show_item_count', { mode: 'boolean' }).notNull().default(true),
     autoExpanded: integer('auto_expanded', { mode: 'boolean' }).notNull().default(false),
+    showOpenAll: integer('show_open_all', { mode: 'boolean' }).notNull().default(false),
     sortBy: text('sort_by').default('order'),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),

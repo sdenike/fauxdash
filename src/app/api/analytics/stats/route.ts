@@ -3,9 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getDb } from '@/db'
 import { pageviews, bookmarkClicks, serviceClicks } from '@/db/schema'
-import { sql, gte, and, isNotNull } from 'drizzle-orm'
+import { sql, and, isNotNull } from 'drizzle-orm'
 import { StatsQuerySchema } from '@/lib/validation/analytics'
-import { subDays, subWeeks, subMonths, subYears } from 'date-fns'
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -47,25 +46,23 @@ export async function GET(request: NextRequest) {
         periodMs = 7 * 24 * 60 * 60 * 1000
     }
 
-    const currentStart = new Date(now.getTime() - periodMs)
-    const previousStart = new Date(now.getTime() - periodMs * 2)
-    const previousEnd = currentStart
+    // Convert to epoch seconds for SQLite comparison (timestamps stored as integers)
+    const currentStartEpoch = Math.floor((now.getTime() - periodMs) / 1000)
+    const previousStartEpoch = Math.floor((now.getTime() - periodMs * 2) / 1000)
+    const previousEndEpoch = currentStartEpoch
 
     // Get current period pageviews
     const [currentPageviews] = await db
       .select({ count: sql<number>`count(*)` })
       .from(pageviews)
-      .where(gte(pageviews.timestamp, currentStart))
+      .where(sql`${pageviews.timestamp} >= ${currentStartEpoch}`)
 
     // Get previous period pageviews
     const [previousPageviews] = await db
       .select({ count: sql<number>`count(*)` })
       .from(pageviews)
       .where(
-        and(
-          gte(pageviews.timestamp, previousStart),
-          sql`${pageviews.timestamp} < ${previousEnd}`
-        )
+        sql`${pageviews.timestamp} >= ${previousStartEpoch} AND ${pageviews.timestamp} < ${previousEndEpoch}`
       )
 
     // Get unique visitors (by IP hash) for current period
@@ -73,10 +70,7 @@ export async function GET(request: NextRequest) {
       .select({ count: sql<number>`count(DISTINCT ${pageviews.ipHash})` })
       .from(pageviews)
       .where(
-        and(
-          gte(pageviews.timestamp, currentStart),
-          isNotNull(pageviews.ipHash)
-        )
+        sql`${pageviews.timestamp} >= ${currentStartEpoch} AND ${pageviews.ipHash} IS NOT NULL`
       )
 
     // Get unique visitors for previous period
@@ -84,43 +78,33 @@ export async function GET(request: NextRequest) {
       .select({ count: sql<number>`count(DISTINCT ${pageviews.ipHash})` })
       .from(pageviews)
       .where(
-        and(
-          gte(pageviews.timestamp, previousStart),
-          sql`${pageviews.timestamp} < ${previousEnd}`,
-          isNotNull(pageviews.ipHash)
-        )
+        sql`${pageviews.timestamp} >= ${previousStartEpoch} AND ${pageviews.timestamp} < ${previousEndEpoch} AND ${pageviews.ipHash} IS NOT NULL`
       )
 
     // Get current period clicks (bookmarks + services)
     const [currentBookmarkClicks] = await db
       .select({ count: sql<number>`count(*)` })
       .from(bookmarkClicks)
-      .where(gte(bookmarkClicks.clickedAt, currentStart))
+      .where(sql`${bookmarkClicks.clickedAt} >= ${currentStartEpoch}`)
 
     const [currentServiceClicks] = await db
       .select({ count: sql<number>`count(*)` })
       .from(serviceClicks)
-      .where(gte(serviceClicks.clickedAt, currentStart))
+      .where(sql`${serviceClicks.clickedAt} >= ${currentStartEpoch}`)
 
     // Get previous period clicks
     const [previousBookmarkClicks] = await db
       .select({ count: sql<number>`count(*)` })
       .from(bookmarkClicks)
       .where(
-        and(
-          gte(bookmarkClicks.clickedAt, previousStart),
-          sql`${bookmarkClicks.clickedAt} < ${previousEnd}`
-        )
+        sql`${bookmarkClicks.clickedAt} >= ${previousStartEpoch} AND ${bookmarkClicks.clickedAt} < ${previousEndEpoch}`
       )
 
     const [previousServiceClicks] = await db
       .select({ count: sql<number>`count(*)` })
       .from(serviceClicks)
       .where(
-        and(
-          gte(serviceClicks.clickedAt, previousStart),
-          sql`${serviceClicks.clickedAt} < ${previousEnd}`
-        )
+        sql`${serviceClicks.clickedAt} >= ${previousStartEpoch} AND ${serviceClicks.clickedAt} < ${previousEndEpoch}`
       )
 
     // Get top country
@@ -131,10 +115,7 @@ export async function GET(request: NextRequest) {
       })
       .from(pageviews)
       .where(
-        and(
-          gte(pageviews.timestamp, currentStart),
-          isNotNull(pageviews.countryName)
-        )
+        sql`${pageviews.timestamp} >= ${currentStartEpoch} AND ${pageviews.countryName} IS NOT NULL`
       )
       .groupBy(pageviews.countryName)
       .orderBy(sql`count(*) DESC`)

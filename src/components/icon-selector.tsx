@@ -14,6 +14,7 @@ interface IconSelectorProps {
   value?: string
   onChange: (iconName: string) => void
   trigger?: React.ReactNode
+  defaultTab?: 'heroicons' | 'selfhst' | 'url'
 }
 
 interface SelfhstIcon {
@@ -23,12 +24,12 @@ interface SelfhstIcon {
   tags: string
 }
 
-export function IconSelector({ value, onChange, trigger }: IconSelectorProps) {
+export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons' }: IconSelectorProps) {
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
-  const [selectedTab, setSelectedTab] = useState<'heroicons' | 'selfhst' | 'url'>('heroicons')
+  const [selectedTab, setSelectedTab] = useState<'heroicons' | 'selfhst' | 'url'>(defaultTab)
   const [showLeftArrow, setShowLeftArrow] = useState(false)
   const [showRightArrow, setShowRightArrow] = useState(false)
   const [selfhstIcons, setSelfhstIcons] = useState<SelfhstIcon[]>([])
@@ -125,9 +126,103 @@ export function IconSelector({ value, onChange, trigger }: IconSelectorProps) {
 
   const allCategories = ['All', ...ICON_CATEGORIES].filter(Boolean)
 
-  const handleSelect = (iconName: string) => {
-    onChange(iconName)
-    setOpen(false)
+  const [savingIcon, setSavingIcon] = useState(false)
+
+  const handleSelect = async (iconName: string) => {
+    // Check if this is a selfh.st or heroicon that should be saved locally
+    if (iconName.startsWith('selfhst:')) {
+      setSavingIcon(true)
+      try {
+        const iconId = iconName.replace('selfhst:', '')
+        const response = await fetch('/api/icons/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            iconType: 'selfhst',
+            iconId,
+            iconName: iconId,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          // Use the local favicon path instead of selfhst: reference
+          onChange(`favicon:${data.path}`)
+          toast({
+            variant: 'success',
+            title: 'Icon saved',
+            description: 'Icon saved locally for editing',
+          })
+          setOpen(false)
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Failed to save icon',
+            description: data.error || 'Could not download icon. Please try again or choose a different icon.',
+          })
+          // DON'T fall back to CDN reference - keep dialog open for retry
+        }
+      } catch (error) {
+        console.error('Error saving icon:', error)
+        toast({
+          variant: 'destructive',
+          title: 'Network error',
+          description: 'Could not save icon. Please check your connection and try again.',
+        })
+        // DON'T fall back to CDN reference - keep dialog open for retry
+      } finally {
+        setSavingIcon(false)
+      }
+    } else if (!iconName.startsWith('favicon:') && !iconName.startsWith('selfhst:')) {
+      // This is a HeroIcon or MDI icon - try to save it locally for editing
+      setSavingIcon(true)
+      try {
+        const response = await fetch('/api/icons/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            iconType: 'heroicon',
+            iconId: iconName,
+            iconName: iconName,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          // Use the local favicon path instead of heroicon reference
+          onChange(`favicon:${data.path}`)
+          toast({
+            variant: 'success',
+            title: 'Icon saved',
+            description: 'Icon saved locally for editing',
+          })
+        } else {
+          // HeroIcons can fall back to component reference (they'll display but won't be editable)
+          console.warn('Could not save icon locally, using component:', data.error)
+          onChange(iconName)
+          toast({
+            title: 'Icon selected',
+            description: 'Icon will display but cannot be color-edited. Fetch as favicon for editing.',
+          })
+        }
+      } catch (error) {
+        console.error('Error saving icon:', error)
+        // Fall back to using the component reference
+        onChange(iconName)
+        toast({
+          title: 'Icon selected',
+          description: 'Icon will display but cannot be color-edited.',
+        })
+      } finally {
+        setSavingIcon(false)
+      }
+      setOpen(false)
+    } else {
+      onChange(iconName)
+      setOpen(false)
+    }
   }
 
   const handleFetchFavicon = async () => {
@@ -210,10 +305,21 @@ export function IconSelector({ value, onChange, trigger }: IconSelectorProps) {
     }
   }, [allCategories])
 
-  const selectedIcon = value ? getIconByName(value) : null
-  const IconComponent = selectedIcon?.component
+  // Handle different icon types for trigger preview
   const isSelfhstIcon = value?.startsWith('selfhst:')
+  const isFaviconIcon = value?.startsWith('favicon:')
   const selfhstId = isSelfhstIcon && value ? value.replace('selfhst:', '') : null
+  const selfhstPath = selfhstId ? `https://cdn.jsdelivr.net/gh/selfhst/icons@latest/png/${selfhstId}.png` : null
+
+  // Compute favicon path with proper handling for paths that already include the serve prefix
+  const faviconPath = isFaviconIcon && value ? (() => {
+    const path = value.replace('favicon:', '')
+    return path.startsWith('/api/favicons/serve/') ? path : `/api/favicons/serve/${path}`
+  })() : null
+
+  // Only look up in icon library if not a special icon type
+  const selectedIcon = !isSelfhstIcon && !isFaviconIcon && value ? getIconByName(value) : null
+  const IconComponent = selectedIcon?.component
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -225,15 +331,25 @@ export function IconSelector({ value, onChange, trigger }: IconSelectorProps) {
                 <IconComponent className="h-5 w-5 mr-2" />
                 {value}
               </>
-            ) : isSelfhstIcon && selfhstId ? (
+            ) : isSelfhstIcon && selfhstPath ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`https://cdn.jsdelivr.net/gh/selfhst/icons@latest/png/${selfhstId}.png`}
-                  alt={selfhstId}
+                  src={selfhstPath}
+                  alt={selfhstId || 'icon'}
                   className="h-5 w-5 mr-2"
                 />
                 {selfhstId}
+              </>
+            ) : isFaviconIcon && faviconPath ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={faviconPath}
+                  alt="favicon"
+                  className="h-5 w-5 mr-2"
+                />
+                Favicon
               </>
             ) : (
               'Select Icon'
@@ -241,7 +357,15 @@ export function IconSelector({ value, onChange, trigger }: IconSelectorProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-6xl max-h-[85vh] overflow-hidden flex flex-col !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2">
+        {savingIcon && (
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              <span className="text-sm font-medium">Saving icon locally...</span>
+            </div>
+          </div>
+        )}
         <DialogHeader>
           <DialogTitle>Select Icon</DialogTitle>
         </DialogHeader>

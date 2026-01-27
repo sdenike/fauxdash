@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { getDb } from '@/db';
 import { settings } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { logger, LogLevel } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -26,6 +27,12 @@ export async function GET(request: NextRequest) {
   userSettings.forEach((setting: any) => {
     settingsObj[setting.key] = setting.value || '';
   });
+
+  // Sync log level to logger
+  const logLevel = settingsObj.logLevel || process.env.LOG_LEVEL || 'error';
+  if (['debug', 'info', 'warn', 'error'].includes(logLevel)) {
+    logger.setLogLevel(logLevel as LogLevel);
+  }
 
   // Return with defaults
   return NextResponse.json({
@@ -94,12 +101,14 @@ export async function GET(request: NextRequest) {
     defaultBookmarkCategoryItemsToShow: settingsObj.defaultBookmarkCategoryItemsToShow ? parseInt(settingsObj.defaultBookmarkCategoryItemsToShow) : null,
     defaultBookmarkCategoryShowItemCount: settingsObj.defaultBookmarkCategoryShowItemCount === 'true',
     defaultBookmarkCategoryAutoExpanded: settingsObj.defaultBookmarkCategoryAutoExpanded === 'true',
+    defaultBookmarkCategoryShowOpenAll: settingsObj.defaultBookmarkCategoryShowOpenAll === 'true',
     defaultBookmarkCategorySortBy: settingsObj.defaultBookmarkCategorySortBy || 'order',
     defaultServiceCategoryEnabled: settingsObj.defaultServiceCategoryEnabled !== 'false',
     defaultServiceCategoryRequiresAuth: settingsObj.defaultServiceCategoryRequiresAuth === 'true',
     defaultServiceCategoryItemsToShow: settingsObj.defaultServiceCategoryItemsToShow ? parseInt(settingsObj.defaultServiceCategoryItemsToShow) : null,
     defaultServiceCategoryShowItemCount: settingsObj.defaultServiceCategoryShowItemCount === 'true',
     defaultServiceCategoryAutoExpanded: settingsObj.defaultServiceCategoryAutoExpanded === 'true',
+    defaultServiceCategoryShowOpenAll: settingsObj.defaultServiceCategoryShowOpenAll === 'true',
     defaultServiceCategorySortBy: settingsObj.defaultServiceCategorySortBy || 'order',
     defaultBookmarkEnabled: settingsObj.defaultBookmarkEnabled !== 'false',
     defaultBookmarkRequiresAuth: settingsObj.defaultBookmarkRequiresAuth === 'true',
@@ -114,6 +123,8 @@ export async function GET(request: NextRequest) {
     smtpEncryption: settingsObj.smtpEncryption || process.env.SMTP_ENCRYPTION || 'tls',
     smtpFromEmail: settingsObj.smtpFromEmail || process.env.SMTP_FROM_EMAIL || '',
     smtpFromName: settingsObj.smtpFromName || process.env.SMTP_FROM_NAME || 'Faux|Dash',
+    // Logging settings
+    logLevel: settingsObj.logLevel || process.env.LOG_LEVEL || 'error',
   });
 }
 
@@ -197,12 +208,14 @@ export async function POST(request: NextRequest) {
   if (body.defaultBookmarkCategoryItemsToShow !== undefined) settingsToSave.push({ key: 'defaultBookmarkCategoryItemsToShow', value: body.defaultBookmarkCategoryItemsToShow?.toString() || '' });
   if (body.defaultBookmarkCategoryShowItemCount !== undefined) settingsToSave.push({ key: 'defaultBookmarkCategoryShowItemCount', value: body.defaultBookmarkCategoryShowItemCount.toString() });
   if (body.defaultBookmarkCategoryAutoExpanded !== undefined) settingsToSave.push({ key: 'defaultBookmarkCategoryAutoExpanded', value: body.defaultBookmarkCategoryAutoExpanded.toString() });
+  if (body.defaultBookmarkCategoryShowOpenAll !== undefined) settingsToSave.push({ key: 'defaultBookmarkCategoryShowOpenAll', value: body.defaultBookmarkCategoryShowOpenAll.toString() });
   if (body.defaultBookmarkCategorySortBy !== undefined) settingsToSave.push({ key: 'defaultBookmarkCategorySortBy', value: body.defaultBookmarkCategorySortBy || 'order' });
   if (body.defaultServiceCategoryEnabled !== undefined) settingsToSave.push({ key: 'defaultServiceCategoryEnabled', value: body.defaultServiceCategoryEnabled.toString() });
   if (body.defaultServiceCategoryRequiresAuth !== undefined) settingsToSave.push({ key: 'defaultServiceCategoryRequiresAuth', value: body.defaultServiceCategoryRequiresAuth.toString() });
   if (body.defaultServiceCategoryItemsToShow !== undefined) settingsToSave.push({ key: 'defaultServiceCategoryItemsToShow', value: body.defaultServiceCategoryItemsToShow?.toString() || '' });
   if (body.defaultServiceCategoryShowItemCount !== undefined) settingsToSave.push({ key: 'defaultServiceCategoryShowItemCount', value: body.defaultServiceCategoryShowItemCount.toString() });
   if (body.defaultServiceCategoryAutoExpanded !== undefined) settingsToSave.push({ key: 'defaultServiceCategoryAutoExpanded', value: body.defaultServiceCategoryAutoExpanded.toString() });
+  if (body.defaultServiceCategoryShowOpenAll !== undefined) settingsToSave.push({ key: 'defaultServiceCategoryShowOpenAll', value: body.defaultServiceCategoryShowOpenAll.toString() });
   if (body.defaultServiceCategorySortBy !== undefined) settingsToSave.push({ key: 'defaultServiceCategorySortBy', value: body.defaultServiceCategorySortBy || 'order' });
   if (body.defaultBookmarkEnabled !== undefined) settingsToSave.push({ key: 'defaultBookmarkEnabled', value: body.defaultBookmarkEnabled.toString() });
   if (body.defaultBookmarkRequiresAuth !== undefined) settingsToSave.push({ key: 'defaultBookmarkRequiresAuth', value: body.defaultBookmarkRequiresAuth.toString() });
@@ -217,6 +230,12 @@ export async function POST(request: NextRequest) {
   if (body.smtpEncryption !== undefined) settingsToSave.push({ key: 'smtpEncryption', value: body.smtpEncryption });
   if (body.smtpFromEmail !== undefined) settingsToSave.push({ key: 'smtpFromEmail', value: body.smtpFromEmail || '' });
   if (body.smtpFromName !== undefined) settingsToSave.push({ key: 'smtpFromName', value: body.smtpFromName || 'Faux|Dash' });
+  // Logging settings
+  if (body.logLevel !== undefined) {
+    settingsToSave.push({ key: 'logLevel', value: body.logLevel || 'error' });
+    // Update the logger's log level immediately
+    logger.setLogLevel(body.logLevel as LogLevel);
+  }
 
   for (const setting of settingsToSave) {
     // Check if setting exists

@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { BookmarkIcon, FolderIcon, Cog6ToothIcon, ServerIcon } from '@heroicons/react/24/outline'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { BookmarkIcon, FolderIcon, ServerIcon } from '@heroicons/react/24/outline'
 import { StatsWidget } from '@/components/stats-widget'
+import { FaviconStatsWidget } from '@/components/admin/favicon-stats-widget'
 import { ChangelogDialog } from '@/components/changelog-dialog'
 import { VERSION } from '@/lib/version'
 
@@ -47,23 +46,6 @@ export default function AdminDashboard() {
       console.error('Failed to fetch stats:', error)
     }
   }
-
-  const quickLinks = [
-    {
-      title: 'Manage Bookmarks',
-      description: 'Add, edit, or organize your bookmarks and categories',
-      href: '/admin/bookmarks',
-      icon: BookmarkIcon,
-      color: 'from-blue-500 to-cyan-500'
-    },
-    {
-      title: 'Settings',
-      description: 'Configure search engines, weather, and appearance',
-      href: '/admin/settings',
-      icon: Cog6ToothIcon,
-      color: 'from-purple-500 to-pink-500'
-    },
-  ]
 
   return (
     <div className="space-y-8">
@@ -147,32 +129,8 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Quick Links */}
-      <div>
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {quickLinks.map((link) => {
-            const Icon = link.icon
-            return (
-              <Link key={link.href} href={link.href}>
-                <Card className="group bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
-                  <CardHeader>
-                    <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-xl bg-gradient-to-br ${link.color} bg-opacity-10`}>
-                        <Icon className="h-6 w-6 text-slate-900 dark:text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-1">{link.title}</CardTitle>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">{link.description}</p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              </Link>
-            )
-          })}
-        </div>
-      </div>
+      {/* Favicon Storage Stats */}
+      <FaviconStatsWidget />
 
       {/* Changelog Dialog */}
       <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />

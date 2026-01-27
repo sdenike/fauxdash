@@ -3,10 +3,10 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getDb } from '@/db'
 import { bookmarkClicks, serviceClicks } from '@/db/schema'
-import { sql, gte, and } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { ClicksQuerySchema } from '@/lib/validation/analytics'
 import { downsampleDateData } from '@/lib/analytics/downsampling'
-import { subDays, subWeeks, subMonths, subYears, format, startOfDay } from 'date-fns'
+import { subDays, subWeeks, subMonths, subYears, subHours, format, startOfDay } from 'date-fns'
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -36,6 +36,9 @@ export async function GET(request: NextRequest) {
       rangeStart = new Date(startDate)
     } else {
       switch (period) {
+        case 'hour':
+          rangeStart = subHours(now, 1)
+          break
         case 'day':
           rangeStart = subDays(now, 1)
           break
@@ -47,6 +50,10 @@ export async function GET(request: NextRequest) {
           break
         case 'year':
           rangeStart = subYears(now, 1)
+          break
+        case 'custom':
+          // For custom, require startDate
+          rangeStart = subWeeks(now, 1)
           break
         default:
           rangeStart = subWeeks(now, 1)
@@ -74,21 +81,22 @@ export async function GET(request: NextRequest) {
 
     const datasets: { label: string; data: { date: string; count: number }[] }[] = []
 
+    // Convert range to epoch seconds for SQLite comparison
+    const rangeStartEpoch = Math.floor(rangeStart.getTime() / 1000)
+
     // Query bookmark clicks if needed
     if (type === 'bookmarks' || type === 'all') {
       const bookmarkData = await db
         .select({
-          date: sql<string>`date(${bookmarkClicks.clickedAt})`,
+          date: sql<string>`date(${bookmarkClicks.clickedAt}, 'unixepoch')`,
           count: sql<number>`count(*)`,
         })
         .from(bookmarkClicks)
         .where(
-          and(
-            gte(bookmarkClicks.clickedAt, rangeStart)
-          )
+          sql`${bookmarkClicks.clickedAt} >= ${rangeStartEpoch}`
         )
-        .groupBy(sql`date(${bookmarkClicks.clickedAt})`)
-        .orderBy(sql`date(${bookmarkClicks.clickedAt})`)
+        .groupBy(sql`date(${bookmarkClicks.clickedAt}, 'unixepoch')`)
+        .orderBy(sql`date(${bookmarkClicks.clickedAt}, 'unixepoch')`)
 
       datasets.push({
         label: 'Bookmark Clicks',
@@ -103,17 +111,15 @@ export async function GET(request: NextRequest) {
     if (type === 'services' || type === 'all') {
       const serviceData = await db
         .select({
-          date: sql<string>`date(${serviceClicks.clickedAt})`,
+          date: sql<string>`date(${serviceClicks.clickedAt}, 'unixepoch')`,
           count: sql<number>`count(*)`,
         })
         .from(serviceClicks)
         .where(
-          and(
-            gte(serviceClicks.clickedAt, rangeStart)
-          )
+          sql`${serviceClicks.clickedAt} >= ${rangeStartEpoch}`
         )
-        .groupBy(sql`date(${serviceClicks.clickedAt})`)
-        .orderBy(sql`date(${serviceClicks.clickedAt})`)
+        .groupBy(sql`date(${serviceClicks.clickedAt}, 'unixepoch')`)
+        .orderBy(sql`date(${serviceClicks.clickedAt}, 'unixepoch')`)
 
       datasets.push({
         label: 'Service Clicks',

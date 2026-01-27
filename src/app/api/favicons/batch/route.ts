@@ -8,6 +8,8 @@ import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import sharp from 'sharp';
+import { logFavicon } from '@/lib/logger';
+import { convertToPng } from '@/lib/favicon-utils';
 
 async function fetchFavicon(url: string): Promise<{ data: ArrayBuffer; contentType: string } | null> {
   try {
@@ -65,10 +67,13 @@ export async function POST(request: NextRequest) {
   const db = getDb();
   const results = [];
 
+  logFavicon('info', `Starting batch favicon fetch for ${ids.length} ${type}s`, { ids });
+
   // Create favicons directory if it doesn't exist
   const publicDir = join(process.cwd(), 'public', 'favicons');
   if (!existsSync(publicDir)) {
     mkdirSync(publicDir, { recursive: true });
+    logFavicon('info', 'Created favicons directory');
   }
 
   try {
@@ -79,12 +84,19 @@ export async function POST(request: NextRequest) {
       .from(table)
       .where(inArray(table.id, ids));
 
+    logFavicon('info', `Found ${items.length} items to process`);
+
     // Process each item
+    let processedCount = 0;
     for (const item of items) {
+      processedCount++;
+      logFavicon('info', `Processing ${processedCount}/${items.length}: ${item.name} (${item.url})`);
+
       try {
         const faviconResult = await fetchFavicon(item.url);
 
         if (!faviconResult) {
+          logFavicon('warn', `Failed to fetch favicon for: ${item.name}`, { url: item.url });
           results.push({ id: item.id, success: false, error: 'Failed to fetch' });
           continue;
         }
@@ -92,26 +104,52 @@ export async function POST(request: NextRequest) {
         const urlObj = new URL(item.url);
         const domain = urlObj.hostname.replace('www.', '');
 
-        // Determine file extension
-        let ext = 'png';
-        if (faviconResult.contentType.includes('x-icon')) ext = 'ico';
-        else if (faviconResult.contentType.includes('png')) ext = 'png';
-        else if (faviconResult.contentType.includes('jpg') || faviconResult.contentType.includes('jpeg')) ext = 'jpg';
-        else if (faviconResult.contentType.includes('svg')) ext = 'svg';
+        // Generate filenames - both original (immutable) and active copy
+        const timestamp = Date.now();
+        const baseFilename = `${domain.replace(/\./g, '_')}_${timestamp}`;
+        const originalFilename = `${baseFilename}_original.png`;
+        const activeFilename = `${baseFilename}.png`;
+        const originalPath = join(publicDir, originalFilename);
+        const activePath = join(publicDir, activeFilename);
 
-        const filename = `${domain.replace(/\./g, '_')}_${Date.now()}.${ext}`;
-        const filepath = join(publicDir, filename);
+        // Try to convert to PNG using shared utility and save both original and active copies
+        let finalFilename = activeFilename;
+        const conversionResult = await convertToPng(Buffer.from(faviconResult.data), domain);
 
-        // Try to convert to PNG, fallback to raw if it fails
-        let finalFilename = filename;
-        try {
-          await sharp(Buffer.from(faviconResult.data))
-            .png()
-            .toFile(filepath.replace(`.${ext}`, '.png'));
-          finalFilename = filename.replace(`.${ext}`, '.png');
-        } catch (convertError) {
-          // If conversion fails, save raw file
-          await writeFile(filepath, Buffer.from(faviconResult.data));
+        if (conversionResult.success && conversionResult.buffer) {
+          // Save immutable original copy
+          await sharp(conversionResult.buffer).toFile(originalPath);
+
+          // Save active copy (can be overwritten by transformations)
+          await sharp(conversionResult.buffer).toFile(activePath);
+          logFavicon('info', `Saved favicon for: ${item.name}`, { filename: activeFilename });
+        } else {
+          // If conversion fails, try Google's favicon service as fallback
+          logFavicon('warn', `PNG conversion failed for ${item.name}, trying Google fallback`, { error: conversionResult.error });
+
+          try {
+            const googleUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+            const googleResponse = await fetch(googleUrl, {
+              headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FauxDash/1.0)' },
+              signal: AbortSignal.timeout(5000),
+            });
+
+            if (googleResponse.ok) {
+              const googleData = await googleResponse.arrayBuffer();
+              const googleBuffer = Buffer.from(googleData);
+
+              // Google returns PNG, save it
+              await sharp(googleBuffer).toFile(originalPath);
+              await sharp(googleBuffer).toFile(activePath);
+              logFavicon('info', `Saved favicon from Google for: ${item.name}`, { filename: activeFilename });
+            } else {
+              throw new Error('Google fallback failed');
+            }
+          } catch (fallbackError: any) {
+            // Last resort: save raw file without original copy
+            logFavicon('warn', `All conversion attempts failed for ${item.name}, saving raw file`, { error: fallbackError.message });
+            await writeFile(activePath, Buffer.from(faviconResult.data));
+          }
         }
 
         // Update database with favicon path (using API route)
@@ -121,20 +159,25 @@ export async function POST(request: NextRequest) {
           .set({ icon: apiPath })
           .where(eq(table.id, item.id));
 
+        logFavicon('info', `Updated database for: ${item.name}`);
         results.push({ id: item.id, success: true, path: apiPath });
       } catch (error: any) {
+        logFavicon('error', `Error processing ${item.name}`, { error: error.message });
         results.push({ id: item.id, success: false, error: error.message });
       }
     }
+
+    const successCount = results.filter((r) => r.success).length;
+    logFavicon('info', `Batch favicon fetch complete: ${successCount}/${ids.length} successful`);
 
     return NextResponse.json({
       success: true,
       results,
       total: ids.length,
-      successful: results.filter((r) => r.success).length,
+      successful: successCount,
     });
   } catch (error: any) {
-    console.error('Batch favicon fetch error:', error);
+    logFavicon('error', 'Batch favicon fetch error', { error: error.message });
     return NextResponse.json(
       { error: error.message || 'Failed to fetch favicons' },
       { status: 500 }

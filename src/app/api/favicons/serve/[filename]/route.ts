@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
+import { existsSync } from 'fs';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { filename: string } }
 ) {
   try {
-    const filename = params.filename;
+    let filename = params.filename;
 
     // Validate filename to prevent path traversal attacks
     // Only allow alphanumeric, underscore, hyphen, and dot characters
@@ -26,7 +27,24 @@ export async function GET(
       );
     }
 
-    const filepath = join(process.cwd(), 'public', 'favicons', filename);
+    const faviconDir = join(process.cwd(), 'public', 'favicons');
+    let filepath = join(faviconDir, filename);
+
+    // Handle grayscale/monotone files - if filename ends with _grayscale or _monotone (no extension),
+    // try to find the black or white version
+    if ((filename.endsWith('_grayscale') || filename.endsWith('_monotone')) && !existsSync(filepath)) {
+      // Try black version first (for light theme), then white
+      const blackPath = join(faviconDir, `${filename}_black.png`);
+      const whitePath = join(faviconDir, `${filename}_white.png`);
+
+      if (existsSync(blackPath)) {
+        filepath = blackPath;
+        filename = `${filename}_black.png`;
+      } else if (existsSync(whitePath)) {
+        filepath = whitePath;
+        filename = `${filename}_white.png`;
+      }
+    }
 
     // Read the file
     const fileBuffer = await readFile(filepath);

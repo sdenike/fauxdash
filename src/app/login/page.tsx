@@ -30,15 +30,25 @@ function LoginContent() {
   useEffect(() => {
     const controller = new AbortController()
 
-    // Fetch both settings in parallel
-    Promise.all([
-      fetch('/api/settings', { signal: controller.signal }).then(res => res.json()),
-      fetch('/api/auth/smtp-status', { signal: controller.signal }).then(res => res.json()),
-    ])
-      .then(([settingsData, smtpData]) => {
-        setOidcEnabled(settingsData.oidcEnabled || false)
-        setOidcProviderName(settingsData.oidcProviderName || 'OIDC')
-        setSmtpConfigured(smtpData.configured || false)
+    // Check if setup is needed first
+    fetch('/api/setup/status', { signal: controller.signal })
+      .then(res => res.json())
+      .then(data => {
+        if (data.needsSetup) {
+          router.push('/setup')
+          return
+        }
+
+        // Fetch settings in parallel
+        Promise.all([
+          fetch('/api/settings', { signal: controller.signal }).then(res => res.json()),
+          fetch('/api/auth/smtp-status', { signal: controller.signal }).then(res => res.json()),
+        ])
+          .then(([settingsData, smtpData]) => {
+            setOidcEnabled(settingsData.oidcEnabled || false)
+            setOidcProviderName(settingsData.oidcProviderName || 'OIDC')
+            setSmtpConfigured(smtpData.configured || false)
+          })
       })
       .catch(err => {
         if (err.name !== 'AbortError') {
@@ -47,7 +57,7 @@ function LoginContent() {
       })
 
     return () => controller.abort()
-  }, [])
+  }, [router])
 
   const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value)

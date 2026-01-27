@@ -1,43 +1,108 @@
-# dependencies
+# ===========================================
+# Faux|Dash .gitignore
+# ===========================================
+
+# -------------------------------------------
+# Dependencies
+# -------------------------------------------
 /node_modules
 /.pnp
 .pnp.js
 
-# testing
-/coverage
-
-# next.js
+# -------------------------------------------
+# Next.js Build Output
+# -------------------------------------------
 /.next/
 /out/
-
-# production
 /build
+build-info.json
 
-# misc
-.DS_Store
-*.pem
+# -------------------------------------------
+# Testing
+# -------------------------------------------
+/coverage
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
+# -------------------------------------------
+# Environment Files (contain secrets!)
+# -------------------------------------------
 .env
-.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# database
+# -------------------------------------------
+# Database Files (development data)
+# -------------------------------------------
 *.db
 *.db-shm
 *.db-wal
-/data
+/data/
+*.sqlite
+*.sqlite3
 
-# drizzle
-drizzle
+# -------------------------------------------
+# Drizzle ORM Migrations
+# -------------------------------------------
+/drizzle/
+
+# -------------------------------------------
+# Favicon Storage (downloaded/processed icons)
+# -------------------------------------------
+/public/favicons/*
+!/public/favicons/.gitkeep
+
+# -------------------------------------------
+# GeoIP Database Files
+# -------------------------------------------
+*.mmdb
+GeoLite2-*.tar.gz
+
+# -------------------------------------------
+# Log Files
+# -------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+/logs/
+
+# -------------------------------------------
+# IDE / Editor
+# -------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# -------------------------------------------
+# OS Generated Files
+# -------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# -------------------------------------------
+# TypeScript
+# -------------------------------------------
+*.tsbuildinfo
+next-env.d.ts
+
+# -------------------------------------------
+# Misc
+# -------------------------------------------
+*.pem
+.vercel
+
+# -------------------------------------------
+# Docker
+# -------------------------------------------
+# docker-compose.sample.yml is the example (tracked)
+# docker-compose.yml is the user's local config (not tracked)
+docker-compose.yml
+docker-compose.override.yml

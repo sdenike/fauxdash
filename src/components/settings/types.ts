@@ -62,12 +62,14 @@ export interface Settings {
   defaultBookmarkCategoryItemsToShow: number | null
   defaultBookmarkCategoryShowItemCount: boolean
   defaultBookmarkCategoryAutoExpanded: boolean
+  defaultBookmarkCategoryShowOpenAll: boolean
   defaultBookmarkCategorySortBy: string
   defaultServiceCategoryEnabled: boolean
   defaultServiceCategoryRequiresAuth: boolean
   defaultServiceCategoryItemsToShow: number | null
   defaultServiceCategoryShowItemCount: boolean
   defaultServiceCategoryAutoExpanded: boolean
+  defaultServiceCategoryShowOpenAll: boolean
   defaultServiceCategorySortBy: string
   defaultBookmarkEnabled: boolean
   defaultBookmarkRequiresAuth: boolean
@@ -82,6 +84,8 @@ export interface Settings {
   smtpEncryption: 'none' | 'tls' | 'ssl'
   smtpFromEmail: string
   smtpFromName: string
+  // Logging
+  logLevel: 'error' | 'warn' | 'info' | 'debug'
 }
 
 export interface SettingsTabProps {
@@ -148,12 +152,14 @@ export const defaultSettings: Settings = {
   defaultBookmarkCategoryItemsToShow: null,
   defaultBookmarkCategoryShowItemCount: false,
   defaultBookmarkCategoryAutoExpanded: false,
+  defaultBookmarkCategoryShowOpenAll: false,
   defaultBookmarkCategorySortBy: 'order',
   defaultServiceCategoryEnabled: true,
   defaultServiceCategoryRequiresAuth: false,
   defaultServiceCategoryItemsToShow: null,
   defaultServiceCategoryShowItemCount: false,
   defaultServiceCategoryAutoExpanded: false,
+  defaultServiceCategoryShowOpenAll: false,
   defaultServiceCategorySortBy: 'order',
   defaultBookmarkEnabled: true,
   defaultBookmarkRequiresAuth: false,
@@ -167,4 +173,5 @@ export const defaultSettings: Settings = {
   smtpEncryption: 'tls',
   smtpFromEmail: '',
   smtpFromName: 'Faux|Dash',
+  logLevel: 'error',
 }

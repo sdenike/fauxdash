@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { CategorySection } from '@/components/category-section'
 import { SearchBar } from '@/components/search-bar'
 import { WeatherWidget } from '@/components/weather-widget'
@@ -33,15 +34,18 @@ interface Category {
   itemsToShow: number | null
   showItemCount: boolean
   autoExpanded: boolean
+  showOpenAll: boolean
   sortBy: string | null
 }
 
 export default function HomePage() {
+  const router = useRouter()
   const { data: session } = useSession()
   const [categories, setCategories] = useState<Category[]>([])
   const [services, setServices] = useState<any[]>([])
   const [serviceCategories, setServiceCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [checkingSetup, setCheckingSetup] = useState(true)
   const [welcomeMessage, setWelcomeMessage] = useState('Welcome back')
   const [welcomeMessageEnabled, setWelcomeMessageEnabled] = useState(true)
   const [welcomeMessageTimeBased, setWelcomeMessageTimeBased] = useState(false)
@@ -63,7 +67,26 @@ export default function HomePage() {
   const [bookmarksColumns, setBookmarksColumns] = useState(4)
   const [siteTitle, setSiteTitle] = useState('Faux|Dash')
 
+  // Check if first-time setup is needed
   useEffect(() => {
+    fetch('/api/setup/status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.needsSetup) {
+          router.push('/setup')
+        } else {
+          setCheckingSetup(false)
+        }
+      })
+      .catch(err => {
+        console.error('Failed to check setup status:', err)
+        setCheckingSetup(false)
+      })
+  }, [router])
+
+  useEffect(() => {
+    if (checkingSetup) return
+
     fetchCategories()
     fetchServices()
     fetchServiceCategories()
@@ -75,7 +98,7 @@ export default function HomePage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path: '/' }),
     }).catch(err => console.error('Failed to track pageview:', err))
-  }, [session])
+  }, [session, checkingSetup])
 
   const fetchSettings = async () => {
     try {

@@ -82,11 +82,11 @@ function SortableBookmarkItem({ bookmark, onEdit, onDelete, isSelected, onToggle
   const iconData = !isFavicon && !isSelfhst && bookmark.icon ? getIconByName(bookmark.icon) : null
   const IconComponent = iconData?.component
 
-  // Handle favicon path with monotone support
+  // Handle favicon path with grayscale support
   let faviconPath = isFavicon && bookmark.icon ? bookmark.icon.replace('favicon:', '') : null
   if (faviconPath) {
-    // Handle monotone suffix
-    if (faviconPath.includes('_monotone')) {
+    // Handle grayscale suffix
+    if (faviconPath.includes('_grayscale')) {
       const suffix = theme === 'dark' ? '_white.png' : '_black.png'
       faviconPath = faviconPath + suffix
     }
@@ -182,7 +182,7 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
   const [selectedBookmarks, setSelectedBookmarks] = useState<Set<number>>(new Set())
   const [fetchingFavicon, setFetchingFavicon] = useState(false)
   const [convertingColor, setConvertingColor] = useState(false)
-  const [convertingMonotone, setConvertingMonotone] = useState(false)
+  const [convertingGrayscale, setConvertingGrayscale] = useState(false)
   const [invertingColors, setInvertingColors] = useState(false)
   const [originalFavicon, setOriginalFavicon] = useState<string | null>(null)
   const [defaults, setDefaults] = useState<Defaults>({
@@ -337,7 +337,7 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
     })
 
     // Set original favicon if this bookmark has a favicon
-    if (bookmark.icon?.startsWith('favicon:') && !bookmark.icon.includes('_themed_') && !bookmark.icon.includes('_monotone') && !bookmark.icon.includes('_inverted')) {
+    if (bookmark.icon?.startsWith('favicon:') && !bookmark.icon.includes('_themed_') && !bookmark.icon.includes('_grayscale') && !bookmark.icon.includes('_inverted')) {
       setOriginalFavicon(bookmark.icon)
     } else {
       setOriginalFavicon(null)
@@ -458,6 +458,7 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
         body: JSON.stringify({
           favicon: sourceIcon,
           color: settings.themeColor || 'Slate',
+          itemUrl: formData.url,
         }),
       })
 
@@ -503,7 +504,7 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
     }
   }
 
-  const handleConvertMonotone = async () => {
+  const handleConvertGrayscale = async () => {
     if (!formData.icon || !formData.icon.startsWith('favicon:')) {
       toast({
         variant: 'destructive',
@@ -518,16 +519,17 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
       setOriginalFavicon(formData.icon)
     }
 
-    setConvertingMonotone(true)
+    setConvertingGrayscale(true)
     try {
       // Use original favicon if available, otherwise use current icon
       const sourceIcon = originalFavicon || formData.icon
 
-      const response = await fetch('/api/favicons/convert-monotone', {
+      const response = await fetch('/api/favicons/convert-grayscale', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           favicon: sourceIcon,
+          itemUrl: formData.url,
         }),
       })
 
@@ -552,24 +554,24 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
 
         toast({
           variant: 'success',
-          title: 'Monotone created',
+          title: 'Grayscale created',
           description: data.message || 'Successfully created black and white versions',
         })
       } else {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: data.error || 'Failed to convert to monotone',
+          description: data.error || 'Failed to convert to grayscale',
         })
       }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to convert to monotone',
+        description: 'Failed to convert to grayscale',
       })
     } finally {
-      setConvertingMonotone(false)
+      setConvertingGrayscale(false)
     }
   }
 
@@ -583,7 +585,7 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
       const response = await fetch('/api/favicons/invert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ favicon: sourceIcon }),
+        body: JSON.stringify({ favicon: sourceIcon, itemUrl: formData.url }),
       })
 
       const data = await response.json()
@@ -848,11 +850,11 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={handleConvertMonotone}
-                            disabled={convertingMonotone}
+                            onClick={handleConvertGrayscale}
+                            disabled={convertingGrayscale}
                           >
                             <SparklesIcon className="h-4 w-4 mr-2" />
-                            {convertingMonotone ? 'Converting...' : 'Convert to Monotone'}
+                            {convertingGrayscale ? 'Converting...' : 'Convert to Grayscale'}
                           </Button>
                           <Button
                             type="button"
@@ -892,9 +894,9 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
                       onChange={(icon) => setFormData({ ...formData, icon })}
                     />
                     {formData.icon?.startsWith('favicon:') && (() => {
-                      // Handle monotone suffix for preview
+                      // Handle grayscale suffix for preview
                       let previewPath = formData.icon.replace('favicon:', '')
-                      if (previewPath.includes('_monotone')) {
+                      if (previewPath.includes('_grayscale')) {
                         const suffix = theme === 'dark' ? '_white.png' : '_black.png'
                         previewPath = previewPath + suffix
                       }

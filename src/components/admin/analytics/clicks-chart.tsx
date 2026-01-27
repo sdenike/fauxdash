@@ -26,12 +26,12 @@ interface ClicksChartProps {
   isLoading?: boolean
 }
 
-// Chart colors
+// Chart colors - use actual values since CSS vars don't work in SVG context
 const COLORS = [
-  'hsl(var(--primary))',
-  'hsl(142, 76%, 36%)', // Green
-  'hsl(38, 92%, 50%)', // Orange
-  'hsl(262, 83%, 58%)', // Purple
+  '#3b82f6', // Blue (primary)
+  '#22c55e', // Green
+  '#f59e0b', // Orange/Amber
+  '#8b5cf6', // Purple
 ]
 
 // Memoize to prevent unnecessary re-renders
@@ -110,8 +110,8 @@ export const ClicksChart = memo(function ClicksChart({
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'hsl(var(--popover))',
-                  border: '1px solid hsl(var(--border))',
+                  backgroundColor: 'var(--popover, #ffffff)',
+                  border: '1px solid var(--border, #e5e7eb)',
                   borderRadius: '6px',
                 }}
               />
@@ -145,8 +145,8 @@ export const ClicksChart = memo(function ClicksChart({
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'hsl(var(--popover))',
-                  border: '1px solid hsl(var(--border))',
+                  backgroundColor: 'var(--popover, #ffffff)',
+                  border: '1px solid var(--border, #e5e7eb)',
                   borderRadius: '6px',
                 }}
               />

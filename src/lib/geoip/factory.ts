@@ -49,12 +49,12 @@ async function getGeoIPSettings(): Promise<{
 
     return {
       provider: (settingsMap.get('geoipProvider') as 'maxmind' | 'ipinfo') || defaults.provider,
-      maxmindDbPath: settingsMap.get('geoipMaxmindDbPath') || defaults.maxmindDbPath,
+      maxmindDbPath: settingsMap.get('geoipMaxmindPath') || defaults.maxmindDbPath,
       maxmindLicenseKey: settingsMap.get('geoipMaxmindLicenseKey') || defaults.maxmindLicenseKey,
       maxmindAccountId: settingsMap.get('geoipMaxmindAccountId') || defaults.maxmindAccountId,
-      ipinfoApiKey: settingsMap.get('geoipIpinfoApiKey') || defaults.ipinfoApiKey,
+      ipinfoApiKey: settingsMap.get('geoipIpinfoToken') || defaults.ipinfoApiKey,
       enabled: settingsMap.get('geoipEnabled') !== 'false',
-      cacheDays: parseInt(settingsMap.get('geoipCacheDays') || '30', 10),
+      cacheDays: parseInt(settingsMap.get('geoipCacheDuration') || '30', 10) / 86400, // Convert seconds to days
     }
   } catch {
     // Return defaults if settings table doesn't exist or query fails

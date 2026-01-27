@@ -8,7 +8,8 @@ import { Label } from '../ui/label'
 import { Switch } from '../ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../ui/dialog'
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, PencilIcon, TrashIcon, CheckIcon } from '@heroicons/react/24/outline'
+import { Checkbox } from '../ui/checkbox'
 import { IconSelector } from '../icon-selector'
 import { getIconByName } from '@/lib/icons'
 import {
@@ -39,6 +40,7 @@ interface ServiceCategory {
   itemsToShow: number | null
   showItemCount: boolean
   autoExpanded: boolean
+  showOpenAll: boolean
   sortBy: string | null
 }
 
@@ -47,7 +49,7 @@ interface ServiceCategoryManagerProps {
   onCategoriesChange: () => void
 }
 
-function SortableServiceCategoryItem({ category, onEdit, onDelete }: any) {
+function SortableServiceCategoryItem({ category, onEdit, onDelete, isSelected, onToggleSelect }: any) {
   const {
     attributes,
     listeners,
@@ -68,10 +70,15 @@ function SortableServiceCategoryItem({ category, onEdit, onDelete }: any) {
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center justify-between p-4 bg-card border rounded-lg hover:shadow-md transition-shadow"
+      className={`flex items-center justify-between p-4 bg-card border rounded-lg hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-primary' : ''}`}
     >
-      <div className="flex items-center gap-3 flex-1" {...attributes} {...listeners}>
-        <div className="cursor-move text-muted-foreground hover:text-foreground">
+      <div className="flex items-center gap-3 flex-1">
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={() => onToggleSelect(category.id)}
+          onClick={(e) => e.stopPropagation()}
+        />
+        <div className="cursor-move text-muted-foreground hover:text-foreground" {...attributes} {...listeners}>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
           </svg>
@@ -105,18 +112,22 @@ interface Defaults {
   itemsToShow: number | null
   showItemCount: boolean
   autoExpanded: boolean
+  showOpenAll: boolean
   sortBy: string
 }
 
 export function ServiceCategoryManager({ categories, onCategoriesChange }: ServiceCategoryManagerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<ServiceCategory | null>(null)
+  const [selectedCategories, setSelectedCategories] = useState<Set<number>>(new Set())
+  const [bulkItemsToShow, setBulkItemsToShow] = useState('')
   const [defaults, setDefaults] = useState<Defaults>({
     isVisible: true,
     requiresAuth: false,
     itemsToShow: null,
     showItemCount: false,
     autoExpanded: false,
+    showOpenAll: false,
     sortBy: 'order',
   })
   const [formData, setFormData] = useState({
@@ -128,6 +139,7 @@ export function ServiceCategoryManager({ categories, onCategoriesChange }: Servi
     itemsToShow: null as number | null,
     showItemCount: false,
     autoExpanded: false,
+    showOpenAll: false,
     sortBy: 'order' as string,
   })
 
@@ -145,6 +157,7 @@ export function ServiceCategoryManager({ categories, onCategoriesChange }: Servi
         itemsToShow: data.defaultServiceCategoryItemsToShow || null,
         showItemCount: data.defaultServiceCategoryShowItemCount || false,
         autoExpanded: data.defaultServiceCategoryAutoExpanded || false,
+        showOpenAll: data.defaultServiceCategoryShowOpenAll || false,
         sortBy: data.defaultServiceCategorySortBy || 'order',
       })
     } catch (error) {
@@ -214,6 +227,7 @@ export function ServiceCategoryManager({ categories, onCategoriesChange }: Servi
       itemsToShow: category.itemsToShow,
       showItemCount: category.showItemCount,
       autoExpanded: category.autoExpanded,
+      showOpenAll: category.showOpenAll || false,
       sortBy: category.sortBy || 'order',
     })
     setIsOpen(true)
@@ -223,6 +237,38 @@ export function ServiceCategoryManager({ categories, onCategoriesChange }: Servi
     if (!confirm('Are you sure you want to delete this service category?')) return
 
     await fetch(`/api/service-categories/${id}`, { method: 'DELETE' })
+    onCategoriesChange()
+  }
+
+  const toggleSelect = (id: number) => {
+    const newSelected = new Set(selectedCategories)
+    if (newSelected.has(id)) {
+      newSelected.delete(id)
+    } else {
+      newSelected.add(id)
+    }
+    setSelectedCategories(newSelected)
+  }
+
+  const handleSelectAll = () => {
+    if (selectedCategories.size === categories.length) {
+      setSelectedCategories(new Set())
+    } else {
+      setSelectedCategories(new Set(categories.map(c => c.id)))
+    }
+  }
+
+  const bulkUpdate = async (updates: Partial<ServiceCategory>) => {
+    await Promise.all(
+      Array.from(selectedCategories).map(id =>
+        fetch(`/api/service-categories/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        })
+      )
+    )
+    setSelectedCategories(new Set())
     onCategoriesChange()
   }
 
@@ -266,6 +312,7 @@ export function ServiceCategoryManager({ categories, onCategoriesChange }: Servi
                     <IconSelector
                       value={formData.icon}
                       onChange={(icon) => setFormData({ ...formData, icon })}
+                      defaultTab="selfhst"
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -320,6 +367,17 @@ export function ServiceCategoryManager({ categories, onCategoriesChange }: Servi
                       onCheckedChange={(checked) => setFormData({ ...formData, autoExpanded: checked })}
                     />
                   </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="showOpenAll">Show Open All</Label>
+                      <p className="text-xs text-muted-foreground">Display button to open all items in new tabs</p>
+                    </div>
+                    <Switch
+                      id="showOpenAll"
+                      checked={formData.showOpenAll}
+                      onCheckedChange={(checked) => setFormData({ ...formData, showOpenAll: checked })}
+                    />
+                  </div>
                   <div>
                     <Label htmlFor="sortBy">Sort Items By</Label>
                     <Select
@@ -353,8 +411,58 @@ export function ServiceCategoryManager({ categories, onCategoriesChange }: Servi
         </div>
       </CardHeader>
       <CardContent>
+        {/* Bulk Action Toolbar */}
+        {selectedCategories.size > 0 && (
+          <div className="flex flex-wrap items-center gap-2 p-3 bg-muted rounded-lg mb-4">
+            <span className="text-sm font-medium">{selectedCategories.size} selected</span>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ isVisible: true })}>Enable</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ isVisible: false })}>Disable</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ requiresAuth: true })}>Require Auth</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ requiresAuth: false })}>No Auth</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ showItemCount: true })}>Show Count</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ showItemCount: false })}>Hide Count</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ autoExpanded: true })}>Auto Expand</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ autoExpanded: false })}>Collapse</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ showOpenAll: true })}>Show Open All</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ showOpenAll: false })}>Hide Open All</Button>
+            <Select onValueChange={(v) => bulkUpdate({ sortBy: v })}>
+              <SelectTrigger className="w-32 h-8">
+                <SelectValue placeholder="Sort by..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="order">Manual Order</SelectItem>
+                <SelectItem value="name_asc">Name (A-Z)</SelectItem>
+                <SelectItem value="name_desc">Name (Z-A)</SelectItem>
+                <SelectItem value="clicks_asc">Clicks (Low)</SelectItem>
+                <SelectItem value="clicks_desc">Clicks (High)</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              type="number"
+              placeholder="Items to show"
+              className="w-28 h-8"
+              value={bulkItemsToShow}
+              onChange={(e) => setBulkItemsToShow(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const value = parseInt(bulkItemsToShow) || null
+                  bulkUpdate({ itemsToShow: value })
+                  setBulkItemsToShow('')
+                }
+              }}
+            />
+            <Button size="sm" variant="ghost" onClick={() => setSelectedCategories(new Set())}>Clear</Button>
+          </div>
+        )}
+
         {categories.length > 0 ? (
-          <DndContext
+          <>
+            <div className="flex items-center gap-2 mb-3">
+              <Button size="sm" variant="outline" onClick={handleSelectAll}>
+                {selectedCategories.size === categories.length ? 'Deselect All' : 'Select All'}
+              </Button>
+            </div>
+            <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
@@ -370,11 +478,14 @@ export function ServiceCategoryManager({ categories, onCategoriesChange }: Servi
                     category={category}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    isSelected={selectedCategories.has(category.id)}
+                    onToggleSelect={toggleSelect}
                   />
                 ))}
               </div>
             </SortableContext>
           </DndContext>
+          </>
         ) : (
           <div className="text-sm text-muted-foreground p-4 border border-dashed rounded-lg text-center">
             No service categories yet. Create your first category to organize services!

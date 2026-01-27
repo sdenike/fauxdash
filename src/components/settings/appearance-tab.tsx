@@ -231,6 +231,61 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
               <h3 className="text-base font-semibold text-foreground">Services</h3>
             </div>
 
+            {/* Services Preview */}
+            <div className="p-4 rounded-lg border bg-card">
+              <p className="text-xs text-muted-foreground mb-3">Preview</p>
+              <div
+                className="flex flex-col"
+                style={{
+                  gap: settings.servicesItemSpacing >= 0 ? `${settings.servicesItemSpacing}px` : '0px',
+                }}
+              >
+                {['Sample Service', 'Another Service'].map((name, idx) => (
+                  <div
+                    key={name}
+                    className="flex items-start gap-3 p-2 hover:bg-accent rounded transition-colors"
+                    style={settings.servicesItemSpacing < 0 ? { marginTop: idx > 0 ? `${settings.servicesItemSpacing}px` : '0' } : {}}
+                  >
+                    <div
+                      className="flex items-center justify-center flex-shrink-0 text-primary"
+                      style={{
+                        width: `${settings.servicesIconSize + 8}px`,
+                        height: `${settings.servicesIconSize + 8}px`,
+                      }}
+                    >
+                      <svg
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                        style={{
+                          width: `${settings.servicesIconSize}px`,
+                          height: `${settings.servicesIconSize}px`,
+                        }}
+                      >
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                      </svg>
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span
+                        className="font-semibold text-foreground"
+                        style={{ fontSize: `${settings.servicesFontSize}px` }}
+                      >
+                        {name}
+                      </span>
+                      <span
+                        className="text-muted-foreground"
+                        style={{
+                          fontSize: `${Math.max(settings.servicesFontSize - 2, 10)}px`,
+                          marginTop: `${settings.servicesDescriptionSpacing}px`,
+                        }}
+                      >
+                        This is a sample description
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between items-center mb-2">
@@ -291,7 +346,7 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
                 <input
                   type="range"
                   id="servicesItemSpacing"
-                  min="0"
+                  min="-4"
                   max="18"
                   step="1"
                   value={settings.servicesItemSpacing}
@@ -307,6 +362,61 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
             <div className="flex items-center gap-2 pb-2 border-b border-border">
               <div className="w-1 h-5 bg-primary rounded-full" />
               <h3 className="text-base font-semibold text-foreground">Bookmarks</h3>
+            </div>
+
+            {/* Bookmarks Preview */}
+            <div className="p-4 rounded-lg border bg-card">
+              <p className="text-xs text-muted-foreground mb-3">Preview</p>
+              <div
+                className="flex flex-col"
+                style={{
+                  gap: settings.itemSpacing >= 0 ? `${settings.itemSpacing}px` : '0px',
+                }}
+              >
+                {['Sample Bookmark', 'Another Bookmark'].map((name, idx) => (
+                  <div
+                    key={name}
+                    className="flex items-start gap-3 p-2 hover:bg-accent rounded transition-colors"
+                    style={settings.itemSpacing < 0 ? { marginTop: idx > 0 ? `${settings.itemSpacing}px` : '0' } : {}}
+                  >
+                    <div
+                      className="flex items-center justify-center flex-shrink-0 text-primary mt-0.5"
+                      style={{
+                        width: `${settings.bookmarksIconSize + 8}px`,
+                        height: `${settings.bookmarksIconSize + 8}px`,
+                      }}
+                    >
+                      <svg
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                        style={{
+                          width: `${settings.bookmarksIconSize}px`,
+                          height: `${settings.bookmarksIconSize}px`,
+                        }}
+                      >
+                        <path d="M5 4h14a2 2 0 012 2v14l-7-3-7 3V6a2 2 0 012-2z" />
+                      </svg>
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span
+                        className="font-medium text-foreground"
+                        style={{ fontSize: `${settings.bookmarksFontSize}px` }}
+                      >
+                        {name}
+                      </span>
+                      <span
+                        className="text-muted-foreground"
+                        style={{
+                          fontSize: `${Math.max(settings.bookmarksFontSize - 2, 10)}px`,
+                          marginTop: `${settings.descriptionSpacing}px`,
+                        }}
+                      >
+                        A helpful description
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -369,7 +479,7 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
                 <input
                   type="range"
                   id="itemSpacing"
-                  min="0"
+                  min="-4"
                   max="18"
                   step="1"
                   value={settings.itemSpacing}
@@ -430,6 +540,14 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
                   onCheckedChange={(checked) => updateSetting('defaultBookmarkCategoryAutoExpanded', checked)}
                 />
               </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="defaultBookmarkCategoryShowOpenAll">Show Open All</Label>
+                <Switch
+                  id="defaultBookmarkCategoryShowOpenAll"
+                  checked={settings.defaultBookmarkCategoryShowOpenAll}
+                  onCheckedChange={(checked) => updateSetting('defaultBookmarkCategoryShowOpenAll', checked)}
+                />
+              </div>
             </div>
             <div>
               <Label htmlFor="defaultBookmarkCategorySortBy">Sort Items By</Label>
@@ -448,6 +566,20 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
                   <SelectItem value="recent">Recently Added</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label htmlFor="defaultBookmarkCategoryItemsToShow">Items to Show</Label>
+              <Input
+                id="defaultBookmarkCategoryItemsToShow"
+                type="number"
+                min={1}
+                placeholder="All"
+                value={settings.defaultBookmarkCategoryItemsToShow ?? ''}
+                onChange={(e) => updateSetting('defaultBookmarkCategoryItemsToShow', e.target.value === '' ? null : parseInt(e.target.value))}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Leave empty to show all items
+              </p>
             </div>
           </div>
 
@@ -490,6 +622,14 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
                   onCheckedChange={(checked) => updateSetting('defaultServiceCategoryAutoExpanded', checked)}
                 />
               </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="defaultServiceCategoryShowOpenAll">Show Open All</Label>
+                <Switch
+                  id="defaultServiceCategoryShowOpenAll"
+                  checked={settings.defaultServiceCategoryShowOpenAll}
+                  onCheckedChange={(checked) => updateSetting('defaultServiceCategoryShowOpenAll', checked)}
+                />
+              </div>
             </div>
             <div>
               <Label htmlFor="defaultServiceCategorySortBy">Sort Items By</Label>
@@ -508,6 +648,20 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
                   <SelectItem value="recent">Recently Added</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label htmlFor="defaultServiceCategoryItemsToShow">Items to Show</Label>
+              <Input
+                id="defaultServiceCategoryItemsToShow"
+                type="number"
+                min={1}
+                placeholder="All"
+                value={settings.defaultServiceCategoryItemsToShow ?? ''}
+                onChange={(e) => updateSetting('defaultServiceCategoryItemsToShow', e.target.value === '' ? null : parseInt(e.target.value))}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Leave empty to show all items
+              </p>
             </div>
           </div>
 

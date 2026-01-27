@@ -1,11 +1,74 @@
+# ===========================================
+# Faux|Dash Docker Build Exclusions
+# ===========================================
+# These files are not needed in the Docker image
+# and excluding them speeds up builds significantly.
+
+# Dependencies (installed fresh in container)
 node_modules
 npm-debug.log
+yarn-error.log
+
+# Build output (built fresh in container)
 .next
+out
+build
+
+# Version control
 .git
+.gitignore
+
+# Environment files (contain secrets!)
 .env
-.env*.local
-README.md
+.env.local
+.env.*.local
+
+# Documentation (not needed at runtime)
 *.md
 !CHANGELOG.md
+
+# IDE / Editor
 .vscode
 .idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Development database and data
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+/data
+
+# Drizzle migrations (handled at runtime)
+/drizzle
+
+# Downloaded favicons (stored in volume)
+public/favicons/*
+!public/favicons/.gitkeep
+
+# GeoIP databases
+*.mmdb
+GeoLite2-*.tar.gz
+
+# Logs
+*.log
+/logs
+
+# Test files
+/coverage
+/__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Docker files (not needed inside container)
+docker-compose*.yml
+Dockerfile
+.dockerignore

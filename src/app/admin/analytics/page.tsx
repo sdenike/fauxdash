@@ -40,6 +40,13 @@ export default function AnalyticsPage() {
   const [period, setPeriod] = useState<Period>('week')
   const [dataType, setDataType] = useState<DataType>('all')
   const [chartType, setChartType] = useState<'line' | 'bar'>('line')
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
+
+  const handleCustomDateChange = (start: string, end: string) => {
+    setCustomStartDate(start)
+    setCustomEndDate(end)
+  }
 
   // Data state
   const [stats, setStats] = useState<StatsData | null>(null)
@@ -59,11 +66,20 @@ export default function AnalyticsPage() {
     heatmap: true,
   })
 
+  // Build query string with custom dates
+  const buildQueryString = useCallback((base: string) => {
+    let qs = `${base}?period=${period}`
+    if (period === 'custom' && customStartDate && customEndDate) {
+      qs += `&startDate=${customStartDate}&endDate=${customEndDate}`
+    }
+    return qs
+  }, [period, customStartDate, customEndDate])
+
   // Fetch stats
   const fetchStats = useCallback(async () => {
     setLoading(prev => ({ ...prev, stats: true }))
     try {
-      const res = await fetch(`/api/analytics/stats?period=${period}`)
+      const res = await fetch(buildQueryString('/api/analytics/stats'))
       if (res.ok) {
         const data = await res.json()
         setStats(data)
@@ -73,13 +89,14 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(prev => ({ ...prev, stats: false }))
     }
-  }, [period])
+  }, [buildQueryString])
 
   // Fetch clicks
   const fetchClicks = useCallback(async () => {
     setLoading(prev => ({ ...prev, clicks: true }))
     try {
-      const res = await fetch(`/api/analytics/clicks?period=${period}&type=${dataType}`)
+      const url = buildQueryString('/api/analytics/clicks') + `&type=${dataType}`
+      const res = await fetch(url)
       if (res.ok) {
         const data = await res.json()
         setClicks(data)
@@ -89,13 +106,13 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(prev => ({ ...prev, clicks: false }))
     }
-  }, [period, dataType])
+  }, [buildQueryString, dataType])
 
   // Fetch geo
   const fetchGeo = useCallback(async () => {
     setLoading(prev => ({ ...prev, geo: true }))
     try {
-      const res = await fetch(`/api/analytics/geo?period=${period}`)
+      const res = await fetch(buildQueryString('/api/analytics/geo'))
       if (res.ok) {
         const data = await res.json()
         setGeo(data)
@@ -105,15 +122,17 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(prev => ({ ...prev, geo: false }))
     }
-  }, [period])
+  }, [buildQueryString])
 
   // Fetch top items
   const fetchTopItems = useCallback(async () => {
     setLoading(prev => ({ ...prev, topBookmarks: true, topServices: true }))
     try {
+      const baseBookmarks = buildQueryString('/api/analytics/top-items') + '&type=bookmarks'
+      const baseServices = buildQueryString('/api/analytics/top-items') + '&type=services'
       const [bookmarksRes, servicesRes] = await Promise.all([
-        fetch(`/api/analytics/top-items?type=bookmarks&period=${period}`),
-        fetch(`/api/analytics/top-items?type=services&period=${period}`),
+        fetch(baseBookmarks),
+        fetch(baseServices),
       ])
 
       if (bookmarksRes.ok) {
@@ -129,14 +148,16 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(prev => ({ ...prev, topBookmarks: false, topServices: false }))
     }
-  }, [period])
+  }, [buildQueryString])
 
   // Fetch heatmap
   const fetchHeatmap = useCallback(async () => {
     setLoading(prev => ({ ...prev, heatmap: true }))
     try {
-      const heatmapPeriod = period === 'day' ? 'week' : period
-      const res = await fetch(`/api/analytics/heatmap?period=${heatmapPeriod}&type=${dataType}`)
+      const heatmapPeriod = (period === 'day' || period === 'hour') ? 'week' : period
+      const url = `/api/analytics/heatmap?period=${heatmapPeriod}&type=${dataType}` +
+        (period === 'custom' && customStartDate && customEndDate ? `&startDate=${customStartDate}&endDate=${customEndDate}` : '')
+      const res = await fetch(url)
       if (res.ok) {
         const data = await res.json()
         setHeatmap(data)
@@ -146,7 +167,7 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(prev => ({ ...prev, heatmap: false }))
     }
-  }, [period, dataType])
+  }, [period, dataType, customStartDate, customEndDate])
 
   // Fetch all data when filters change
   useEffect(() => {
@@ -175,6 +196,9 @@ export default function AnalyticsPage() {
           onPeriodChange={setPeriod}
           dataType={dataType}
           onDataTypeChange={setDataType}
+          customStartDate={customStartDate}
+          customEndDate={customEndDate}
+          onCustomDateChange={handleCustomDateChange}
         />
       </div>
 

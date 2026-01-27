@@ -79,11 +79,11 @@ function SortableServiceItem({ service, onEdit, onDelete, isSelected, onToggleSe
   const iconData = !isFavicon && !isSelfhst && service.icon ? getIconByName(service.icon) : null
   const IconComponent = iconData?.component
 
-  // Handle favicon path with monotone support
+  // Handle favicon path with grayscale support
   let faviconPath = isFavicon && service.icon ? service.icon.replace('favicon:', '') : null
   if (faviconPath) {
-    // Handle monotone suffix
-    if (faviconPath.includes('_monotone')) {
+    // Handle grayscale suffix
+    if (faviconPath.includes('_grayscale')) {
       const suffix = theme === 'dark' ? '_white.png' : '_black.png'
       faviconPath = faviconPath + suffix
     }
@@ -161,7 +161,7 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
   const [selectedServices, setSelectedServices] = useState<Set<number>>(new Set())
   const [fetchingFavicon, setFetchingFavicon] = useState(false)
   const [convertingColor, setConvertingColor] = useState(false)
-  const [convertingMonotone, setConvertingMonotone] = useState(false)
+  const [convertingGrayscale, setConvertingGrayscale] = useState(false)
   const [invertingColors, setInvertingColors] = useState(false)
   const [originalFavicon, setOriginalFavicon] = useState<string | null>(null)
   const [defaults, setDefaults] = useState<Defaults>({
@@ -259,7 +259,7 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
     })
 
     // Set original favicon if this service has a favicon
-    if (service.icon?.startsWith('favicon:') && !service.icon.includes('_themed_') && !service.icon.includes('_monotone') && !service.icon.includes('_inverted')) {
+    if (service.icon?.startsWith('favicon:') && !service.icon.includes('_themed_') && !service.icon.includes('_grayscale') && !service.icon.includes('_inverted')) {
       setOriginalFavicon(service.icon)
     } else {
       setOriginalFavicon(null)
@@ -379,6 +379,7 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
         body: JSON.stringify({
           favicon: sourceIcon,
           color: settings.themeColor || 'Slate',
+          itemUrl: formData.url,
         }),
       })
 
@@ -424,7 +425,7 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
     }
   }
 
-  const handleConvertMonotone = async () => {
+  const handleConvertGrayscale = async () => {
     if (!formData.icon || !formData.icon.startsWith('favicon:')) {
       toast({
         variant: 'destructive',
@@ -439,16 +440,17 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
       setOriginalFavicon(formData.icon)
     }
 
-    setConvertingMonotone(true)
+    setConvertingGrayscale(true)
     try {
       // Use original favicon if available, otherwise use current icon
       const sourceIcon = originalFavicon || formData.icon
 
-      const response = await fetch('/api/favicons/convert-monotone', {
+      const response = await fetch('/api/favicons/convert-grayscale', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           favicon: sourceIcon,
+          itemUrl: formData.url,
         }),
       })
 
@@ -473,24 +475,24 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
 
         toast({
           variant: 'success',
-          title: 'Monotone created',
+          title: 'Grayscale created',
           description: data.message || 'Successfully created black and white versions',
         })
       } else {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: data.error || 'Failed to convert to monotone',
+          description: data.error || 'Failed to convert to grayscale',
         })
       }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to convert to monotone',
+        description: 'Failed to convert to grayscale',
       })
     } finally {
-      setConvertingMonotone(false)
+      setConvertingGrayscale(false)
     }
   }
 
@@ -504,7 +506,7 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
       const response = await fetch('/api/favicons/invert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ favicon: sourceIcon }),
+        body: JSON.stringify({ favicon: sourceIcon, itemUrl: formData.url }),
       })
 
       const data = await response.json()
@@ -791,11 +793,11 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={handleConvertMonotone}
-                            disabled={convertingMonotone}
+                            onClick={handleConvertGrayscale}
+                            disabled={convertingGrayscale}
                           >
                             <SparklesIcon className="h-4 w-4 mr-2" />
-                            {convertingMonotone ? 'Converting...' : 'Convert to Monotone'}
+                            {convertingGrayscale ? 'Converting...' : 'Convert to Grayscale'}
                           </Button>
                           <Button
                             type="button"
@@ -833,11 +835,12 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
                     <IconSelector
                       value={formData.icon?.startsWith('favicon:') || formData.icon?.startsWith('selfhst:') ? '' : formData.icon}
                       onChange={(icon) => setFormData({ ...formData, icon })}
+                      defaultTab="selfhst"
                     />
                     {formData.icon?.startsWith('favicon:') && (() => {
-                      // Handle monotone suffix for preview
+                      // Handle grayscale suffix for preview
                       let previewPath = formData.icon.replace('favicon:', '')
-                      if (previewPath.includes('_monotone')) {
+                      if (previewPath.includes('_grayscale')) {
                         const suffix = theme === 'dark' ? '_white.png' : '_black.png'
                         previewPath = previewPath + suffix
                       }

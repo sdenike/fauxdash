@@ -18,6 +18,9 @@ ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN npm run build
 
+# Generate build info file
+RUN node -e "const pkg = require('./package.json'); const fs = require('fs'); fs.writeFileSync('build-info.json', JSON.stringify({ version: pkg.version, buildDate: new Date().toISOString(), nodeVersion: process.version }, null, 2));"
+
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
@@ -50,11 +53,14 @@ COPY --chown=nextjs:nodejs scripts/migrate-add-accordion.js /app/scripts/
 COPY --chown=nextjs:nodejs scripts/migrate-add-sorting-analytics.js /app/scripts/
 COPY --chown=nextjs:nodejs scripts/migrate-add-uncategorized.js /app/scripts/
 COPY --chown=nextjs:nodejs scripts/migrate-rename-maincolumns.js /app/scripts/
+COPY --chown=nextjs:nodejs scripts/migrate-add-open-all.js /app/scripts/
+COPY --chown=nextjs:nodejs scripts/migrate-add-geo-cache.js /app/scripts/
 COPY --from=builder --chown=nextjs:nodejs /app/CHANGELOG.md /app/CHANGELOG.md
+COPY --from=builder --chown=nextjs:nodejs /app/build-info.json /app/build-info.json
 RUN chmod +x /app/scripts/docker-entrypoint.sh
 
-# Create data directory for SQLite
-RUN mkdir -p /data && chown nextjs:nodejs /data
+# Create data directory for SQLite and logs
+RUN mkdir -p /data /data/logs && chown -R nextjs:nodejs /data
 
 # Create favicons directory with write permissions
 RUN mkdir -p /app/public/favicons && chown -R nextjs:nodejs /app/public

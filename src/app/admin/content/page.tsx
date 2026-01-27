@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { CategoryManager } from '@/components/admin/category-manager'
 import { ServiceCategoryManager } from '@/components/admin/service-category-manager'
 import { ContentManager } from '@/components/admin/content-manager'
+import { AddBookmarkForm } from '@/components/admin/add-bookmark-form'
+import { AddServiceForm } from '@/components/admin/add-service-form'
+import { CSVImport } from '@/components/admin/csv-import'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function BookmarksPage() {
@@ -41,8 +44,11 @@ export default function BookmarksPage() {
       </div>
 
       <Tabs defaultValue="content" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="add-bookmark">Add Bookmark</TabsTrigger>
+          <TabsTrigger value="add-service">Add Service</TabsTrigger>
+          <TabsTrigger value="import">Import</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
         </TabsList>
 
@@ -52,6 +58,24 @@ export default function BookmarksPage() {
             serviceCategories={serviceCategories}
             onContentChange={fetchData}
           />
+        </TabsContent>
+
+        <TabsContent value="add-bookmark" className="mt-6">
+          <AddBookmarkForm
+            categories={categories}
+            onBookmarkAdded={fetchData}
+          />
+        </TabsContent>
+
+        <TabsContent value="add-service" className="mt-6">
+          <AddServiceForm
+            serviceCategories={serviceCategories}
+            onServiceAdded={fetchData}
+          />
+        </TabsContent>
+
+        <TabsContent value="import" className="mt-6">
+          <CSVImport onImportComplete={fetchData} />
         </TabsContent>
 
         <TabsContent value="categories" className="mt-6 space-y-6">

@@ -11,7 +11,8 @@ import {
   UserCircleIcon,
   ArrowLeftIcon,
   DocumentTextIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -42,8 +43,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: HomeIcon },
     { href: '/admin/analytics', label: 'Analytics', icon: ChartBarIcon },
-    { href: '/admin/bookmarks', label: 'Content', icon: RectangleStackIcon },
+    { href: '/admin/content', label: 'Content', icon: RectangleStackIcon },
     { href: '/admin/settings', label: 'Configuration', icon: WrenchScrewdriverIcon },
+    { href: '/admin/tools', label: 'Tools', icon: Cog6ToothIcon },
     { href: '/admin/logs', label: 'Logs', icon: DocumentTextIcon },
     { href: '/admin/profile', label: 'Profile', icon: UserCircleIcon },
   ]
