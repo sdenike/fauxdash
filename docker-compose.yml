@@ -14,6 +14,7 @@ services:
     volumes:
       - fauxdash-data:/data
       - fauxdash-favicons:/app/public/favicons
+      - fauxdash-logs:/data/logs
     depends_on:
       - redis
     restart: unless-stopped
@@ -51,6 +52,7 @@ services:
 volumes:
   fauxdash-data:
   fauxdash-favicons:
+  fauxdash-logs:
   redis-data:
   # postgres-data:
   # mysql-data:
