@@ -5,6 +5,15 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.37] - 2026-01-28
+
+### Added
+- **Release script**: New `scripts/release.sh` for automated version releases
+  - Handles patch/minor/major version bumps
+  - Validates CHANGELOG.md has entry for new version
+  - Creates commit, pushes, and creates GitHub release
+  - Usage: `./scripts/release.sh patch "Fix description"`
+
 ## [0.5.36] - 2026-01-28
 
 ### Added
