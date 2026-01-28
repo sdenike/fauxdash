@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **DEBUG_IP environment variable**: Enable IP detection logging for troubleshooting geolocation
 
 ### Fixed
+- **Memory leak in toast system**: Reduced toast removal delay from ~17 minutes to 5 seconds, preventing memory accumulation
+- **Toast useEffect dependency**: Fixed listener leak that could cause memory issues over time
 - **Search bar in header**: Now displays correctly even when date/time is enabled
 - **Cloudflare IP detection**: Improved header parsing with support for `True-Client-IP` and better handling of X-Forwarded-For chains
 - **Private IP filtering**: IP detection now skips private/internal IPs when looking for real client IP
