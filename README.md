@@ -52,7 +52,12 @@ A modern, self-hosted homepage dashboard for managing bookmarks and services. Bu
 
 ## Screenshots
 
-*Coming soon*
+### Homepage
+![Homepage Dark](docs/screenshots/homepage-dark.png)
+![Homepage Light](docs/screenshots/homepage-light.png)
+
+### Admin Dashboard
+![Admin Dashboard](docs/screenshots/admin-dashboard.png)
 
 ---
 
@@ -82,6 +87,10 @@ echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> .env
 
 # Start
 docker compose up -d
+
+# Access at http://localhost:8080
+# Default login: admin@fauxdash.local / admin
+# CHANGE PASSWORD IMMEDIATELY after first login!
 ```
 
 ### Installation from Source
@@ -123,7 +132,11 @@ docker compose up -d
 
 Open http://localhost:8080 in your browser.
 
-On first run, you'll be guided through a setup wizard to create your admin account.
+**Default Login Credentials:**
+- Email: `admin@fauxdash.local`
+- Password: `admin`
+
+**Important:** Change these credentials immediately after first login via Admin > Users.
 
 ---
 
@@ -487,7 +500,9 @@ Ensure you've set a valid API key for your chosen weather provider.
 
 ### Can't log in
 
-Reset by recreating the container (this reinitializes with default credentials) or connect to your database and update the users table directly.
+Default credentials are `admin@fauxdash.local` / `admin`. If you've changed these and forgotten them, you can either:
+- Delete the database file and restart the container to reset to defaults
+- Connect to your database directly and update the users table
 
 ### Favicon fetch fails
 

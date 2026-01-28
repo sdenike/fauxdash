@@ -47,6 +47,11 @@ build-info.json
 /drizzle/
 
 # -------------------------------------------
+# Development Plans (local only)
+# -------------------------------------------
+/docs/plans/
+
+# -------------------------------------------
 # Favicon Storage (downloaded/processed icons)
 # -------------------------------------------
 /public/favicons/*
