@@ -32,42 +32,44 @@ echo "  PGID:       ${PGID}"
 echo "============================================"
 echo ""
 
-# -----------------------------------------------------------------------------
-# Handle PUID/PGID - Modify user/group if different from defaults
-# -----------------------------------------------------------------------------
-echo "Setting up user permissions..."
-
-# Get current UID/GID of fauxdash user
-CURRENT_UID=$(id -u fauxdash 2>/dev/null || echo "1000")
-CURRENT_GID=$(id -g fauxdash 2>/dev/null || echo "1000")
-
-# Modify group if PGID is different
-if [ "$PGID" != "$CURRENT_GID" ]; then
-  echo "  Changing group ID from ${CURRENT_GID} to ${PGID}"
-  groupmod -g "$PGID" fauxdash 2>/dev/null || true
-fi
-
-# Modify user if PUID is different
-if [ "$PUID" != "$CURRENT_UID" ]; then
-  echo "  Changing user ID from ${CURRENT_UID} to ${PUID}"
-  usermod -u "$PUID" fauxdash 2>/dev/null || true
-fi
-
-# -----------------------------------------------------------------------------
-# Fix ownership of directories
-# -----------------------------------------------------------------------------
-echo "Fixing directory permissions..."
-
 # Set database path environment variables
 export DATABASE_PATH="/data/fauxdash.db"
 export SQLITE_FILE="/data/fauxdash.db"
 
-# Fix ownership of data directory
-chown -R fauxdash:fauxdash /data 2>/dev/null || true
+# -----------------------------------------------------------------------------
+# Check if running as root - determines how we handle permissions
+# -----------------------------------------------------------------------------
+if [ "$(id -u)" = "0" ]; then
+  echo "Running as root, setting up user permissions..."
 
-# Fix ownership of app directories that need write access
-chown -R fauxdash:fauxdash /app/.next 2>/dev/null || true
-chown -R fauxdash:fauxdash /app/public/favicons 2>/dev/null || true
+  # Get current UID/GID of fauxdash user
+  CURRENT_UID=$(id -u fauxdash 2>/dev/null || echo "1000")
+  CURRENT_GID=$(id -g fauxdash 2>/dev/null || echo "1000")
+
+  # Modify group if PGID is different
+  if [ "$PGID" != "$CURRENT_GID" ]; then
+    echo "  Changing group ID from ${CURRENT_GID} to ${PGID}"
+    groupmod -g "$PGID" fauxdash 2>/dev/null || true
+  fi
+
+  # Modify user if PUID is different
+  if [ "$PUID" != "$CURRENT_UID" ]; then
+    echo "  Changing user ID from ${CURRENT_UID} to ${PUID}"
+    usermod -u "$PUID" fauxdash 2>/dev/null || true
+  fi
+
+  echo "Fixing directory permissions..."
+  chown -R fauxdash:fauxdash /data 2>/dev/null || true
+  chown -R fauxdash:fauxdash /app/.next 2>/dev/null || true
+  chown -R fauxdash:fauxdash /app/public/favicons 2>/dev/null || true
+
+  # Run as fauxdash user using su-exec
+  RUN_CMD="su-exec fauxdash"
+else
+  echo "Running as non-root user (UID: $(id -u)), skipping permission setup..."
+  # Run directly without su-exec
+  RUN_CMD=""
+fi
 
 # -----------------------------------------------------------------------------
 # Database initialization and migrations
@@ -76,27 +78,27 @@ chown -R fauxdash:fauxdash /app/public/favicons 2>/dev/null || true
 # Initialize database if it doesn't exist
 if [ ! -f "/data/fauxdash.db" ] || [ ! -s "/data/fauxdash.db" ]; then
   echo "Initializing database..."
-  su-exec fauxdash node /app/scripts/init-db.js
+  $RUN_CMD node /app/scripts/init-db.js
   echo "Database initialized successfully"
 fi
 
 # Always run migrations (they are idempotent)
 echo "Running migrations..."
-su-exec fauxdash node /app/scripts/migrate-add-description.js
-su-exec fauxdash node /app/scripts/migrate-add-columns.js
-su-exec fauxdash node /app/scripts/migrate-add-pageviews.js
-su-exec fauxdash node /app/scripts/migrate-add-services.js
-su-exec fauxdash node /app/scripts/migrate-add-service-categories.js
-su-exec fauxdash node /app/scripts/migrate-add-accordion.js
-su-exec fauxdash node /app/scripts/migrate-add-sorting-analytics.js
-su-exec fauxdash node /app/scripts/migrate-add-uncategorized.js
-su-exec fauxdash node /app/scripts/migrate-rename-maincolumns.js
-su-exec fauxdash node /app/scripts/migrate-add-open-all.js
-su-exec fauxdash node /app/scripts/migrate-add-geo-cache.js
+$RUN_CMD node /app/scripts/migrate-add-description.js
+$RUN_CMD node /app/scripts/migrate-add-columns.js
+$RUN_CMD node /app/scripts/migrate-add-pageviews.js
+$RUN_CMD node /app/scripts/migrate-add-services.js
+$RUN_CMD node /app/scripts/migrate-add-service-categories.js
+$RUN_CMD node /app/scripts/migrate-add-accordion.js
+$RUN_CMD node /app/scripts/migrate-add-sorting-analytics.js
+$RUN_CMD node /app/scripts/migrate-add-uncategorized.js
+$RUN_CMD node /app/scripts/migrate-rename-maincolumns.js
+$RUN_CMD node /app/scripts/migrate-add-open-all.js
+$RUN_CMD node /app/scripts/migrate-add-geo-cache.js
 echo "Migrations completed"
 
 # -----------------------------------------------------------------------------
-# Start the application as the fauxdash user
+# Start the application
 # -----------------------------------------------------------------------------
 echo "Starting application..."
-exec su-exec fauxdash node /app/server.js
+exec $RUN_CMD node /app/server.js

@@ -36,6 +36,8 @@ services:
       # -----------------------------------------------------------------------
       # Set these to match your host user's UID/GID (run `id` to check)
       # Default: 1000:1000
+      # NOTE: Do NOT use Docker's "user:" directive with this image.
+      #       Use PUID/PGID environment variables instead.
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
 
