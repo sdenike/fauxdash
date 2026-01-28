@@ -5,6 +5,33 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.33] - 2026-01-28
+
+### Added
+- **PUID/PGID Support**: Container now supports custom user/group IDs via environment variables
+  - Set `PUID` and `PGID` to match your host user (run `id` to check)
+  - Default: 1000:1000
+  - Fixes permission issues when mounting volumes on Linux/NAS systems
+- **GitHub Container Registry**: Docker images now automatically published to `ghcr.io/sdenike/fauxdash`
+- **Multi-platform builds**: Docker images available for both `linux/amd64` and `linux/arm64`
+
+### Changed
+- Upgraded Next.js from 14.1.0 to 14.2.35 (security fix)
+- Upgraded drizzle-kit to 0.31.8 with new config format
+- Switched from Google Fonts to system fonts for faster builds and no external dependencies
+- Container user renamed from `nextjs` to `fauxdash`
+- Default credentials: `admin@fauxdash.local` / `admin` (change immediately after first login)
+
+### Fixed
+- Docker build failures due to Google Fonts timeout
+- drizzle.config.ts updated for drizzle-kit 0.31+ compatibility
+- Container permission issues when running as non-root
+- Dockerfile ENV format updated to modern `key=value` syntax
+
+### Security
+- Removed development plan files from repository
+- Added comprehensive .gitignore for sensitive data
+
 ## [0.5.7] - 2026-01-25
 
 ### Fixed

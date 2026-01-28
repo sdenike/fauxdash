@@ -140,6 +140,46 @@ Open http://localhost:8080 in your browser.
 
 ---
 
+## Docker Configuration
+
+### User/Group Permissions (PUID/PGID)
+
+When running Faux|Dash in Docker with mounted volumes, you may encounter permission issues. Use the `PUID` and `PGID` environment variables to match your host user's permissions.
+
+**Find your user's UID/GID:**
+```bash
+id
+# Output: uid=1000(youruser) gid=1000(youruser) ...
+```
+
+**Configure in docker-compose.yml:**
+```yaml
+services:
+  app:
+    image: ghcr.io/sdenike/fauxdash:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./data:/data
+```
+
+**Important:** Do NOT use Docker's `user:` directive with this image. Use the `PUID`/`PGID` environment variables instead.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PUID` | `1000` | User ID for file permissions |
+| `PGID` | `1000` | Group ID for file permissions |
+| `NEXTAUTH_SECRET` | (required) | Secret for session encryption. Generate with `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | `http://localhost:8080` | Your deployment URL |
+| `DB_PROVIDER` | `sqlite` | Database type: `sqlite`, `postgres`, or `mysql` |
+| `REDIS_ENABLED` | `true` | Enable Redis caching |
+| `REDIS_URL` | `redis://redis:6379` | Redis connection URL |
+
+---
+
 ## Configuration Guide
 
 All settings can be configured through the Admin Panel at `/admin/settings`. Below is a detailed explanation of each configuration section.
