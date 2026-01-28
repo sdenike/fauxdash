@@ -6,7 +6,7 @@ import { BookmarkIcon, FolderIcon, ServerIcon } from '@heroicons/react/24/outlin
 import { StatsWidget } from '@/components/stats-widget'
 import { FaviconStatsWidget } from '@/components/admin/favicon-stats-widget'
 import { ChangelogDialog } from '@/components/changelog-dialog'
-import { VERSION } from '@/lib/version'
+import { UpdateChecker } from '@/components/admin/update-checker'
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -54,13 +54,7 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
             Admin Dashboard
           </h1>
-          <button
-            onClick={() => setChangelogOpen(true)}
-            className="text-sm font-mono px-2 py-0.5 rounded bg-slate-200/50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-300/50 dark:hover:bg-slate-600/50 transition-colors cursor-pointer"
-            title="View changelog"
-          >
-            v{VERSION}
-          </button>
+          <UpdateChecker onChangelogClick={() => setChangelogOpen(true)} />
         </div>
         <p className="text-slate-600 dark:text-slate-400">
           Welcome to your Faux|Dash admin panel
