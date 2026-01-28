@@ -16,6 +16,7 @@ import {
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
   ArchiveBoxIcon,
+  BeakerIcon,
 } from '@heroicons/react/24/outline'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
@@ -28,6 +29,17 @@ interface ToolResult {
   details?: Record<string, any>
 }
 
+interface DemoStatus {
+  hasDemo: boolean
+  stats: {
+    bookmarkCategories: number
+    bookmarks: number
+    serviceCategories: number
+    services: number
+    pageviews: number
+  }
+}
+
 export default function ToolsPage() {
   const { toast } = useToast()
   const [loading, setLoading] = useState<Record<string, boolean>>({})
@@ -36,6 +48,7 @@ export default function ToolsPage() {
   const [clearExisting, setClearExisting] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
   const [lastBackupDate, setLastBackupDate] = useState<string | null>(null)
+  const [demoStatus, setDemoStatus] = useState<DemoStatus | null>(null)
 
   useEffect(() => {
     // Fetch last backup date
@@ -47,7 +60,94 @@ export default function ToolsPage() {
         }
       })
       .catch(() => {})
+
+    // Fetch demo status
+    fetchDemoStatus()
   }, [])
+
+  const fetchDemoStatus = async () => {
+    try {
+      const response = await fetch('/api/demo/status')
+      if (response.ok) {
+        const data = await response.json()
+        setDemoStatus(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch demo status:', error)
+    }
+  }
+
+  const loadDemo = async () => {
+    setLoading(prev => ({ ...prev, loadDemo: true }))
+    setResults(prev => ({ ...prev, loadDemo: null }))
+
+    try {
+      const response = await fetch('/api/demo/load', { method: 'POST' })
+      const data = await response.json()
+
+      if (response.ok) {
+        setResults(prev => ({ ...prev, loadDemo: { success: true, message: data.message, details: data.stats } }))
+        toast({
+          variant: 'success',
+          title: 'Demo Content Loaded',
+          description: data.message,
+        })
+        fetchDemoStatus()
+      } else {
+        setResults(prev => ({ ...prev, loadDemo: { success: false, message: data.error } }))
+        toast({
+          variant: 'destructive',
+          title: 'Failed to load demo',
+          description: data.error,
+        })
+      }
+    } catch (error: any) {
+      setResults(prev => ({ ...prev, loadDemo: { success: false, message: error.message } }))
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      })
+    } finally {
+      setLoading(prev => ({ ...prev, loadDemo: false }))
+    }
+  }
+
+  const clearDemo = async () => {
+    setLoading(prev => ({ ...prev, clearDemo: true }))
+    setResults(prev => ({ ...prev, clearDemo: null }))
+
+    try {
+      const response = await fetch('/api/demo/clear', { method: 'DELETE' })
+      const data = await response.json()
+
+      if (response.ok) {
+        setResults(prev => ({ ...prev, clearDemo: { success: true, message: data.message, details: data.stats } }))
+        toast({
+          variant: 'success',
+          title: 'Demo Content Cleared',
+          description: data.message,
+        })
+        fetchDemoStatus()
+      } else {
+        setResults(prev => ({ ...prev, clearDemo: { success: false, message: data.error } }))
+        toast({
+          variant: 'destructive',
+          title: 'Failed to clear demo',
+          description: data.error,
+        })
+      }
+    } catch (error: any) {
+      setResults(prev => ({ ...prev, clearDemo: { success: false, message: error.message } }))
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      })
+    } finally {
+      setLoading(prev => ({ ...prev, clearDemo: false }))
+    }
+  }
 
   const runTool = async (toolName: string, endpoint: string) => {
     setLoading(prev => ({ ...prev, [toolName]: true }))
@@ -393,6 +493,100 @@ export default function ToolsPage() {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Demo Content Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <BeakerIcon className="h-5 w-5" />
+          Demo Content
+        </h2>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BeakerIcon className="h-5 w-5" />
+              Sample Bookmarks & Services
+            </CardTitle>
+            <CardDescription>
+              Test drive Faux|Dash with pre-populated demo data including bookmarks, services,
+              and 30 days of sample analytics. Demo content is marked and can be cleared
+              without affecting your real data.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {demoStatus && (
+              <div className={`text-sm p-3 rounded ${
+                demoStatus.hasDemo
+                  ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                  : 'bg-muted text-muted-foreground'
+              }`}>
+                {demoStatus.hasDemo ? (
+                  <>
+                    <span className="font-medium">Demo content loaded:</span>
+                    <div className="mt-1 text-xs grid grid-cols-2 gap-1">
+                      <span>Bookmark categories: {demoStatus.stats.bookmarkCategories}</span>
+                      <span>Bookmarks: {demoStatus.stats.bookmarks}</span>
+                      <span>Service categories: {demoStatus.stats.serviceCategories}</span>
+                      <span>Services: {demoStatus.stats.services}</span>
+                      <span className="col-span-2">Demo pageviews: {demoStatus.stats.pageviews}</span>
+                    </div>
+                  </>
+                ) : (
+                  'No demo content loaded'
+                )}
+              </div>
+            )}
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Button
+                onClick={loadDemo}
+                disabled={loading.loadDemo || loading.clearDemo || demoStatus?.hasDemo}
+                className="w-full"
+              >
+                {loading.loadDemo ? (
+                  <>
+                    <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                    Loading Demo...
+                  </>
+                ) : (
+                  <>
+                    <BeakerIcon className="h-4 w-4 mr-2" />
+                    Load Demo Content
+                  </>
+                )}
+              </Button>
+
+              <Button
+                onClick={clearDemo}
+                disabled={loading.loadDemo || loading.clearDemo || !demoStatus?.hasDemo}
+                variant="outline"
+                className="w-full"
+              >
+                {loading.clearDemo ? (
+                  <>
+                    <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                    Clearing Demo...
+                  </>
+                ) : (
+                  <>
+                    <TrashIcon className="h-4 w-4 mr-2" />
+                    Clear Demo Content
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {(results.loadDemo || results.clearDemo) && (
+              <div className={`text-sm p-3 rounded ${
+                (results.loadDemo?.success || results.clearDemo?.success)
+                  ? 'bg-green-500/10 text-green-600'
+                  : 'bg-red-500/10 text-red-600'
+              }`}>
+                <p>{results.loadDemo?.message || results.clearDemo?.message}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Maintenance Tools Section */}

@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getDb } from '@/db';
 import { serviceCategories, services } from '@/db/schema';
-import { eq, and, asc, desc } from 'drizzle-orm';
+import { eq, and, asc, desc, inArray } from 'drizzle-orm';
 import { cacheGet, cacheSet, cacheDel } from '@/lib/redis';
 
 export async function GET(request: NextRequest) {
@@ -32,51 +32,59 @@ export async function GET(request: NextRequest) {
     categoriesData = categoriesData.filter((cat: any) => cat.isVisible);
   }
 
-  // Get services for each category
-  const categoriesWithServices = await Promise.all(
-    categoriesData.map(async (category: any) => {
-      // Determine sorting based on category.sortBy
-      let orderByClause;
-      switch (category.sortBy) {
-        case 'name_asc':
-          orderByClause = asc(services.name);
-          break;
-        case 'name_desc':
-          orderByClause = desc(services.name);
-          break;
-        case 'clicks_asc':
-          orderByClause = asc(services.clickCount);
-          break;
-        case 'clicks_desc':
-          orderByClause = desc(services.clickCount);
-          break;
-        case 'order':
-        default:
-          orderByClause = asc(services.order);
-          break;
-      }
+  // Fetch all services in a single query (fixes N+1 problem)
+  const categoryIds = categoriesData.map((cat: any) => cat.id);
+  let allServices = categoryIds.length > 0
+    ? await db.select().from(services).where(
+        categoryIds.length === 1
+          ? eq(services.categoryId, categoryIds[0])
+          : inArray(services.categoryId, categoryIds)
+      )
+    : [];
 
-      let servicesQuery = db
-        .select()
-        .from(services)
-        .where(eq(services.categoryId, category.id))
-        .orderBy(orderByClause);
+  // Filter services based on auth
+  if (!session) {
+    allServices = allServices.filter((svc: any) => !svc.requiresAuth && svc.isVisible);
+  } else {
+    allServices = allServices.filter((svc: any) => svc.isVisible);
+  }
 
-      let servicesData = await servicesQuery;
+  // Group services by categoryId
+  const servicesByCategory = new Map<number, any[]>();
+  allServices.forEach((svc: any) => {
+    const catId = svc.categoryId;
+    if (!servicesByCategory.has(catId)) {
+      servicesByCategory.set(catId, []);
+    }
+    servicesByCategory.get(catId)!.push(svc);
+  });
 
-      // Filter services based on auth
-      if (!session) {
-        servicesData = servicesData.filter((svc: any) => !svc.requiresAuth && svc.isVisible);
-      } else {
-        servicesData = servicesData.filter((svc: any) => svc.isVisible);
-      }
+  // Sort services per category based on category.sortBy setting
+  const sortServices = (items: any[], sortBy: string) => {
+    const sorted = [...items];
+    switch (sortBy) {
+      case 'name_asc':
+        return sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      case 'name_desc':
+        return sorted.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+      case 'clicks_asc':
+        return sorted.sort((a, b) => (a.clickCount || 0) - (b.clickCount || 0));
+      case 'clicks_desc':
+        return sorted.sort((a, b) => (b.clickCount || 0) - (a.clickCount || 0));
+      case 'order':
+      default:
+        return sorted.sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
+  };
 
-      return {
-        ...category,
-        services: servicesData,
-      };
-    })
-  );
+  // Build final result with sorted services
+  const categoriesWithServices = categoriesData.map((category: any) => {
+    const catServices = servicesByCategory.get(category.id) || [];
+    return {
+      ...category,
+      services: sortServices(catServices, category.sortBy),
+    };
+  });
 
   // Cache for 5 minutes
   await cacheSet(cacheKey, categoriesWithServices, 300);

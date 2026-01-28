@@ -95,6 +95,7 @@ $RUN_CMD node /app/scripts/migrate-add-uncategorized.js
 $RUN_CMD node /app/scripts/migrate-rename-maincolumns.js
 $RUN_CMD node /app/scripts/migrate-add-open-all.js
 $RUN_CMD node /app/scripts/migrate-add-geo-cache.js
+$RUN_CMD node /app/scripts/migrate-add-demo-flag.js
 echo "Migrations completed"
 
 # -----------------------------------------------------------------------------

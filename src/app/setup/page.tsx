@@ -14,7 +14,9 @@ import {
   ArrowRightIcon,
   BookmarkIcon,
   Cog6ToothIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  BeakerIcon,
+  DocumentPlusIcon
 } from '@heroicons/react/24/outline'
 
 export default function SetupPage() {
@@ -22,6 +24,7 @@ export default function SetupPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [loadingDemo, setLoadingDemo] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [formData, setFormData] = useState({
@@ -292,49 +295,88 @@ export default function SetupPage() {
           </Card>
         )}
 
-        {/* Step 3: Success */}
+        {/* Step 3: Demo Choice */}
         {step === 3 && success && (
           <Card className="border-green-500/20 bg-slate-800/50 backdrop-blur">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4">
                 <CheckCircleIcon className="h-16 w-16 text-green-500" />
               </div>
-              <CardTitle className="text-white">Setup Complete!</CardTitle>
+              <CardTitle className="text-white">Account Created!</CardTitle>
               <CardDescription>
-                Your admin account has been created successfully.
+                How would you like to get started?
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="p-4 bg-slate-700/50 rounded-lg space-y-3">
-                <h3 className="text-white font-semibold">Next Steps:</h3>
-                <ul className="space-y-2 text-sm text-gray-300">
-                  <li className="flex items-start gap-2">
-                    <span className="text-purple-400">1.</span>
-                    <span>Log in with your new admin account</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-purple-400">2.</span>
-                    <span>Go to <strong>Admin &gt; Content</strong> to add bookmarks and services</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-purple-400">3.</span>
-                    <span>Customize the look in <strong>Admin &gt; Settings</strong></span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-purple-400">4.</span>
-                    <span>Check <strong>Admin &gt; Analytics</strong> to track usage</span>
-                  </li>
-                </ul>
+              {error && (
+                <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  onClick={async () => {
+                    setError('')
+                    setLoadingDemo(true)
+                    try {
+                      // First sign in so we have a session
+                      const signInRes = await fetch('/api/auth/callback/credentials', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          email: formData.email,
+                          password: formData.password,
+                          redirect: false
+                        })
+                      })
+
+                      // Load demo content
+                      const response = await fetch('/api/demo/load', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                      })
+
+                      if (!response.ok) {
+                        const data = await response.json()
+                        throw new Error(data.error || 'Failed to load demo content')
+                      }
+
+                      router.push('/login?demo=loaded')
+                    } catch (err: any) {
+                      setError(err.message || 'Failed to load demo content')
+                    } finally {
+                      setLoadingDemo(false)
+                    }
+                  }}
+                  disabled={loadingDemo}
+                  className="p-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 hover:from-purple-600/30 hover:to-blue-600/30 border border-purple-500/30 rounded-lg text-left transition-all disabled:opacity-50"
+                >
+                  <BeakerIcon className="h-10 w-10 text-purple-400 mb-3" />
+                  <h3 className="text-white font-semibold text-lg mb-1">
+                    {loadingDemo ? 'Loading Demo...' : 'Load Demo Data'}
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    Explore Faux|Dash with sample bookmarks, services, and 30 days of analytics data
+                  </p>
+                </button>
+
+                <button
+                  onClick={() => router.push('/login')}
+                  disabled={loadingDemo}
+                  className="p-6 bg-slate-700/50 hover:bg-slate-700/70 border border-slate-600 rounded-lg text-left transition-all disabled:opacity-50"
+                >
+                  <DocumentPlusIcon className="h-10 w-10 text-gray-400 mb-3" />
+                  <h3 className="text-white font-semibold text-lg mb-1">Start Fresh</h3>
+                  <p className="text-sm text-gray-400">
+                    Begin with an empty dashboard and add your own content
+                  </p>
+                </button>
               </div>
 
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={() => router.push('/login')}
-              >
-                Go to Login
-                <ArrowRightIcon className="h-4 w-4 ml-2" />
-              </Button>
+              <p className="text-xs text-gray-500 text-center">
+                Demo content can be cleared at any time from Admin &gt; Tools
+              </p>
             </CardContent>
           </Card>
         )}

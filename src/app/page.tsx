@@ -10,6 +10,7 @@ import { Header } from '@/components/header'
 import { ServicesSection } from '@/components/services-section'
 import { getTimeBasedWelcomeMessage } from '@/lib/datetime'
 import { substituteVariables } from '@/lib/template'
+import { BeakerIcon } from '@heroicons/react/24/outline'
 
 interface Bookmark {
   id: number
@@ -332,7 +333,7 @@ export default function HomePage() {
           </>
         )}
 
-        {categories.length === 0 && (
+        {categories.length === 0 && serviceCategories.length === 0 && (
           <div className="text-center py-20">
             {session ? (
               <>
@@ -343,13 +344,44 @@ export default function HomePage() {
                 </div>
                 <p className="text-muted-foreground text-lg mb-2">No bookmarks yet</p>
                 {(session.user as any)?.isAdmin && (
-                  <p className="text-sm text-muted-foreground">
-                    Go to{' '}
-                    <a href="/admin" className="text-primary hover:underline font-medium">
-                      admin panel
-                    </a>{' '}
-                    to add your first category
-                  </p>
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Go to{' '}
+                      <a href="/admin" className="text-primary hover:underline font-medium">
+                        admin panel
+                      </a>{' '}
+                      to add your first category
+                    </p>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-sm text-muted-foreground">or</span>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await fetch('/api/demo/load', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' }
+                          })
+                          if (response.ok) {
+                            window.location.reload()
+                          } else {
+                            const data = await response.json()
+                            alert(data.error || 'Failed to load demo content')
+                          }
+                        } catch (err) {
+                          console.error('Failed to load demo:', err)
+                          alert('Failed to load demo content')
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg transition-colors"
+                    >
+                      <BeakerIcon className="h-5 w-5" />
+                      Load Demo Content
+                    </button>
+                    <p className="text-xs text-muted-foreground">
+                      Explore with sample data (can be cleared anytime)
+                    </p>
+                  </div>
                 )}
               </>
             ) : (
