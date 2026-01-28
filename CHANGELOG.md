@@ -5,6 +5,12 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.35] - 2026-01-28
+
+### Fixed
+- **Memory leak in toast system**: Reduced toast removal delay from ~17 minutes to 5 seconds, preventing memory accumulation
+- **Toast useEffect dependency**: Fixed listener leak that could cause memory issues over time
+
 ## [0.5.34] - 2026-01-28
 
 ### Added
@@ -12,8 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **DEBUG_IP environment variable**: Enable IP detection logging for troubleshooting geolocation
 
 ### Fixed
-- **Memory leak in toast system**: Reduced toast removal delay from ~17 minutes to 5 seconds, preventing memory accumulation
-- **Toast useEffect dependency**: Fixed listener leak that could cause memory issues over time
 - **Search bar in header**: Now displays correctly even when date/time is enabled
 - **Cloudflare IP detection**: Improved header parsing with support for `True-Client-IP` and better handling of X-Forwarded-For chains
 - **Private IP filtering**: IP detection now skips private/internal IPs when looking for real client IP
