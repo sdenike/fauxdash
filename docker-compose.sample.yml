@@ -32,6 +32,14 @@ services:
       - NODE_ENV=production
 
       # -----------------------------------------------------------------------
+      # User/Group ID (for volume permissions)
+      # -----------------------------------------------------------------------
+      # Set these to match your host user's UID/GID (run `id` to check)
+      # Default: 1000:1000
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+
+      # -----------------------------------------------------------------------
       # Database Configuration
       # -----------------------------------------------------------------------
       # Options: sqlite (default), postgres, mysql
