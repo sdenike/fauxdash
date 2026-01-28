@@ -5,6 +5,32 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-01-28
+
+### Added
+- **Demo Content System**: Allow new users to explore Faux|Dash with pre-populated sample data
+  - Load demo bookmarks, services, and 30 days of analytics in one click
+  - Demo choice offered during setup wizard after account creation
+  - "Load Demo Content" button shown on empty dashboard for admins
+  - New Demo Content section in Admin > Tools for loading/clearing
+  - Demo content marked with `isDemo` flag for selective clearing
+  - Clear demo data without affecting real user content
+  - Demo items use selfh.st icons for realistic appearance
+- **Demo API endpoints**:
+  - `POST /api/demo/load` - Load all demo content
+  - `DELETE /api/demo/clear` - Remove all demo-flagged content
+  - `GET /api/demo/status` - Check if demo content exists
+
+### Changed
+- **Performance: N+1 Query Fix**: Categories and service-categories APIs now use single query with memory grouping
+  - `/api/categories` reduced from N+1 queries to 2 queries
+  - `/api/service-categories` reduced from N+1 queries to 2 queries
+  - Sorting now done in memory after single bulk fetch
+
+### Fixed
+- Memory audit verified all timer/interval cleanup is correct
+- Caching strategy audit confirmed proper Redis TTL and invalidation
+
 ## [0.5.37] - 2026-01-28
 
 ### Added

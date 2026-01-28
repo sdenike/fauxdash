@@ -109,6 +109,7 @@ const createCategoriesTable = () => {
     autoExpanded: integer('auto_expanded', { mode: 'boolean' }).notNull().default(false),
     showOpenAll: integer('show_open_all', { mode: 'boolean' }).notNull().default(false),
     sortBy: text('sort_by').default('order'),
+    isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
   });
@@ -162,6 +163,7 @@ const createBookmarksTable = () => {
     isVisible: integer('is_visible', { mode: 'boolean' }).notNull().default(true),
     requiresAuth: integer('requires_auth', { mode: 'boolean' }).notNull().default(false),
     clickCount: integer('click_count').notNull().default(0),
+    isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
   });
@@ -295,6 +297,7 @@ const createPageviewsTable = () => {
     longitude: integer('longitude'),
     timezone: text('timezone'),
     geoEnriched: integer('geo_enriched', { mode: 'boolean' }).default(false),
+    isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
     timestamp: integer('timestamp', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
   });
 };
@@ -351,6 +354,7 @@ const createServiceCategoriesTable = () => {
     autoExpanded: integer('auto_expanded', { mode: 'boolean' }).notNull().default(false),
     showOpenAll: integer('show_open_all', { mode: 'boolean' }).notNull().default(false),
     sortBy: text('sort_by').default('order'),
+    isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
   });
@@ -404,6 +408,7 @@ const createServicesTable = () => {
     isVisible: integer('is_visible', { mode: 'boolean' }).notNull().default(true),
     requiresAuth: integer('requires_auth', { mode: 'boolean' }).notNull().default(false),
     clickCount: integer('click_count').notNull().default(0),
+    isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
   });
@@ -441,6 +446,7 @@ const createBookmarkClicksTable = () => {
     hourOfDay: integer('hour_of_day').notNull(),
     dayOfWeek: integer('day_of_week').notNull(),
     dayOfMonth: integer('day_of_month').notNull(),
+    isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
   });
 };
 
@@ -476,6 +482,7 @@ const createServiceClicksTable = () => {
     hourOfDay: integer('hour_of_day').notNull(),
     dayOfWeek: integer('day_of_week').notNull(),
     dayOfMonth: integer('day_of_month').notNull(),
+    isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
   });
 };
 
