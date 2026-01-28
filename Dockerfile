@@ -31,8 +31,11 @@ ENV NEXT_TELEMETRY_DISABLED 1
 # Install shadow for usermod/groupmod and su-exec for dropping privileges
 RUN apk add --no-cache shadow su-exec
 
-# Create default user/group with UID/GID 1000 (can be changed at runtime via PUID/PGID)
-RUN addgroup -g 1000 fauxdash && \
+# Remove existing node user/group (UID/GID 1000) and create fauxdash user
+# This allows PUID/PGID to work correctly at runtime
+RUN deluser --remove-home node 2>/dev/null || true && \
+    delgroup node 2>/dev/null || true && \
+    addgroup -g 1000 fauxdash && \
     adduser -u 1000 -G fauxdash -s /bin/sh -D fauxdash
 
 COPY --from=builder /app/public ./public
