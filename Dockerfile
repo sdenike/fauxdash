@@ -14,7 +14,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
 
@@ -25,8 +25,8 @@ RUN node -e "const pkg = require('./package.json'); const fs = require('fs'); fs
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Install shadow for usermod/groupmod and su-exec for dropping privileges
 RUN apk add --no-cache shadow su-exec
@@ -74,8 +74,8 @@ RUN mkdir -p /app/public/favicons && chown -R fauxdash:fauxdash /app/public
 
 EXPOSE 8080
 
-ENV PORT 8080
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=8080
+ENV HOSTNAME="0.0.0.0"
 
 # Default PUID/PGID (can be overridden at runtime)
 ENV PUID=1000
