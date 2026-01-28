@@ -83,6 +83,12 @@ services:
       # - GEOIP_PROVIDER=${GEOIP_PROVIDER:-maxmind}
       # - GEOIP_MAXMIND_LICENSE_KEY=${GEOIP_MAXMIND_LICENSE_KEY}
 
+      # -----------------------------------------------------------------------
+      # Optional: Debug IP detection (for Cloudflare/proxy troubleshooting)
+      # -----------------------------------------------------------------------
+      # Enable to log IP detection headers on each pageview
+      # - DEBUG_IP=true
+
     volumes:
       # Database and configuration storage
       - fauxdash-data:/data

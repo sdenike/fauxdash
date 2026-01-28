@@ -20,6 +20,17 @@ export async function POST(request: NextRequest) {
     const ipAddress = getClientIP(request.headers, 'unknown')
     const ipHash = hashIP(ipAddress)
 
+    // Debug logging for IP detection (helps diagnose Cloudflare issues)
+    if (process.env.DEBUG_IP === 'true') {
+      console.log('[Pageview] IP Detection:', {
+        detected: ipAddress,
+        cfConnectingIp: request.headers.get('cf-connecting-ip'),
+        xForwardedFor: request.headers.get('x-forwarded-for'),
+        xRealIp: request.headers.get('x-real-ip'),
+        cfIpCountry: request.headers.get('cf-ipcountry'),
+      })
+    }
+
     // Insert pageview immediately (non-blocking for geo enrichment)
     const [inserted] = await db.insert(pageviews).values({
       path,

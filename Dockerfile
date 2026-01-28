@@ -6,7 +6,7 @@ RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci && npm cache clean --force
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -29,48 +29,25 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Install shadow for usermod/groupmod and su-exec for dropping privileges
-RUN apk add --no-cache shadow su-exec
-
-# Remove existing node user/group (UID/GID 1000) and create fauxdash user
-# This allows PUID/PGID to work correctly at runtime
-RUN deluser --remove-home node 2>/dev/null || true && \
+# Then set up user in same layer to reduce image size
+RUN apk add --no-cache shadow su-exec && \
+    deluser --remove-home node 2>/dev/null || true && \
     delgroup node 2>/dev/null || true && \
     addgroup -g 1000 fauxdash && \
     adduser -u 1000 -G fauxdash -s /bin/sh -D fauxdash
 
+# Copy application files
 COPY --from=builder /app/public ./public
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown fauxdash:fauxdash .next
-
-# Automatically leverage output traces to reduce image size
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-
-# Copy initialization scripts
-COPY scripts/docker-entrypoint.sh /app/scripts/
-COPY scripts/init-db.js /app/scripts/
-COPY scripts/migrate-add-description.js /app/scripts/
-COPY scripts/migrate-add-columns.js /app/scripts/
-COPY scripts/migrate-add-pageviews.js /app/scripts/
-COPY scripts/migrate-add-services.js /app/scripts/
-COPY scripts/migrate-add-service-categories.js /app/scripts/
-COPY scripts/migrate-add-accordion.js /app/scripts/
-COPY scripts/migrate-add-sorting-analytics.js /app/scripts/
-COPY scripts/migrate-add-uncategorized.js /app/scripts/
-COPY scripts/migrate-rename-maincolumns.js /app/scripts/
-COPY scripts/migrate-add-open-all.js /app/scripts/
-COPY scripts/migrate-add-geo-cache.js /app/scripts/
 COPY --from=builder /app/CHANGELOG.md /app/CHANGELOG.md
 COPY --from=builder /app/build-info.json /app/build-info.json
-RUN chmod +x /app/scripts/docker-entrypoint.sh
+COPY scripts/ /app/scripts/
 
-# Create data directory for SQLite and logs
-RUN mkdir -p /data /data/logs && chown -R fauxdash:fauxdash /data
-
-# Create favicons directory with write permissions
-RUN mkdir -p /app/public/favicons && chown -R fauxdash:fauxdash /app/public
+# Set up directories and permissions in one layer
+RUN mkdir -p .next /data /data/logs /app/public/favicons && \
+    chown -R fauxdash:fauxdash .next /data /app/public && \
+    chmod +x /app/scripts/docker-entrypoint.sh
 
 EXPOSE 8080
 

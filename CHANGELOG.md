@@ -5,6 +5,23 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.34] - 2026-01-28
+
+### Added
+- **Debug endpoint**: `/api/debug/headers` to diagnose Cloudflare/proxy IP detection issues (requires admin login)
+- **DEBUG_IP environment variable**: Enable IP detection logging for troubleshooting geolocation
+
+### Fixed
+- **Search bar in header**: Now displays correctly even when date/time is enabled
+- **Cloudflare IP detection**: Improved header parsing with support for `True-Client-IP` and better handling of X-Forwarded-For chains
+- **Private IP filtering**: IP detection now skips private/internal IPs when looking for real client IP
+
+### Changed
+- **Docker image optimization**: Consolidated layers and reduced image size
+  - Combined RUN commands to reduce layer count
+  - Consolidated script COPY into single command
+  - Added npm cache cleanup
+
 ## [0.5.33] - 2026-01-28
 
 ### Added

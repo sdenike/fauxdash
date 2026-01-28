@@ -56,21 +56,36 @@ export function isPrivateIP(ip: string): boolean {
 /**
  * Get client IP from request headers (proxy-aware)
  * Checks common proxy headers in order of precedence
+ *
+ * Header priority:
+ * 1. CF-Connecting-IP (Cloudflare - most reliable)
+ * 2. True-Client-IP (Cloudflare Enterprise / some configs)
+ * 3. X-Real-IP (nginx/generic proxy)
+ * 4. X-Forwarded-For (standard proxy header - first IP)
  */
 export function getClientIP(headers: Headers, fallbackIP?: string): string {
-  // Cloudflare
+  // Cloudflare standard header (set by Cloudflare edge)
   const cfIP = headers.get('cf-connecting-ip')
-  if (cfIP) return cfIP
+  if (cfIP && !isPrivateIP(cfIP)) return cfIP
+
+  // Cloudflare Enterprise / True-Client-IP header
+  const trueClientIP = headers.get('true-client-ip')
+  if (trueClientIP && !isPrivateIP(trueClientIP)) return trueClientIP
 
   // nginx/generic reverse proxy
   const realIP = headers.get('x-real-ip')
-  if (realIP) return realIP
+  if (realIP && !isPrivateIP(realIP)) return realIP
 
-  // X-Forwarded-For (take first IP, which is the client)
+  // X-Forwarded-For (take first non-private IP, which should be the client)
   const forwardedFor = headers.get('x-forwarded-for')
   if (forwardedFor) {
-    const firstIP = forwardedFor.split(',')[0].trim()
-    if (firstIP) return firstIP
+    // May contain multiple IPs: "client, proxy1, proxy2"
+    const ips = forwardedFor.split(',').map(ip => ip.trim())
+    for (const ip of ips) {
+      if (ip && !isPrivateIP(ip)) return ip
+    }
+    // If all are private, return the first one anyway
+    if (ips[0]) return ips[0]
   }
 
   // Fallback

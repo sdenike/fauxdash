@@ -189,21 +189,24 @@ export function Header() {
             )}
           </div>
 
-          {session && dateTimeEnabled && dateTimePosition === 'center' && (
-            <DateTimeDisplay
-              dateFormat={dateFormat}
-              timeEnabled={timeEnabled}
-              timeFormat={timeFormat}
-              showSeconds={showSeconds}
-              displayMode={dateTimeDisplayMode}
-            />
-          )}
+          {/* Center section: search bar and/or date-time */}
+          <div className="flex-1 flex items-center justify-center gap-4">
+            {session && searchEnabled && searchInHeader && (
+              <div className="flex-1 max-w-xl">
+                <SearchBar />
+              </div>
+            )}
 
-          {session && searchEnabled && searchInHeader && !dateTimeEnabled && (
-            <div className="flex-1 max-w-2xl">
-              <SearchBar />
-            </div>
-          )}
+            {session && dateTimeEnabled && dateTimePosition === 'center' && (
+              <DateTimeDisplay
+                dateFormat={dateFormat}
+                timeEnabled={timeEnabled}
+                timeFormat={timeFormat}
+                showSeconds={showSeconds}
+                displayMode={dateTimeDisplayMode}
+              />
+            )}
+          </div>
 
           <div className="flex items-center space-x-2">
             {session && dateTimeEnabled && dateTimePosition === 'right' && (
