@@ -53,8 +53,15 @@
   * {
     @apply border-border;
   }
-  body {
+  html {
     @apply bg-background text-foreground;
+  }
+  body {
+    @apply text-foreground;
+    background: transparent;
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
   }
 }
 
@@ -66,4 +73,62 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Mobile touch targets - minimum 44px for accessibility */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Safe area padding for notched devices */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .pt-safe {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+  .pl-safe {
+    padding-left: max(0px, env(safe-area-inset-left));
+  }
+  .pr-safe {
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* Background image styles */
+.background-image-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Main content wrapper should be above background */
+main, .main-content {
+  position: relative;
+  z-index: 1;
+}
+
+.bg-mode-cover {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.bg-mode-contain {
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.bg-mode-center {
+  background-size: auto;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.bg-mode-tile {
+  background-size: auto;
+  background-repeat: repeat;
 }

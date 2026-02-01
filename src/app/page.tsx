@@ -11,6 +11,18 @@ import { ServicesSection } from '@/components/services-section'
 import { getTimeBasedWelcomeMessage } from '@/lib/datetime'
 import { substituteVariables } from '@/lib/template'
 import { BeakerIcon } from '@heroicons/react/24/outline'
+import { cn } from '@/lib/utils'
+
+// Generate responsive grid classes based on max columns setting
+function getResponsiveGridClasses(maxColumns: number): string {
+  const classes = ['grid', 'gap-6', 'grid-cols-1']
+  if (maxColumns >= 2) classes.push('sm:grid-cols-2')
+  if (maxColumns >= 3) classes.push('md:grid-cols-3')
+  if (maxColumns >= 4) classes.push('lg:grid-cols-4')
+  if (maxColumns >= 5) classes.push('xl:grid-cols-5')
+  if (maxColumns >= 6) classes.push('2xl:grid-cols-6')
+  return classes.join(' ')
+}
 
 interface Bookmark {
   id: number
@@ -223,12 +235,7 @@ export default function HomePage() {
                 <h2 className="text-2xl font-bold text-foreground mb-6 pb-2 border-b-2 border-primary/20">
                   Services
                 </h2>
-                <div
-                  className="grid gap-6"
-                  style={{
-                    gridTemplateColumns: `repeat(${servicesColumns}, 1fr)`
-                  }}
-                >
+                <div className={getResponsiveGridClasses(servicesColumns)}>
                   {serviceCategories.map((category) => (
                     <ServicesSection
                       key={category.id}
@@ -252,12 +259,7 @@ export default function HomePage() {
                 <h2 className="text-2xl font-bold text-foreground mb-6 pb-2 border-b-2 border-primary/20">
                   Bookmarks
                 </h2>
-                <div
-                  className="grid gap-6"
-                  style={{
-                    gridTemplateColumns: `repeat(${bookmarksColumns}, 1fr)`
-                  }}
-                >
+                <div className={getResponsiveGridClasses(bookmarksColumns)}>
                   {categories.map((category) => (
                     <CategorySection
                       key={category.id}
@@ -281,12 +283,7 @@ export default function HomePage() {
                 <h2 className="text-2xl font-bold text-foreground mb-6 pb-2 border-b-2 border-primary/20">
                   Bookmarks
                 </h2>
-                <div
-                  className="grid gap-6"
-                  style={{
-                    gridTemplateColumns: `repeat(${bookmarksColumns}, 1fr)`
-                  }}
-                >
+                <div className={getResponsiveGridClasses(bookmarksColumns)}>
                   {categories.map((category) => (
                     <CategorySection
                       key={category.id}
@@ -308,12 +305,7 @@ export default function HomePage() {
                 <h2 className="text-2xl font-bold text-foreground mb-6 pb-2 border-b-2 border-primary/20">
                   Services
                 </h2>
-                <div
-                  className="grid gap-6"
-                  style={{
-                    gridTemplateColumns: `repeat(${servicesColumns}, 1fr)`
-                  }}
-                >
+                <div className={getResponsiveGridClasses(servicesColumns)}>
                   {serviceCategories.map((category) => (
                     <ServicesSection
                       key={category.id}

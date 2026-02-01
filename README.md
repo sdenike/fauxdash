@@ -22,6 +22,13 @@ A modern, self-hosted homepage dashboard for managing bookmarks and services. Bu
 - **Weather Widget**: Display weather for multiple locations with auto-rotation
 - **Click Analytics**: Track which bookmarks and services you use most
 
+### Mobile & PWA
+- **Progressive Web App**: Install as a native app on mobile and desktop devices
+- **Offline Support**: Access cached content even without internet connection
+- **Mobile-Responsive**: Adaptive layouts that work on phones, tablets, and desktops
+- **Touch-Friendly**: 44px minimum touch targets and safe area support for notched devices
+- **Add to Home Screen**: Native install prompts for iOS and Android
+
 ### Authentication & Privacy
 - **User Authentication**: Local user authentication with admin access control
 - **Auth-Required Items**: Mark specific bookmarks/services as requiring login to view

@@ -111,3 +111,11 @@ next-env.d.ts
 # docker-compose.yml is the user's local config (not tracked)
 docker-compose.yml
 docker-compose.override.yml
+
+# -------------------------------------------
+# PWA Generated Files
+# -------------------------------------------
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map

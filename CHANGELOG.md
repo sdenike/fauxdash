@@ -5,6 +5,35 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-01-31
+
+### Added
+- **Progressive Web App (PWA) Support**: Install Faux|Dash as a native app on mobile and desktop
+  - Service worker for offline caching
+  - Web app manifest with app icons (8 sizes: 72px-512px)
+  - "Add to Home Screen" install prompt for iOS and Android
+  - Offline fallback page when network unavailable
+  - Standalone display mode without browser chrome
+- **Mobile-Responsive UI**: Full mobile support with adaptive layouts
+  - Responsive homepage grid (1 col mobile → 2 col tablet → up to 6 col desktop)
+  - Admin sidebar with hamburger menu on mobile (slides in/out with backdrop)
+  - Header stacks vertically on mobile with consolidated action buttons
+  - Touch-friendly 44px minimum touch targets for accessibility
+  - Safe area padding for notched devices (iPhone X+, etc.)
+- **PWA Icon Generator**: Script to generate app icons (`scripts/generate-pwa-icons.js`)
+
+### Changed
+- Column settings now act as *maximum* columns - responsive design uses fewer columns on smaller screens
+- Admin layout mobile header with hamburger button appears below 768px breakpoint
+- Header search bar becomes full-width on mobile
+
+### Technical
+- Added `@ducanh2912/next-pwa` package for service worker generation
+- Added viewport configuration with `viewportFit: 'cover'` for notched devices
+- Added `.touch-target`, `.pb-safe`, `.pt-safe`, `.pl-safe`, `.pr-safe` CSS utilities
+- PWA disabled in development mode to avoid caching issues
+- Added PWA generated files to `.gitignore` (sw.js, workbox files)
+
 ## [0.6.0] - 2026-01-28
 
 ### Added
@@ -389,7 +418,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **0.3.0** - Services feature, complete MDI library, pageview analytics (Current)
+- **0.7.0** - Mobile-responsive UI, PWA support, offline mode (Current)
+- **0.6.0** - Demo content system, N+1 query performance fix
+- **0.5.x** - Release automation, update notifications, memory leak fixes
+- **0.3.0** - Services feature, complete MDI library, pageview analytics
 - **0.2.0** - Heroicons integration, settings UI, weather configuration
 - **0.1.0** - Initial release
 
