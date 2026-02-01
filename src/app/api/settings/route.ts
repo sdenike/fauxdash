@@ -45,6 +45,11 @@ export async function GET(request: NextRequest) {
     themeColor: settingsObj.themeColor || 'Slate',
     siteTitle: settingsObj.siteTitle || 'Faux|Dash',
     siteTitleEnabled: settingsObj.siteTitleEnabled === 'false' ? false : true,
+    // Background Image
+    backgroundImage: settingsObj.backgroundImage || '',
+    backgroundDisplayMode: settingsObj.backgroundDisplayMode || 'cover',
+    backgroundOpacity: parseInt(settingsObj.backgroundOpacity || '100'),
+    backgroundShowLoggedOut: settingsObj.backgroundShowLoggedOut === 'true',
     welcomeMessage: settingsObj.welcomeMessage || 'Welcome back',
     welcomeMessageEnabled: settingsObj.welcomeMessageEnabled === 'false' ? false : true,
     welcomeMessageTimeBased: settingsObj.welcomeMessageTimeBased === 'true' || false,
@@ -152,6 +157,11 @@ export async function POST(request: NextRequest) {
   if (body.themeColor !== undefined) settingsToSave.push({ key: 'themeColor', value: body.themeColor || 'Slate' });
   if (body.siteTitle !== undefined) settingsToSave.push({ key: 'siteTitle', value: body.siteTitle || 'Faux|Dash' });
   if (body.siteTitleEnabled !== undefined) settingsToSave.push({ key: 'siteTitleEnabled', value: body.siteTitleEnabled.toString() });
+  // Background Image
+  if (body.backgroundImage !== undefined) settingsToSave.push({ key: 'backgroundImage', value: body.backgroundImage || '' });
+  if (body.backgroundDisplayMode !== undefined) settingsToSave.push({ key: 'backgroundDisplayMode', value: body.backgroundDisplayMode || 'cover' });
+  if (body.backgroundOpacity !== undefined) settingsToSave.push({ key: 'backgroundOpacity', value: body.backgroundOpacity.toString() });
+  if (body.backgroundShowLoggedOut !== undefined) settingsToSave.push({ key: 'backgroundShowLoggedOut', value: body.backgroundShowLoggedOut.toString() });
   if (body.welcomeMessage !== undefined) settingsToSave.push({ key: 'welcomeMessage', value: body.welcomeMessage || 'Welcome back' });
   if (body.welcomeMessageEnabled !== undefined) settingsToSave.push({ key: 'welcomeMessageEnabled', value: body.welcomeMessageEnabled.toString() });
   if (body.welcomeMessageTimeBased !== undefined) settingsToSave.push({ key: 'welcomeMessageTimeBased', value: body.welcomeMessageTimeBased.toString() });

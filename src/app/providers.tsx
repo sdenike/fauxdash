@@ -4,6 +4,7 @@ import { SessionProvider } from 'next-auth/react'
 import { ThemeProvider } from 'next-themes'
 import { ThemeSync } from '@/components/theme-sync'
 import { Toaster } from '@/components/ui/toaster'
+import { BackgroundImage } from '@/components/background-image'
 import { PWAInstallPrompt } from '@/components/pwa-install-prompt'
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -16,6 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         <ThemeSync />
+        <BackgroundImage />
         {children}
         <Toaster />
         <PWAInstallPrompt />

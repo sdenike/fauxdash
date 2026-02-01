@@ -18,6 +18,11 @@ export interface Settings {
   themeColor: string
   siteTitle: string
   siteTitleEnabled: boolean
+  // Background Image
+  backgroundImage: string
+  backgroundDisplayMode: 'cover' | 'contain' | 'center' | 'tile'
+  backgroundOpacity: number
+  backgroundShowLoggedOut: boolean
   welcomeMessage: string
   welcomeMessageEnabled: boolean
   welcomeMessageTimeBased: boolean
@@ -110,6 +115,11 @@ export const defaultSettings: Settings = {
   themeColor: 'Slate',
   siteTitle: 'Faux|Dash',
   siteTitleEnabled: true,
+  // Background Image
+  backgroundImage: '',
+  backgroundDisplayMode: 'cover',
+  backgroundOpacity: 100,
+  backgroundShowLoggedOut: false,
   welcomeMessage: 'Welcome back',
   welcomeMessageEnabled: true,
   welcomeMessageTimeBased: false,

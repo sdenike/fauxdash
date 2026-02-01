@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { THEMES, getThemeByName, applyTheme } from '@/lib/themes'
 import { SettingsTabProps } from './types'
+import { BackgroundImageSettings } from './background-image-settings'
 
 export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) {
   const { setTheme: setNextTheme, resolvedTheme } = useTheme()
@@ -44,6 +45,15 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
       body: JSON.stringify({ themeColor: value }),
     })
   }, [settings, onSettingsChange, resolvedTheme])
+
+  const handleBackgroundChange = useCallback((changes: {
+    backgroundImage?: string
+    backgroundDisplayMode?: 'cover' | 'contain' | 'center' | 'tile'
+    backgroundOpacity?: number
+    backgroundShowLoggedOut?: boolean
+  }) => {
+    onSettingsChange({ ...settings, ...changes })
+  }, [settings, onSettingsChange])
 
   return (
     <div className="space-y-4">
@@ -128,6 +138,25 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
               />
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Background Image Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Background Image</CardTitle>
+          <CardDescription>
+            Set a custom background image for your dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BackgroundImageSettings
+            backgroundImage={settings.backgroundImage}
+            displayMode={settings.backgroundDisplayMode}
+            opacity={settings.backgroundOpacity}
+            showLoggedOut={settings.backgroundShowLoggedOut}
+            onChange={handleBackgroundChange}
+          />
         </CardContent>
       </Card>
 
