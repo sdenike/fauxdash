@@ -6,7 +6,12 @@ RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci && npm cache clean --force
+
+# Force native modules to build from source to avoid QEMU emulation issues
+# ARGON2_NO_SIMD disables SIMD optimizations that fail under QEMU ARM64 emulation
+ENV npm_config_build_from_source=true
+
+RUN ARGON2_NO_SIMD=1 npm ci && npm cache clean --force
 
 # Rebuild the source code only when needed
 FROM base AS builder
