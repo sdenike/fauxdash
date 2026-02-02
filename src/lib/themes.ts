@@ -780,11 +780,17 @@ export const DARK_THEMES: Theme[] = THEMES.map((theme) => ({
 
 export const ALL_THEMES = [...THEMES, ...DARK_THEMES, ...STANDALONE_THEMES]
 
+// Convert camelCase to kebab-case for CSS variable names
+function toKebabCase(str: string): string {
+  return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+}
+
 export function applyTheme(theme: Theme) {
   const root = document.documentElement
 
   Object.entries(theme.colors).forEach(([key, value]) => {
-    root.style.setProperty(`--${key}`, value)
+    const cssVarName = toKebabCase(key)
+    root.style.setProperty(`--${cssVarName}`, value)
   })
 }
 
