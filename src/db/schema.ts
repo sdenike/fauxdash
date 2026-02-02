@@ -109,6 +109,7 @@ const createCategoriesTable = () => {
     autoExpanded: integer('auto_expanded', { mode: 'boolean' }).notNull().default(false),
     showOpenAll: integer('show_open_all', { mode: 'boolean' }).notNull().default(false),
     sortBy: text('sort_by').default('order'),
+    showDescriptions: integer('show_descriptions'), // null = inherit, 0 = hide, 1 = show
     isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
@@ -163,6 +164,7 @@ const createBookmarksTable = () => {
     isVisible: integer('is_visible', { mode: 'boolean' }).notNull().default(true),
     requiresAuth: integer('requires_auth', { mode: 'boolean' }).notNull().default(false),
     clickCount: integer('click_count').notNull().default(0),
+    showDescription: integer('show_description'), // null = inherit, 0 = hide, 1 = show
     isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
@@ -354,6 +356,7 @@ const createServiceCategoriesTable = () => {
     autoExpanded: integer('auto_expanded', { mode: 'boolean' }).notNull().default(false),
     showOpenAll: integer('show_open_all', { mode: 'boolean' }).notNull().default(false),
     sortBy: text('sort_by').default('order'),
+    showDescriptions: integer('show_descriptions'), // null = inherit, 0 = hide, 1 = show
     isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
@@ -408,6 +411,7 @@ const createServicesTable = () => {
     isVisible: integer('is_visible', { mode: 'boolean' }).notNull().default(true),
     requiresAuth: integer('requires_auth', { mode: 'boolean' }).notNull().default(false),
     clickCount: integer('click_count').notNull().default(0),
+    showDescription: integer('show_description'), // null = inherit, 0 = hide, 1 = show
     isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),

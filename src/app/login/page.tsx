@@ -22,6 +22,7 @@ function LoginContent() {
   const [loading, setLoading] = useState(false)
   const [oidcEnabled, setOidcEnabled] = useState(false)
   const [oidcProviderName, setOidcProviderName] = useState('OIDC')
+  const [disablePasswordLogin, setDisablePasswordLogin] = useState(false)
   const [smtpConfigured, setSmtpConfigured] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [forgotEmail, setForgotEmail] = useState('')
@@ -43,14 +44,15 @@ function LoginContent() {
           return
         }
 
-        // Fetch settings in parallel
+        // Fetch public settings (for OIDC) and SMTP status in parallel
         Promise.all([
-          fetch('/api/settings', { signal: controller.signal }).then(res => res.json()),
+          fetch('/api/settings/public', { signal: controller.signal }).then(res => res.json()),
           fetch('/api/auth/smtp-status', { signal: controller.signal }).then(res => res.json()),
         ])
-          .then(([settingsData, smtpData]) => {
-            setOidcEnabled(settingsData.oidcEnabled || false)
-            setOidcProviderName(settingsData.oidcProviderName || 'OIDC')
+          .then(([publicSettings, smtpData]) => {
+            setOidcEnabled(publicSettings.oidcEnabled || false)
+            setOidcProviderName(publicSettings.oidcProviderName || 'OIDC')
+            setDisablePasswordLogin(publicSettings.disablePasswordLogin || false)
             setSmtpConfigured(smtpData.configured || false)
           })
       })
@@ -173,82 +175,22 @@ function LoginContent() {
         <CardHeader>
           <CardTitle>Sign In</CardTitle>
           <CardDescription>
-            Enter your credentials to access Faux|Dash
+            {oidcEnabled && disablePasswordLogin
+              ? `Sign in with ${oidcProviderName} to access Faux|Dash`
+              : 'Enter your credentials to access Faux|Dash'
+            }
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit} aria-busy={loading}>
+
+        {/* OIDC-only mode */}
+        {oidcEnabled && disablePasswordLogin ? (
           <CardContent className="space-y-4">
             {error && <AlertMessage variant="error" message={error} />}
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@fauxdash.local"
-                value={email}
-                onChange={handleEmailChange}
-                required
-                autoComplete="email"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={handlePasswordChange}
-                required
-                autoComplete="current-password"
-              />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="rememberMe"
-                  checked={rememberMe}
-                  onCheckedChange={handleRememberMeChange}
-                />
-                <Label htmlFor="rememberMe" className="text-sm font-normal cursor-pointer">
-                  Remember me
-                </Label>
-              </div>
-              {rememberMe && (
-                <Select value={rememberDuration} onValueChange={handleRememberDurationChange}>
-                  <SelectTrigger className="w-[130px] h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">1 week</SelectItem>
-                    <SelectItem value="30">1 month</SelectItem>
-                    <SelectItem value="90">3 months</SelectItem>
-                    <SelectItem value="365">1 year</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            {smtpConfigured && (
-              <div className="text-right">
-                <button
-                  type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="text-sm text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded transition-colors"
-                >
-                  Forgot password?
-                </button>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-col gap-3">
             <Button
-              type="submit"
+              type="button"
               className="w-full"
+              onClick={handleOidcLogin}
               disabled={loading}
-              aria-busy={loading}
             >
               {loading ? (
                 <>
@@ -256,15 +198,117 @@ function LoginContent() {
                   Signing in...
                 </>
               ) : (
-                'Sign In'
+                <>
+                  <svg
+                    className="mr-2 h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                    />
+                  </svg>
+                  Sign in with {oidcProviderName}
+                </>
               )}
             </Button>
+          </CardContent>
+        ) : (
+          /* Standard login form */
+          <form onSubmit={handleSubmit} aria-busy={loading}>
+            <CardContent className="space-y-4">
+              {error && <AlertMessage variant="error" message={error} />}
 
-            {oidcEnabled && (
-              <>
-                <div className="relative w-full">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="admin@fauxdash.local"
+                  value={email}
+                  onChange={handleEmailChange}
+                  required
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="rememberMe"
+                    checked={rememberMe}
+                    onCheckedChange={handleRememberMeChange}
+                  />
+                  <Label htmlFor="rememberMe" className="text-sm font-normal cursor-pointer">
+                    Remember me
+                  </Label>
+                </div>
+                {rememberMe && (
+                  <Select value={rememberDuration} onValueChange={handleRememberDurationChange}>
+                    <SelectTrigger className="w-[130px] h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">1 week</SelectItem>
+                      <SelectItem value="30">1 month</SelectItem>
+                      <SelectItem value="90">3 months</SelectItem>
+                      <SelectItem value="365">1 year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              {smtpConfigured && (
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="flex flex-col gap-3">
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+                aria-busy={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
+              </Button>
+
+              {oidcEnabled && (
+                <>
+                  <div className="relative w-full">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
                     <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
@@ -298,6 +342,7 @@ function LoginContent() {
             )}
           </CardFooter>
         </form>
+        )}
       </Card>
 
       {/* Forgot Password Dialog */}

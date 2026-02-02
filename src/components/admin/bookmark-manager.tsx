@@ -9,6 +9,7 @@ import { Switch } from '../ui/switch'
 import { Textarea } from '../ui/textarea'
 import { Checkbox } from '../ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { PlusIcon, PencilIcon, TrashIcon, ArrowDownTrayIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import { IconSelector } from '../icon-selector'
 import { getIconByName } from '@/lib/icons'
@@ -44,6 +45,7 @@ interface Bookmark {
   isVisible: boolean
   requiresAuth: boolean
   clickCount: number
+  showDescription: number | null // null = inherit, 0 = hide, 1 = show
 }
 
 interface Category {
@@ -197,6 +199,7 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
     categoryId: 0,
     isVisible: true,
     requiresAuth: false,
+    showDescription: null as number | null, // null = inherit, 0 = hide, 1 = show
   })
 
   useEffect(() => {
@@ -320,7 +323,7 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
 
     setIsOpen(false)
     setEditingBookmark(null)
-    setFormData({ name: '', url: '', description: '', icon: '', categoryId: categories[0]?.id || 0, ...defaults })
+    setFormData({ name: '', url: '', description: '', icon: '', categoryId: categories[0]?.id || 0, showDescription: null, ...defaults })
     onBookmarksChange()
   }
 
@@ -334,6 +337,7 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
       categoryId: bookmark.categoryId,
       isVisible: bookmark.isVisible,
       requiresAuth: bookmark.requiresAuth,
+      showDescription: bookmark.showDescription,
     })
 
     // Set original favicon if this bookmark has a favicon
@@ -770,7 +774,7 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
               <DialogTrigger asChild>
                 <Button onClick={() => {
                   setEditingBookmark(null)
-                  setFormData({ name: '', url: '', description: '', icon: '', categoryId: categories[0]?.id || 0, ...defaults })
+                  setFormData({ name: '', url: '', description: '', icon: '', categoryId: categories[0]?.id || 0, showDescription: null, ...defaults })
                 }}>
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Add Bookmark
@@ -959,6 +963,25 @@ export function BookmarkManager({ categories, onBookmarksChange }: BookmarkManag
                       checked={formData.requiresAuth}
                       onCheckedChange={(checked) => setFormData({ ...formData, requiresAuth: checked })}
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="bm-showDescription">Show Description</Label>
+                    <Select
+                      value={formData.showDescription === null ? 'inherit' : formData.showDescription.toString()}
+                      onValueChange={(value) => setFormData({ ...formData, showDescription: value === 'inherit' ? null : parseInt(value) })}
+                    >
+                      <SelectTrigger id="bm-showDescription">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="inherit">Inherit (Use Category/Global Setting)</SelectItem>
+                        <SelectItem value="1">Show</SelectItem>
+                        <SelectItem value="0">Hide</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Whether to show the description for this bookmark
+                    </p>
                   </div>
                 </div>
                 <DialogFooter className="mt-6">

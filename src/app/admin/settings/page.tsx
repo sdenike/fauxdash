@@ -99,10 +99,10 @@ function SettingsContent() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Settings
         </h1>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-muted-foreground">
           Configure your dashboard preferences
         </p>
       </div>

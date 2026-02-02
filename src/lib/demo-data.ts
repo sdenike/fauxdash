@@ -345,14 +345,14 @@ export function generateDemoPageviews(days: number = 30): Array<{
   path: string;
   country: string;
   countryName: string;
-  timestamp: number;
+  timestamp: Date;
   isDemo: boolean;
 }> {
   const pageviews: Array<{
     path: string;
     country: string;
     countryName: string;
-    timestamp: number;
+    timestamp: Date;
     isDemo: boolean;
   }> = [];
   const now = Date.now();
@@ -369,7 +369,7 @@ export function generateDemoPageviews(days: number = 30): Array<{
 
     for (let i = 0; i < dailyPageviews; i++) {
       // Random time during the day
-      const timestamp = Math.floor((dayStart - Math.random() * msPerDay) / 1000);
+      const timestamp = new Date(dayStart - Math.random() * msPerDay);
 
       // Pick a country based on weight distribution
       const geo = pickWeightedRandom(demoGeoDistribution);
@@ -396,7 +396,7 @@ export function generateDemoClicks(
   days: number = 30
 ): Array<{
   itemId: number;
-  clickedAt: number;
+  clickedAt: Date;
   hourOfDay: number;
   dayOfWeek: number;
   dayOfMonth: number;
@@ -404,7 +404,7 @@ export function generateDemoClicks(
 }> {
   const clicks: Array<{
     itemId: number;
-    clickedAt: number;
+    clickedAt: Date;
     hourOfDay: number;
     dayOfWeek: number;
     dayOfMonth: number;
@@ -425,14 +425,13 @@ export function generateDemoClicks(
     for (let i = 0; i < dailyClicks; i++) {
       // Random time during the day
       const clickTime = new Date(dayStart - Math.random() * msPerDay);
-      const clickedAt = Math.floor(clickTime.getTime() / 1000);
 
       // Pick a random item
       const itemId = itemIds[Math.floor(Math.random() * itemIds.length)];
 
       clicks.push({
         itemId,
-        clickedAt,
+        clickedAt: clickTime,
         hourOfDay: clickTime.getHours(),
         dayOfWeek: clickTime.getDay(),
         dayOfMonth: clickTime.getDate(),

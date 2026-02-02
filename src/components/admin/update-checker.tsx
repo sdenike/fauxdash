@@ -41,7 +41,7 @@ export function UpdateChecker({ onChangelogClick }: UpdateCheckerProps) {
     return (
       <button
         onClick={onChangelogClick}
-        className="text-sm font-mono px-2 py-0.5 rounded bg-slate-200/50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-300/50 dark:hover:bg-slate-600/50 transition-colors cursor-pointer"
+        className="text-sm font-mono px-2 py-0.5 rounded bg-muted/50 text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
         title="View changelog"
       >
         v{updateInfo?.currentVersion || '...'}
@@ -54,7 +54,7 @@ export function UpdateChecker({ onChangelogClick }: UpdateCheckerProps) {
       <div className="flex items-center gap-2">
         <button
           onClick={onChangelogClick}
-          className="text-sm font-mono px-2 py-0.5 rounded bg-slate-200/50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-300/50 dark:hover:bg-slate-600/50 transition-colors cursor-pointer"
+          className="text-sm font-mono px-2 py-0.5 rounded bg-muted/50 text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
           title="View changelog"
         >
           v{updateInfo.currentVersion}
@@ -80,7 +80,7 @@ export function UpdateChecker({ onChangelogClick }: UpdateCheckerProps) {
   return (
     <button
       onClick={onChangelogClick}
-      className="text-sm font-mono px-2 py-0.5 rounded bg-slate-200/50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-300/50 dark:hover:bg-slate-600/50 transition-colors cursor-pointer"
+      className="text-sm font-mono px-2 py-0.5 rounded bg-muted/50 text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
       title="View changelog - You're on the latest version"
     >
       v{updateInfo.currentVersion}

@@ -12,6 +12,7 @@ interface Bookmark {
   description: string | null
   icon: string | null
   order: number
+  showDescription?: number | null // null = inherit, 0 = hide, 1 = show
 }
 
 interface Category {
@@ -25,6 +26,7 @@ interface Category {
   autoExpanded: boolean
   showOpenAll: boolean
   sortBy: string | null
+  showDescriptions?: number | null // null = inherit, 0 = hide, 1 = show
 }
 
 interface CategorySectionProps {
@@ -34,9 +36,38 @@ interface CategorySectionProps {
   fontSize?: number
   descriptionSpacing?: number
   itemSpacing?: number
+  showDescriptions?: boolean // Global setting (default)
 }
 
-export function CategorySection({ category, onBookmarkClick, iconSize = 32, fontSize = 14, descriptionSpacing = 2, itemSpacing = 4 }: CategorySectionProps) {
+/**
+ * Determine if description should be shown using hierarchical logic:
+ * 1. Item setting (showDescription) overrides all if set
+ * 2. Category setting (showDescriptions) overrides global if set
+ * 3. Global setting (showDescriptions prop) is the default
+ */
+function shouldShowDescription(
+  item: { showDescription?: number | null; description?: string | null },
+  categoryShowDescriptions: number | null | undefined,
+  globalDefault: boolean
+): boolean {
+  // Must have a description to show
+  if (!item.description) return false
+
+  // Item-level override (highest priority)
+  if (item.showDescription !== null && item.showDescription !== undefined) {
+    return item.showDescription === 1
+  }
+
+  // Category-level override
+  if (categoryShowDescriptions !== null && categoryShowDescriptions !== undefined) {
+    return categoryShowDescriptions === 1
+  }
+
+  // Global default
+  return globalDefault
+}
+
+export function CategorySection({ category, onBookmarkClick, iconSize = 32, fontSize = 14, descriptionSpacing = 2, itemSpacing = 4, showDescriptions = false }: CategorySectionProps) {
   const { theme } = useTheme()
   const [isExpanded, setIsExpanded] = useState(category.autoExpanded)
 
@@ -158,15 +189,17 @@ export function CategorySection({ category, onBookmarkClick, iconSize = 32, font
           const selfhstId = isSelfhst && bookmark.icon ? bookmark.icon.replace('selfhst:', '') : null
           const selfhstPath = selfhstId ? `https://cdn.jsdelivr.net/gh/selfhst/icons@latest/png/${selfhstId}.png` : null
 
+          const showDesc = shouldShowDescription(bookmark, category.showDescriptions, showDescriptions)
+
           return (
             <div key={bookmark.id} className="relative" style={itemSpacing < 0 ? { margin: `${itemSpacing / 2}px` } : {}}>
               <button
                 onClick={() => onBookmarkClick(bookmark.id, bookmark.url)}
-                className={`group/item flex gap-3 p-2 hover:bg-accent rounded transition-colors text-left w-full ${bookmark.description ? 'items-start' : 'items-center'}`}
+                className={`group/item flex gap-3 p-2 hover:bg-accent rounded transition-colors text-left w-full ${showDesc ? 'items-start' : 'items-center'}`}
               >
                 {(BookmarkIcon || faviconPath || selfhstPath) && (
                   <div
-                    className={`flex items-center justify-center flex-shrink-0 text-primary ${bookmark.description ? 'mt-0.5' : ''}`}
+                    className={`flex items-center justify-center flex-shrink-0 text-primary ${showDesc ? 'mt-0.5' : ''}`}
                     style={{
                       width: `${containerSize}px`,
                       height: `${containerSize}px`
@@ -195,7 +228,7 @@ export function CategorySection({ category, onBookmarkClick, iconSize = 32, font
                   >
                     {bookmark.name}
                   </span>
-                  {bookmark.description && (
+                  {showDesc && (
                     <span
                       className="text-muted-foreground line-clamp-2"
                       style={{

@@ -31,11 +31,35 @@ export async function GET(request: NextRequest) {
     const allServices = await db.select().from(services).orderBy(asc(services.order));
     const allSettings = await db.select().from(settings).where(isNull(settings.userId));
 
-    // Fetch analytics data
-    const allPageviews = await db.select().from(pageviews);
-    const allBookmarkClicks = await db.select().from(bookmarkClicks);
-    const allServiceClicks = await db.select().from(serviceClicks);
-    const allAnalyticsDaily = await db.select().from(analyticsDaily);
+    // Fetch analytics data (with error handling for missing tables)
+    let allPageviews: any[] = [];
+    let allBookmarkClicks: any[] = [];
+    let allServiceClicks: any[] = [];
+    let allAnalyticsDaily: any[] = [];
+
+    try {
+      allPageviews = await db.select().from(pageviews);
+    } catch (e) {
+      console.warn('Could not fetch pageviews (table may not exist):', e);
+    }
+
+    try {
+      allBookmarkClicks = await db.select().from(bookmarkClicks);
+    } catch (e) {
+      console.warn('Could not fetch bookmarkClicks (table may not exist):', e);
+    }
+
+    try {
+      allServiceClicks = await db.select().from(serviceClicks);
+    } catch (e) {
+      console.warn('Could not fetch serviceClicks (table may not exist):', e);
+    }
+
+    try {
+      allAnalyticsDaily = await db.select().from(analyticsDaily);
+    } catch (e) {
+      console.warn('Could not fetch analyticsDaily (table may not exist):', e);
+    }
 
     // Create category lookup maps
     const categoryMap = new Map(allCategories.map((c: any) => [c.id, c.name]));

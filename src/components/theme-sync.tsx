@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import { useSession } from 'next-auth/react'
-import { getThemeByName, applyTheme } from '@/lib/themes'
+import { getThemeByName, applyTheme, STANDALONE_THEMES } from '@/lib/themes'
 
 export function ThemeSync() {
   const { setTheme, resolvedTheme } = useTheme()
@@ -36,11 +36,20 @@ export function ThemeSync() {
         const data = await response.json()
 
         if (data.themeColor && resolvedTheme) {
-          // Determine which theme variant to use
-          const isDark = resolvedTheme === 'dark'
-          const themeName = isDark ? `${data.themeColor} (Dark)` : data.themeColor
+          // Check if this is a standalone theme (already includes its own colors)
+          const isStandalone = STANDALONE_THEMES.some(t => t.name === data.themeColor)
+          let selectedTheme = null
 
-          const selectedTheme = getThemeByName(themeName)
+          if (isStandalone) {
+            // Standalone themes apply directly without "(Dark)" suffix
+            selectedTheme = getThemeByName(data.themeColor)
+          } else {
+            // Standard themes use "(Dark)" variant in dark mode
+            const isDark = resolvedTheme === 'dark'
+            const themeName = isDark ? `${data.themeColor} (Dark)` : data.themeColor
+            selectedTheme = getThemeByName(themeName)
+          }
+
           if (selectedTheme) {
             applyTheme(selectedTheme)
           }

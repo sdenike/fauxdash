@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { THEMES, getThemeByName, applyTheme } from '@/lib/themes'
+import { THEMES, STANDALONE_THEMES, getThemeByName, applyTheme } from '@/lib/themes'
 import { SettingsTabProps } from './types'
 import { BackgroundImageSettings } from './background-image-settings'
 
@@ -32,9 +32,16 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
   const handleThemeColorChange = useCallback((value: string) => {
     onSettingsChange({ ...settings, themeColor: value })
     // Apply theme immediately
-    const isDark = resolvedTheme === 'dark'
-    const themeName = isDark ? `${value} (Dark)` : value
-    const selectedTheme = getThemeByName(themeName)
+    // First check if this is a standalone theme (already includes its own dark/light styling)
+    let selectedTheme = getThemeByName(value)
+
+    // If not found as standalone, and we're in dark mode, try the "(Dark)" variant
+    if (!selectedTheme || !STANDALONE_THEMES.some(t => t.name === value)) {
+      const isDark = resolvedTheme === 'dark'
+      const themeName = isDark ? `${value} (Dark)` : value
+      selectedTheme = getThemeByName(themeName)
+    }
+
     if (selectedTheme) {
       applyTheme(selectedTheme)
     }
@@ -90,7 +97,14 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Standard Themes</div>
                 {THEMES.map((theme) => (
+                  <SelectItem key={theme.name} value={theme.name}>
+                    {theme.name}
+                  </SelectItem>
+                ))}
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Special Themes</div>
+                {STANDALONE_THEMES.map((theme) => (
                   <SelectItem key={theme.name} value={theme.name}>
                     {theme.name}
                   </SelectItem>
@@ -98,7 +112,7 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground mt-1">
-              Choose from {THEMES.length} color themes. Changes apply immediately.
+              Choose from {THEMES.length + STANDALONE_THEMES.length} color themes. Changes apply immediately.
             </p>
           </div>
         </CardContent>
@@ -138,6 +152,34 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
               />
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Description Visibility Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Description Visibility</CardTitle>
+          <CardDescription>
+            Control whether descriptions are shown for bookmarks and services
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="showDescriptions">Show Descriptions</Label>
+              <p className="text-sm text-muted-foreground">
+                Display descriptions for bookmarks and services by default
+              </p>
+            </div>
+            <Switch
+              id="showDescriptions"
+              checked={settings.showDescriptions}
+              onCheckedChange={(checked) => updateSetting('showDescriptions', checked)}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            This is the global default. Individual categories and items can override this setting.
+          </p>
         </CardContent>
       </Card>
 

@@ -42,6 +42,7 @@ interface Category {
   autoExpanded: boolean
   showOpenAll: boolean
   sortBy: string | null
+  showDescriptions: number | null // null = inherit, 0 = hide, 1 = show
 }
 
 interface CategoryManagerProps {
@@ -141,6 +142,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
     autoExpanded: false,
     showOpenAll: false,
     sortBy: 'order' as string,
+    showDescriptions: null as number | null, // null = inherit, 0 = hide, 1 = show
   })
 
   useEffect(() => {
@@ -212,7 +214,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
 
     setIsOpen(false)
     setEditingCategory(null)
-    setFormData({ name: '', icon: '', columns: 1, ...defaults })
+    setFormData({ name: '', icon: '', columns: 1, showDescriptions: null, ...defaults })
     onCategoriesChange()
   }
 
@@ -229,6 +231,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
       autoExpanded: category.autoExpanded,
       showOpenAll: category.showOpenAll || false,
       sortBy: category.sortBy || 'order',
+      showDescriptions: category.showDescriptions,
     })
     setIsOpen(true)
   }
@@ -284,7 +287,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
             <DialogTrigger asChild>
               <Button onClick={() => {
                 setEditingCategory(null)
-                setFormData({ name: '', icon: '', columns: 1, ...defaults })
+                setFormData({ name: '', icon: '', columns: 1, showDescriptions: null, ...defaults })
               }}>
                 <PlusIcon className="h-4 w-4 mr-2" />
                 Add Category
@@ -396,6 +399,25 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">
                       How items in this category should be sorted
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="showDescriptions">Show Descriptions</Label>
+                    <Select
+                      value={formData.showDescriptions === null ? 'inherit' : formData.showDescriptions.toString()}
+                      onValueChange={(value) => setFormData({ ...formData, showDescriptions: value === 'inherit' ? null : parseInt(value) })}
+                    >
+                      <SelectTrigger id="showDescriptions">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="inherit">Inherit (Use Global Setting)</SelectItem>
+                        <SelectItem value="1">Show</SelectItem>
+                        <SelectItem value="0">Hide</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Whether to show descriptions for items in this category
                     </p>
                   </div>
                 </div>

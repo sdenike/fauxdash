@@ -2,12 +2,107 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { getDb } from '@/db';
 import { users, settings } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import * as argon2 from 'argon2';
 
-const oidcClientId = process.env.OIDC_CLIENT_ID || '';
-const oidcClientSecret = process.env.OIDC_CLIENT_SECRET || '';
-const oidcIssuerUrl = process.env.OIDC_ISSUER_URL || '';
+// Synchronously read OIDC settings from database at startup
+function getOidcSettingsSync(): {
+  enabled: boolean;
+  clientId: string;
+  clientSecret: string;
+  issuerUrl: string;
+  disablePasswordLogin: boolean;
+} {
+  try {
+    const db = getDb();
+    // Drizzle with better-sqlite3 is synchronous
+    const allSettings = db.select().from(settings).where(isNull(settings.userId)).all();
+    const settingsObj: Record<string, string> = {};
+    for (const s of allSettings) {
+      if (s.key && s.value !== null) {
+        settingsObj[s.key] = s.value;
+      }
+    }
+
+    return {
+      enabled: settingsObj.oidcEnabled === 'true',
+      clientId: settingsObj.oidcClientId || process.env.OIDC_CLIENT_ID || '',
+      clientSecret: settingsObj.oidcClientSecret || process.env.OIDC_CLIENT_SECRET || '',
+      issuerUrl: settingsObj.oidcIssuerUrl || process.env.OIDC_ISSUER_URL || '',
+      disablePasswordLogin: settingsObj.disablePasswordLogin === 'true',
+    };
+  } catch (e) {
+    // Fallback to env vars if DB not available (e.g., during build)
+    console.log('Could not read OIDC settings from DB, using env vars:', e);
+    return {
+      enabled: false,
+      clientId: process.env.OIDC_CLIENT_ID || '',
+      clientSecret: process.env.OIDC_CLIENT_SECRET || '',
+      issuerUrl: process.env.OIDC_ISSUER_URL || '',
+      disablePasswordLogin: false,
+    };
+  }
+}
+
+// Cache for runtime OIDC settings checks
+let oidcSettingsCache: {
+  enabled: boolean;
+  clientId: string;
+  clientSecret: string;
+  issuerUrl: string;
+  disablePasswordLogin: boolean;
+  cachedAt: number;
+} | null = null;
+
+const CACHE_TTL = 30000; // 30 seconds cache
+
+// Async version for runtime checks (e.g., in credentials authorize)
+export async function getOidcSettings() {
+  // Return cached settings if still valid
+  if (oidcSettingsCache && Date.now() - oidcSettingsCache.cachedAt < CACHE_TTL) {
+    return oidcSettingsCache;
+  }
+
+  try {
+    const db = getDb();
+    const allSettings = await db.select().from(settings).where(isNull(settings.userId));
+    const settingsObj: Record<string, string> = {};
+    for (const s of allSettings) {
+      if (s.key && s.value !== null) {
+        settingsObj[s.key] = s.value;
+      }
+    }
+
+    oidcSettingsCache = {
+      enabled: settingsObj.oidcEnabled === 'true',
+      clientId: settingsObj.oidcClientId || process.env.OIDC_CLIENT_ID || '',
+      clientSecret: settingsObj.oidcClientSecret || process.env.OIDC_CLIENT_SECRET || '',
+      issuerUrl: settingsObj.oidcIssuerUrl || process.env.OIDC_ISSUER_URL || '',
+      disablePasswordLogin: settingsObj.disablePasswordLogin === 'true',
+      cachedAt: Date.now(),
+    };
+
+    return oidcSettingsCache;
+  } catch {
+    // Fallback to env vars if DB not available
+    return {
+      enabled: false,
+      clientId: process.env.OIDC_CLIENT_ID || '',
+      clientSecret: process.env.OIDC_CLIENT_SECRET || '',
+      issuerUrl: process.env.OIDC_ISSUER_URL || '',
+      disablePasswordLogin: false,
+      cachedAt: Date.now(),
+    };
+  }
+}
+
+// Clear OIDC settings cache (call after saving settings)
+export function clearOidcSettingsCache() {
+  oidcSettingsCache = null;
+}
+
+// Get OIDC settings at module load time
+const oidcConfig = getOidcSettingsSync();
 
 // Build providers array
 const providers: any[] = [
@@ -22,6 +117,13 @@ const providers: any[] = [
     },
     async authorize(credentials) {
       if (!credentials?.email || !credentials?.password) {
+        return null;
+      }
+
+      // Check if password login is disabled (re-check from DB for real-time settings)
+      const currentOidcSettings = await getOidcSettings();
+      if (currentOidcSettings.disablePasswordLogin && currentOidcSettings.enabled) {
+        console.log('Password login is disabled, OIDC only mode');
         return null;
       }
 
@@ -65,16 +167,20 @@ const providers: any[] = [
   }),
 ];
 
-// Add OIDC provider if configured
-if (oidcClientId && oidcIssuerUrl) {
+// Add OIDC provider if enabled and configured
+if (oidcConfig.enabled && oidcConfig.clientId && oidcConfig.issuerUrl) {
+  const normalizedIssuerUrl = oidcConfig.issuerUrl.endsWith('/')
+    ? oidcConfig.issuerUrl
+    : oidcConfig.issuerUrl + '/';
+
   providers.push({
     id: 'oidc',
     name: 'OIDC',
     type: 'oauth',
-    wellKnown: `${oidcIssuerUrl}.well-known/openid-configuration`,
+    wellKnown: `${normalizedIssuerUrl}.well-known/openid-configuration`,
     authorization: { params: { scope: 'openid email profile' } },
-    clientId: oidcClientId,
-    clientSecret: oidcClientSecret,
+    clientId: oidcConfig.clientId,
+    clientSecret: oidcConfig.clientSecret,
     idToken: true,
     checks: ['pkce', 'state'],
     profile(profile: any) {
@@ -86,6 +192,7 @@ if (oidcClientId && oidcIssuerUrl) {
       };
     },
   });
+  console.log('OIDC provider configured with issuer:', normalizedIssuerUrl);
 }
 
 export const authOptions: NextAuthOptions = {
@@ -198,7 +305,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 2 * 24 * 60 * 60, // 2 days (reduced from 30 for security)
+    maxAge: 2 * 24 * 60 * 60, // 2 days
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

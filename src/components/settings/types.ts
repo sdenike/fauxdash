@@ -18,6 +18,7 @@ export interface Settings {
   themeColor: string
   siteTitle: string
   siteTitleEnabled: boolean
+  showDescriptions: boolean // Global default for description visibility
   // Background Image
   backgroundImage: string
   backgroundDisplayMode: 'cover' | 'contain' | 'center' | 'tile'
@@ -115,6 +116,7 @@ export const defaultSettings: Settings = {
   themeColor: 'Slate',
   siteTitle: 'Faux|Dash',
   siteTitleEnabled: true,
+  showDescriptions: false, // Default: descriptions are hidden
   // Background Image
   backgroundImage: '',
   backgroundDisplayMode: 'cover',

@@ -43,6 +43,7 @@ interface Service {
   isVisible: boolean
   requiresAuth: boolean
   clickCount: number
+  showDescription: number | null // null = inherit, 0 = hide, 1 = show
 }
 
 interface ServiceCategory {
@@ -176,6 +177,7 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
     categoryId: null as number | null,
     isVisible: true,
     requiresAuth: false,
+    showDescription: null as number | null, // null = inherit, 0 = hide, 1 = show
   })
 
   useEffect(() => {
@@ -242,7 +244,7 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
 
     setIsOpen(false)
     setEditingService(null)
-    setFormData({ name: '', url: '', description: '', icon: '', categoryId: null, ...defaults })
+    setFormData({ name: '', url: '', description: '', icon: '', categoryId: null, showDescription: null, ...defaults })
     onServicesChange()
   }
 
@@ -256,6 +258,7 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
       categoryId: service.categoryId,
       isVisible: service.isVisible,
       requiresAuth: service.requiresAuth,
+      showDescription: service.showDescription,
     })
 
     // Set original favicon if this service has a favicon
@@ -694,7 +697,7 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
               <DialogTrigger asChild>
                 <Button onClick={() => {
                   setEditingService(null)
-                  setFormData({ name: '', url: '', description: '', icon: '', categoryId: null, ...defaults })
+                  setFormData({ name: '', url: '', description: '', icon: '', categoryId: null, showDescription: null, ...defaults })
                 }}>
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Add Service
@@ -887,6 +890,25 @@ export function ServiceManager({ services, serviceCategories, onServicesChange }
                       checked={formData.requiresAuth}
                       onCheckedChange={(checked) => setFormData({ ...formData, requiresAuth: checked })}
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="svc-showDescription">Show Description</Label>
+                    <Select
+                      value={formData.showDescription === null ? 'inherit' : formData.showDescription.toString()}
+                      onValueChange={(value) => setFormData({ ...formData, showDescription: value === 'inherit' ? null : parseInt(value) })}
+                    >
+                      <SelectTrigger id="svc-showDescription">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="inherit">Inherit (Use Category/Global Setting)</SelectItem>
+                        <SelectItem value="1">Show</SelectItem>
+                        <SelectItem value="0">Hide</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Whether to show the description for this service
+                    </p>
                   </div>
                 </div>
                 <DialogFooter className="mt-6">

@@ -8,64 +8,94 @@ console.log('Running migration: Add uncategorized categories...');
 try {
   db.exec('BEGIN TRANSACTION');
 
-  // Check for uncategorized bookmarks
-  const uncategorizedBookmarks = db.prepare('SELECT COUNT(*) as count FROM bookmarks WHERE category_id IS NULL').get();
-
-  if (uncategorizedBookmarks.count > 0) {
-    console.log(`Found ${uncategorizedBookmarks.count} uncategorized bookmarks`);
-
-    // Create Uncategorized category for bookmarks if it doesn't exist
-    const existingBookmarkCategory = db.prepare("SELECT id FROM categories WHERE name = 'Uncategorized'").get();
-
-    let bookmarkCategoryId;
-    if (!existingBookmarkCategory) {
-      const maxOrder = db.prepare('SELECT COALESCE(MAX("order"), 0) as max FROM categories').get();
-      const result = db.prepare(`
-        INSERT INTO categories (name, icon, "order", columns, is_visible, requires_auth, items_to_show, show_item_count, auto_expanded)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run('Uncategorized', 'mdi:folder-alert', maxOrder.max + 1, 1, 1, 0, 50, 1, 1);
-      bookmarkCategoryId = result.lastInsertRowid;
-      console.log('✓ Created Uncategorized category for bookmarks');
-    } else {
-      bookmarkCategoryId = existingBookmarkCategory.id;
-      console.log('✓ Using existing Uncategorized category for bookmarks');
+  // Helper function to get or create Uncategorized bookmark category
+  function getOrCreateBookmarkUncategorized() {
+    const existing = db.prepare("SELECT id FROM categories WHERE name = 'Uncategorized'").get();
+    if (existing) {
+      return existing.id;
     }
-
-    // Assign uncategorized bookmarks
-    db.prepare('UPDATE bookmarks SET category_id = ? WHERE category_id IS NULL').run(bookmarkCategoryId);
-    console.log(`✓ Assigned ${uncategorizedBookmarks.count} bookmarks to Uncategorized category`);
-  } else {
-    console.log('✓ No uncategorized bookmarks found');
+    const maxOrder = db.prepare('SELECT COALESCE(MAX("order"), 0) as max FROM categories').get();
+    const result = db.prepare(`
+      INSERT INTO categories (name, icon, "order", columns, is_visible, requires_auth, items_to_show, show_item_count, auto_expanded)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run('Uncategorized', 'mdi:folder-alert', maxOrder.max + 1, 1, 1, 0, 50, 1, 1);
+    console.log('✓ Created Uncategorized category for bookmarks');
+    return result.lastInsertRowid;
   }
 
-  // Check for uncategorized services
-  const uncategorizedServices = db.prepare('SELECT COUNT(*) as count FROM services WHERE category_id IS NULL').get();
-
-  if (uncategorizedServices.count > 0) {
-    console.log(`Found ${uncategorizedServices.count} uncategorized services`);
-
-    // Create Uncategorized category for services if it doesn't exist
-    const existingServiceCategory = db.prepare("SELECT id FROM service_categories WHERE name = 'Uncategorized'").get();
-
-    let serviceCategoryId;
-    if (!existingServiceCategory) {
-      const maxOrder = db.prepare('SELECT COALESCE(MAX("order"), 0) as max FROM service_categories').get();
-      const result = db.prepare(`
-        INSERT INTO service_categories (name, icon, "order", columns, is_visible, requires_auth, items_to_show, show_item_count, auto_expanded)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run('Uncategorized', 'mdi:folder-alert', maxOrder.max + 1, 1, 1, 0, 50, 1, 1);
-      serviceCategoryId = result.lastInsertRowid;
-      console.log('✓ Created Uncategorized category for services');
-    } else {
-      serviceCategoryId = existingServiceCategory.id;
-      console.log('✓ Using existing Uncategorized category for services');
+  // Helper function to get or create Uncategorized service category
+  function getOrCreateServiceUncategorized() {
+    const existing = db.prepare("SELECT id FROM service_categories WHERE name = 'Uncategorized'").get();
+    if (existing) {
+      return existing.id;
     }
+    const maxOrder = db.prepare('SELECT COALESCE(MAX("order"), 0) as max FROM service_categories').get();
+    const result = db.prepare(`
+      INSERT INTO service_categories (name, icon, "order", columns, is_visible, requires_auth, items_to_show, show_item_count, auto_expanded)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run('Uncategorized', 'mdi:folder-alert', maxOrder.max + 1, 1, 1, 0, 50, 1, 1);
+    console.log('✓ Created Uncategorized category for services');
+    return result.lastInsertRowid;
+  }
 
-    // Assign uncategorized services
+  // Check for bookmarks with NULL category_id
+  const nullCategoryBookmarks = db.prepare('SELECT COUNT(*) as count FROM bookmarks WHERE category_id IS NULL').get();
+  if (nullCategoryBookmarks.count > 0) {
+    console.log(`Found ${nullCategoryBookmarks.count} bookmarks with NULL category`);
+    const bookmarkCategoryId = getOrCreateBookmarkUncategorized();
+    db.prepare('UPDATE bookmarks SET category_id = ? WHERE category_id IS NULL').run(bookmarkCategoryId);
+    console.log(`✓ Assigned ${nullCategoryBookmarks.count} bookmarks to Uncategorized category`);
+  }
+
+  // Check for bookmarks with orphaned category_id (pointing to deleted categories)
+  const orphanedBookmarks = db.prepare(`
+    SELECT COUNT(*) as count FROM bookmarks
+    WHERE category_id IS NOT NULL
+    AND category_id NOT IN (SELECT id FROM categories)
+  `).get();
+  if (orphanedBookmarks.count > 0) {
+    console.log(`Found ${orphanedBookmarks.count} bookmarks with orphaned category references`);
+    const bookmarkCategoryId = getOrCreateBookmarkUncategorized();
+    db.prepare(`
+      UPDATE bookmarks SET category_id = ?
+      WHERE category_id IS NOT NULL
+      AND category_id NOT IN (SELECT id FROM categories)
+    `).run(bookmarkCategoryId);
+    console.log(`✓ Reassigned ${orphanedBookmarks.count} orphaned bookmarks to Uncategorized category`);
+  }
+
+  if (nullCategoryBookmarks.count === 0 && orphanedBookmarks.count === 0) {
+    console.log('✓ No uncategorized or orphaned bookmarks found');
+  }
+
+  // Check for services with NULL category_id
+  const nullCategoryServices = db.prepare('SELECT COUNT(*) as count FROM services WHERE category_id IS NULL').get();
+  if (nullCategoryServices.count > 0) {
+    console.log(`Found ${nullCategoryServices.count} services with NULL category`);
+    const serviceCategoryId = getOrCreateServiceUncategorized();
     db.prepare('UPDATE services SET category_id = ? WHERE category_id IS NULL').run(serviceCategoryId);
-    console.log(`✓ Assigned ${uncategorizedServices.count} services to Uncategorized category`);
-  } else {
-    console.log('✓ No uncategorized services found');
+    console.log(`✓ Assigned ${nullCategoryServices.count} services to Uncategorized category`);
+  }
+
+  // Check for services with orphaned category_id (pointing to deleted categories)
+  const orphanedServices = db.prepare(`
+    SELECT COUNT(*) as count FROM services
+    WHERE category_id IS NOT NULL
+    AND category_id NOT IN (SELECT id FROM service_categories)
+  `).get();
+  if (orphanedServices.count > 0) {
+    console.log(`Found ${orphanedServices.count} services with orphaned category references`);
+    const serviceCategoryId = getOrCreateServiceUncategorized();
+    db.prepare(`
+      UPDATE services SET category_id = ?
+      WHERE category_id IS NOT NULL
+      AND category_id NOT IN (SELECT id FROM service_categories)
+    `).run(serviceCategoryId);
+    console.log(`✓ Reassigned ${orphanedServices.count} orphaned services to Uncategorized category`);
+  }
+
+  if (nullCategoryServices.count === 0 && orphanedServices.count === 0) {
+    console.log('✓ No uncategorized or orphaned services found');
   }
 
   // Note: Global settings are no longer created here

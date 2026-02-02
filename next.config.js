@@ -6,6 +6,31 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   fallbacks: {
     document: "/offline",
   },
+  runtimeCaching: [
+    // Exclude backup and restore API routes from caching
+    {
+      urlPattern: /\/api\/backup/,
+      handler: 'NetworkOnly',
+    },
+    {
+      urlPattern: /\/api\/restore/,
+      handler: 'NetworkOnly',
+    },
+    // Default API route handling
+    {
+      urlPattern: ({ sameOrigin, url: { pathname } }) =>
+        sameOrigin && pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/callback'),
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'apis',
+        networkTimeoutSeconds: 10,
+        expiration: {
+          maxEntries: 16,
+          maxAgeSeconds: 86400,
+        },
+      },
+    },
+  ],
 });
 
 /** @type {import('next').NextConfig} */

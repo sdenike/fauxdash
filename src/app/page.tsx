@@ -79,6 +79,7 @@ export default function HomePage() {
   const [servicesColumns, setServicesColumns] = useState(4)
   const [bookmarksColumns, setBookmarksColumns] = useState(4)
   const [siteTitle, setSiteTitle] = useState('Faux|Dash')
+  const [showDescriptions, setShowDescriptions] = useState(false)
 
   // Check if first-time setup is needed
   useEffect(() => {
@@ -137,6 +138,7 @@ export default function HomePage() {
       setItemSpacing(data.itemSpacing || 4)
       setServicesColumns(data.servicesColumns || 4)
       setBookmarksColumns(data.bookmarksColumns || 4)
+      setShowDescriptions(data.showDescriptions || false)
     } catch (error) {
       console.error('Failed to fetch settings:', error)
     }
@@ -247,6 +249,7 @@ export default function HomePage() {
                       descriptionSpacing={servicesDescriptionSpacing}
                       itemSpacing={servicesItemSpacing}
                       columns={servicesColumns}
+                      showDescriptions={showDescriptions}
                     />
                   ))}
                 </div>
@@ -269,6 +272,7 @@ export default function HomePage() {
                       fontSize={bookmarksFontSize}
                       descriptionSpacing={descriptionSpacing}
                       itemSpacing={itemSpacing}
+                      showDescriptions={showDescriptions}
                     />
                   ))}
                 </div>
@@ -293,6 +297,7 @@ export default function HomePage() {
                       fontSize={bookmarksFontSize}
                       descriptionSpacing={descriptionSpacing}
                       itemSpacing={itemSpacing}
+                      showDescriptions={showDescriptions}
                     />
                   ))}
                 </div>
@@ -317,6 +322,7 @@ export default function HomePage() {
                       descriptionSpacing={servicesDescriptionSpacing}
                       itemSpacing={servicesItemSpacing}
                       columns={servicesColumns}
+                      showDescriptions={showDescriptions}
                     />
                   ))}
                 </div>

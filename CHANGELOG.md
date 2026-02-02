@@ -5,6 +5,35 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2026-02-02
+
+### Added
+- **Description Visibility Settings**: Hierarchical control over description display
+  - Global "Show Descriptions" toggle in Settings → Appearance
+  - Per-category override (Inherit/Show/Hide dropdown)
+  - Per-item override (Inherit/Show/Hide dropdown)
+  - Hierarchy: Item setting → Category setting → Global default
+- **New Standalone Themes**: 10 new pre-configured dark themes
+  - Nord Light, Nord Dark, Material Dark, Minimal Kiwi
+  - One Dark Pro, Catppuccin Mocha, Shades of Purple
+  - Monokai Light, Monokai Dark, Dracula
+- **Public Settings API**: New `/api/settings/public` endpoint for unauthenticated access to non-sensitive settings
+
+### Fixed
+- **OIDC Login Button Not Appearing**: Login page now correctly fetches OIDC settings via public API endpoint
+- **Standalone Theme Application**: Themes like "Nord Dark" and "Dracula" now apply correctly without being mangled by "(Dark)" suffix logic
+- **Uncategorized Items Disappearing**: Category deletion now moves items to "Uncategorized" instead of orphaning them
+- **Orphaned Items on Container Restart**: Migration now catches items with invalid category references (deleted categories), not just NULL categories
+- **Dark Mode Contrast**: Updated dark mode base palette to GitHub Dark Default for better readability
+- **Admin Panel Theme Consistency**: Replaced hardcoded Tailwind colors with CSS variables throughout admin pages
+- **Backup API Resilience**: Added error handling for missing analytics tables during backup export
+- **Service Worker Caching**: Excluded backup/restore API routes from PWA cache to prevent download issues
+
+### Changed
+- Dark themes now use GitHub Dark Default as base palette (better contrast)
+- Theme selection dropdown now groups standalone themes separately
+- Migration script refactored for better maintainability
+
 ## [0.8.1] - 2026-02-02
 
 ### Added

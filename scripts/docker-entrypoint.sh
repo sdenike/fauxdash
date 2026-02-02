@@ -59,6 +59,8 @@ if [ "$(id -u)" = "0" ]; then
   fi
 
   echo "Fixing directory permissions..."
+  # Ensure site-assets directory exists for favicon and background
+  mkdir -p /data/site-assets 2>/dev/null || true
   chown -R fauxdash:fauxdash /data 2>/dev/null || true
   chown -R fauxdash:fauxdash /app/.next 2>/dev/null || true
   chown -R fauxdash:fauxdash /app/public/favicons 2>/dev/null || true

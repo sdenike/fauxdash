@@ -13,6 +13,7 @@ interface Service {
   icon: string | null
   categoryId: number | null
   order: number
+  showDescription?: number | null // null = inherit, 0 = hide, 1 = show
 }
 
 interface ServiceCategory {
@@ -27,6 +28,7 @@ interface ServiceCategory {
   autoExpanded: boolean
   showOpenAll: boolean
   sortBy: string | null
+  showDescriptions?: number | null // null = inherit, 0 = hide, 1 = show
 }
 
 interface ServicesSectionProps {
@@ -38,6 +40,35 @@ interface ServicesSectionProps {
   descriptionSpacing?: number
   itemSpacing?: number
   columns?: number
+  showDescriptions?: boolean // Global setting (default)
+}
+
+/**
+ * Determine if description should be shown using hierarchical logic:
+ * 1. Item setting (showDescription) overrides all if set
+ * 2. Category setting (showDescriptions) overrides global if set
+ * 3. Global setting (showDescriptions prop) is the default
+ */
+function shouldShowDescription(
+  item: { showDescription?: number | null; description?: string | null },
+  categoryShowDescriptions: number | null | undefined,
+  globalDefault: boolean
+): boolean {
+  // Must have a description to show
+  if (!item.description) return false
+
+  // Item-level override (highest priority)
+  if (item.showDescription !== null && item.showDescription !== undefined) {
+    return item.showDescription === 1
+  }
+
+  // Category-level override
+  if (categoryShowDescriptions !== null && categoryShowDescriptions !== undefined) {
+    return categoryShowDescriptions === 1
+  }
+
+  // Global default
+  return globalDefault
 }
 
 function ServiceCategoryWithAccordion({
@@ -47,7 +78,7 @@ function ServiceCategoryWithAccordion({
   columns
 }: {
   category: ServiceCategory
-  renderServiceCard: (service: Service, isLastVisibleItem?: boolean) => JSX.Element
+  renderServiceCard: (service: Service, isLastVisibleItem?: boolean, categoryShowDescriptions?: number | null) => JSX.Element
   itemSpacing: number
   columns: number
 }) {
@@ -144,7 +175,7 @@ function ServiceCategoryWithAccordion({
       }}>
         {displayedServices.map((service, index) => {
           const isLastVisibleItem = !!(shouldShowExpandButton && !isExpanded && index === displayedServices.length - 1)
-          return renderServiceCard(service, isLastVisibleItem)
+          return renderServiceCard(service, isLastVisibleItem, category.showDescriptions)
         })}
       </div>
     </div>
@@ -159,7 +190,8 @@ export function ServicesSection({
   fontSize = 16,
   descriptionSpacing = 2,
   itemSpacing = 4,
-  columns = 4
+  columns = 4,
+  showDescriptions = false
 }: ServicesSectionProps) {
   const { theme } = useTheme()
   const containerSize = iconSize + 8
@@ -179,7 +211,7 @@ export function ServicesSection({
     return null
   }
 
-  const renderServiceCard = (service: Service, isLastVisibleItem = false) => {
+  const renderServiceCard = (service: Service, isLastVisibleItem = false, categoryShowDescriptions: number | null | undefined = null) => {
     const isFavicon = service.icon?.startsWith('favicon:')
     const isSelfhst = service.icon?.startsWith('selfhst:')
     const serviceIconData = !isFavicon && !isSelfhst && service.icon ? getIconByName(service.icon) : null
@@ -203,11 +235,13 @@ export function ServicesSection({
     const selfhstId = isSelfhst && service.icon ? service.icon.replace('selfhst:', '') : null
     const selfhstPath = selfhstId ? `https://cdn.jsdelivr.net/gh/selfhst/icons@latest/png/${selfhstId}.png` : null
 
+    const showDesc = shouldShowDescription(service, categoryShowDescriptions, showDescriptions)
+
     return (
       <div key={service.id} className="relative" style={itemSpacing < 0 ? { margin: `${itemSpacing / 2}px` } : {}}>
         <button
           onClick={() => onServiceClick(service.id, service.url)}
-          className={`group/item flex gap-3 p-2 hover:bg-accent rounded transition-colors text-left w-full ${service.description ? 'items-start' : 'items-center'}`}
+          className={`group/item flex gap-3 p-2 hover:bg-accent rounded transition-colors text-left w-full ${showDesc ? 'items-start' : 'items-center'}`}
         >
         {(ServiceIcon || faviconPath || selfhstPath) && (
           <div
@@ -240,7 +274,7 @@ export function ServicesSection({
           >
             {service.name}
           </span>
-          {service.description && (
+          {showDesc && (
             <span
               className="text-muted-foreground line-clamp-2"
               style={{
@@ -290,7 +324,7 @@ export function ServicesSection({
                 gap: itemSpacing >= 0 ? `${itemSpacing}px` : '0px',
                 margin: itemSpacing < 0 ? `${itemSpacing / 2}px` : '0px'
               }}>
-                {uncategorizedServices.map((service) => renderServiceCard(service))}
+                {uncategorizedServices.map((service) => renderServiceCard(service, false, null))}
               </div>
             </div>
           )}
@@ -310,7 +344,7 @@ export function ServicesSection({
             gap: itemSpacing >= 0 ? `${itemSpacing}px` : '0px',
             margin: itemSpacing < 0 ? `${itemSpacing / 2}px` : '0px'
           }}>
-            {services.map((service) => renderServiceCard(service))}
+            {services.map((service) => renderServiceCard(service, false, null))}
           </div>
         </>
       )}

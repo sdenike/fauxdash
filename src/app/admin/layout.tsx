@@ -60,7 +60,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900">
+    <div className="min-h-screen bg-background">
       <div className="flex h-screen">
         {/* Mobile backdrop */}
         {sidebarOpen && (
@@ -73,26 +73,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-50 w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-r border-slate-200/50 dark:border-slate-700/50 flex flex-col transform transition-transform duration-200 ease-in-out",
+            "fixed inset-y-0 left-0 z-50 w-64 bg-card/95 backdrop-blur-xl border-r border-border/50 flex flex-col transform transition-transform duration-200 ease-in-out",
             "md:relative md:translate-x-0",
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
-          <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between">
+          <div className="p-6 border-b border-border/50 flex items-center justify-between">
             <div>
               <Link href="/">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold text-primary">
                   Faux|Dash
                 </h1>
               </Link>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Admin Panel</p>
+              <p className="text-sm text-muted-foreground mt-1">Admin Panel</p>
             </div>
             {/* Mobile close button */}
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors touch-target"
+              className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors touch-target"
             >
-              <XMarkIcon className="h-6 w-6 text-slate-600 dark:text-slate-400" />
+              <XMarkIcon className="h-6 w-6 text-muted-foreground" />
             </button>
           </div>
 
@@ -107,8 +107,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 touch-target",
                     isActive
-                      ? 'bg-gradient-to-r from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 text-blue-600 dark:text-blue-400 font-medium'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
                   <Icon className="h-5 w-5" />
@@ -118,10 +118,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
           </nav>
 
-          <div className="p-4 border-t border-slate-200/50 dark:border-slate-700/50 pb-safe">
+          <div className="p-4 border-t border-border/50 pb-safe">
             <Link
               href="/"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors touch-target"
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors touch-target"
             >
               <ArrowLeftIcon className="h-5 w-5" />
               <span>Back to Home</span>
@@ -130,17 +130,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-background">
           {/* Mobile header with hamburger */}
-          <div className="sticky top-0 z-30 md:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 px-4 py-3">
+          <div className="sticky top-0 z-30 md:hidden bg-card/95 backdrop-blur-xl border-b border-border/50 px-4 py-3">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors touch-target"
+                className="p-2 rounded-lg hover:bg-muted transition-colors touch-target"
               >
-                <Bars3Icon className="h-6 w-6 text-slate-600 dark:text-slate-400" />
+                <Bars3Icon className="h-6 w-6 text-muted-foreground" />
               </button>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+              <h1 className="text-lg font-bold text-primary">
                 Faux|Dash
               </h1>
             </div>

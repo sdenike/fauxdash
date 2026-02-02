@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions, clearOidcSettingsCache } from '@/lib/auth';
 import { getDb } from '@/db';
 import { settings } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
     themeColor: settingsObj.themeColor || 'Slate',
     siteTitle: settingsObj.siteTitle || 'Faux|Dash',
     siteTitleEnabled: settingsObj.siteTitleEnabled === 'false' ? false : true,
+    showDescriptions: settingsObj.showDescriptions === 'true' || false,
     // Background Image
     backgroundImage: settingsObj.backgroundImage || '',
     backgroundDisplayMode: settingsObj.backgroundDisplayMode || 'cover',
@@ -92,6 +93,7 @@ export async function GET(request: NextRequest) {
     oidcClientId: settingsObj.oidcClientId || process.env.OIDC_CLIENT_ID || '',
     oidcClientSecret: settingsObj.oidcClientSecret || process.env.OIDC_CLIENT_SECRET || '',
     oidcIssuerUrl: settingsObj.oidcIssuerUrl || process.env.OIDC_ISSUER_URL || '',
+    disablePasswordLogin: settingsObj.disablePasswordLogin === 'true' || false,
     // GeoIP settings
     geoipEnabled: settingsObj.geoipEnabled === 'true' || false,
     geoipProvider: settingsObj.geoipProvider || 'maxmind',
@@ -157,6 +159,7 @@ export async function POST(request: NextRequest) {
   if (body.themeColor !== undefined) settingsToSave.push({ key: 'themeColor', value: body.themeColor || 'Slate' });
   if (body.siteTitle !== undefined) settingsToSave.push({ key: 'siteTitle', value: body.siteTitle || 'Faux|Dash' });
   if (body.siteTitleEnabled !== undefined) settingsToSave.push({ key: 'siteTitleEnabled', value: body.siteTitleEnabled.toString() });
+  if (body.showDescriptions !== undefined) settingsToSave.push({ key: 'showDescriptions', value: body.showDescriptions.toString() });
   // Background Image
   if (body.backgroundImage !== undefined) settingsToSave.push({ key: 'backgroundImage', value: body.backgroundImage || '' });
   if (body.backgroundDisplayMode !== undefined) settingsToSave.push({ key: 'backgroundDisplayMode', value: body.backgroundDisplayMode || 'cover' });
@@ -204,6 +207,7 @@ export async function POST(request: NextRequest) {
   if (body.oidcClientId !== undefined) settingsToSave.push({ key: 'oidcClientId', value: body.oidcClientId || '' });
   if (body.oidcClientSecret !== undefined) settingsToSave.push({ key: 'oidcClientSecret', value: body.oidcClientSecret || '' });
   if (body.oidcIssuerUrl !== undefined) settingsToSave.push({ key: 'oidcIssuerUrl', value: body.oidcIssuerUrl || '' });
+  if (body.disablePasswordLogin !== undefined) settingsToSave.push({ key: 'disablePasswordLogin', value: body.disablePasswordLogin.toString() });
   // GeoIP settings
   if (body.geoipEnabled !== undefined) settingsToSave.push({ key: 'geoipEnabled', value: body.geoipEnabled.toString() });
   if (body.geoipProvider !== undefined) settingsToSave.push({ key: 'geoipProvider', value: body.geoipProvider || 'maxmind' });
@@ -278,6 +282,9 @@ export async function POST(request: NextRequest) {
         });
     }
   }
+
+  // Clear OIDC settings cache so changes take effect immediately
+  clearOidcSettingsCache();
 
   return NextResponse.json({ success: true });
 }

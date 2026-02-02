@@ -136,7 +136,7 @@ export default function LogsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold text-foreground">
           Application Logs
         </h1>
         <p className="text-muted-foreground mt-2">
@@ -253,7 +253,7 @@ export default function LogsPage() {
         <CardContent>
           <div
             ref={logContainerRef}
-            className="bg-slate-950 rounded-lg p-4 h-[600px] overflow-auto font-mono text-sm"
+            className="bg-background rounded-lg p-4 h-[600px] overflow-auto font-mono text-sm border border-border"
           >
             {loading && logs.length === 0 ? (
               <div className="text-gray-500 animate-pulse">Loading logs...</div>

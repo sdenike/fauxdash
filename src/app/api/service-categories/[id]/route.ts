@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getDb } from '@/db';
-import { serviceCategories } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { serviceCategories, services } from '@/db/schema';
+import { eq, sql } from 'drizzle-orm';
 import { cacheDel } from '@/lib/redis';
 
 export async function PATCH(
@@ -48,10 +48,55 @@ export async function DELETE(
   }
 
   const db = getDb();
+  const categoryId = parseInt(params.id);
 
+  // Check if there are services in this category
+  const servicesInCategory = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(services)
+    .where(eq(services.categoryId, categoryId));
+
+  const serviceCount = servicesInCategory[0]?.count || 0;
+
+  if (serviceCount > 0) {
+    // Get or create Uncategorized service category
+    let uncategorized = await db
+      .select()
+      .from(serviceCategories)
+      .where(eq(serviceCategories.name, 'Uncategorized'));
+
+    let uncategorizedId: number;
+
+    if (uncategorized.length === 0) {
+      // Create Uncategorized category
+      const maxOrder = await db
+        .select({ max: sql<number>`COALESCE(MAX("order"), 0)` })
+        .from(serviceCategories);
+
+      const [newCategory] = await db.insert(serviceCategories).values({
+        name: 'Uncategorized',
+        icon: 'mdi:folder-alert',
+        order: (maxOrder[0]?.max || 0) + 1,
+        isVisible: true,
+        autoExpanded: true,
+      }).returning();
+
+      uncategorizedId = newCategory.id;
+    } else {
+      uncategorizedId = uncategorized[0].id;
+    }
+
+    // Move services to Uncategorized
+    await db
+      .update(services)
+      .set({ categoryId: uncategorizedId })
+      .where(eq(services.categoryId, categoryId));
+  }
+
+  // Now delete the category
   await db
     .delete(serviceCategories)
-    .where(eq(serviceCategories.id, parseInt(params.id)));
+    .where(eq(serviceCategories.id, categoryId));
 
   // Invalidate cache
   await cacheDel('service-categories:public');
@@ -59,5 +104,5 @@ export async function DELETE(
   await cacheDel('services:public');
   await cacheDel(`services:auth:${session.user?.email}`);
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, movedServices: serviceCount });
 }

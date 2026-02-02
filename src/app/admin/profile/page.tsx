@@ -33,9 +33,12 @@ function ProfileContent() {
     oidcClientId: '',
     oidcClientSecret: '',
     oidcIssuerUrl: '',
+    disablePasswordLogin: false,
   })
   const [loadingOidc, setLoadingOidc] = useState(true)
   const [savingOidc, setSavingOidc] = useState(false)
+  const [testingOidc, setTestingOidc] = useState(false)
+  const [oidcTestResult, setOidcTestResult] = useState<{ success: boolean; message?: string; error?: string; details?: any } | null>(null)
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -74,6 +77,7 @@ function ProfileContent() {
         oidcClientId: data.oidcClientId || '',
         oidcClientSecret: '', // Don't expose secret in UI
         oidcIssuerUrl: data.oidcIssuerUrl || '',
+        disablePasswordLogin: data.disablePasswordLogin || false,
       })
     } catch (error) {
       console.error('Failed to fetch OIDC settings:', error)
@@ -125,6 +129,33 @@ function ProfileContent() {
   const handleOidcEnabledChange = useCallback((checked: boolean) => {
     setOidcSettings(prev => ({ ...prev, oidcEnabled: checked }))
   }, [])
+
+  const handleDisablePasswordLoginChange = useCallback((checked: boolean) => {
+    setOidcSettings(prev => ({ ...prev, disablePasswordLogin: checked }))
+  }, [])
+
+  const handleTestOidc = useCallback(async () => {
+    setTestingOidc(true)
+    setOidcTestResult(null)
+    try {
+      const response = await fetch('/api/settings/oidc-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: oidcSettings.oidcClientId,
+          clientSecret: oidcSettings.oidcClientSecret || undefined,
+          issuerUrl: oidcSettings.oidcIssuerUrl,
+        }),
+      })
+      const data = await response.json()
+      setOidcTestResult(data)
+    } catch (error) {
+      console.error('Failed to test OIDC:', error)
+      setOidcTestResult({ success: false, error: 'Failed to test OIDC connection' })
+    } finally {
+      setTestingOidc(false)
+    }
+  }, [oidcSettings.oidcClientId, oidcSettings.oidcClientSecret, oidcSettings.oidcIssuerUrl])
 
   const handleSaveProfile = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -254,10 +285,10 @@ function ProfileContent() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Profile
         </h1>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-muted-foreground">
           Manage your account settings
         </p>
       </div>
@@ -505,6 +536,61 @@ function ProfileContent() {
                       variant="info"
                       message={`Configure this callback URL in your OIDC provider: ${callbackUrl}`}
                     />
+                  </div>
+
+                  {/* Test OIDC Connection */}
+                  <div className="pt-4 border-t space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Test Connection</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Verify your OIDC configuration is correct
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleTestOidc}
+                        disabled={testingOidc || !oidcSettings.oidcClientId || !oidcSettings.oidcIssuerUrl}
+                      >
+                        {testingOidc ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                            Testing...
+                          </>
+                        ) : (
+                          'Test OIDC'
+                        )}
+                      </Button>
+                    </div>
+
+                    {oidcTestResult && (
+                      <AlertMessage
+                        variant={oidcTestResult.success ? 'success' : 'error'}
+                        message={oidcTestResult.success ? (oidcTestResult.message || 'OIDC configuration is valid') : (oidcTestResult.error || 'OIDC test failed')}
+                      />
+                    )}
+                  </div>
+
+                  {/* Disable Password Login */}
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="disablePasswordLogin">OIDC-Only Mode</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Disable password login and require OIDC authentication
+                        </p>
+                        <p className="text-xs text-destructive mt-1">
+                          Warning: Make sure OIDC is working before enabling this!
+                        </p>
+                      </div>
+                      <Switch
+                        id="disablePasswordLogin"
+                        checked={oidcSettings.disablePasswordLogin}
+                        onCheckedChange={handleDisablePasswordLoginChange}
+                        disabled={!oidcSettings.oidcEnabled}
+                      />
+                    </div>
                   </div>
                 </>
               )}
