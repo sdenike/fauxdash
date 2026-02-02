@@ -16,7 +16,9 @@ const providers: any[] = [
     name: 'Credentials',
     credentials: {
       email: { label: "Email", type: "email" },
-      password: { label: "Password", type: "password" }
+      password: { label: "Password", type: "password" },
+      rememberMe: { label: "Remember Me", type: "text" },
+      rememberDuration: { label: "Remember Duration", type: "text" },
     },
     async authorize(credentials) {
       if (!credentials?.email || !credentials?.password) {
@@ -57,6 +59,7 @@ const providers: any[] = [
         isAdmin: foundUser.isAdmin,
         firstname: foundUser.firstname,
         lastname: foundUser.lastname,
+        rememberDuration: credentials.rememberDuration || '2',
       };
     },
   }),
@@ -150,6 +153,11 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name;
         token.firstname = (user as any).firstname;
         token.lastname = (user as any).lastname;
+
+        // Handle remember me duration
+        const days = parseInt((user as any).rememberDuration || '2', 10);
+        const maxAgeSeconds = days * 24 * 60 * 60;
+        token.exp = Math.floor(Date.now() / 1000) + maxAgeSeconds;
       }
 
       // Refresh user data from database on update trigger

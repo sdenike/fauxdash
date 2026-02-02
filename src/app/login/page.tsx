@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertMessage } from '@/components/ui/alert-message'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Loader2, Mail } from 'lucide-react'
@@ -26,6 +28,8 @@ function LoginContent() {
   const [forgotLoading, setForgotLoading] = useState(false)
   const [forgotMessage, setForgotMessage] = useState('')
   const [forgotError, setForgotError] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
+  const [rememberDuration, setRememberDuration] = useState('7')
 
   useEffect(() => {
     const controller = new AbortController()
@@ -84,6 +88,14 @@ function LoginContent() {
     }
   }, [resetForgotPasswordState])
 
+  const handleRememberMeChange = useCallback((checked: boolean | 'indeterminate') => {
+    setRememberMe(checked === true)
+  }, [])
+
+  const handleRememberDurationChange = useCallback((value: string) => {
+    setRememberDuration(value)
+  }, [])
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -93,6 +105,8 @@ function LoginContent() {
       const result = await signIn('credentials', {
         email,
         password,
+        rememberMe: rememberMe ? 'true' : 'false',
+        rememberDuration: rememberMe ? rememberDuration : '2',
         redirect: false,
       })
 
@@ -107,7 +121,7 @@ function LoginContent() {
     } finally {
       setLoading(false)
     }
-  }, [email, password, router])
+  }, [email, password, rememberMe, rememberDuration, router])
 
   const handleOidcLogin = useCallback(async () => {
     setError('')
@@ -189,6 +203,32 @@ function LoginContent() {
                 required
                 autoComplete="current-password"
               />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onCheckedChange={handleRememberMeChange}
+                />
+                <Label htmlFor="rememberMe" className="text-sm font-normal cursor-pointer">
+                  Remember me
+                </Label>
+              </div>
+              {rememberMe && (
+                <Select value={rememberDuration} onValueChange={handleRememberDurationChange}>
+                  <SelectTrigger className="w-[130px] h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">1 week</SelectItem>
+                    <SelectItem value="30">1 month</SelectItem>
+                    <SelectItem value="90">3 months</SelectItem>
+                    <SelectItem value="365">1 year</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {smtpConfigured && (

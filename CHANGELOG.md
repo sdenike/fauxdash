@@ -5,6 +5,15 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-02-02
+
+### Added
+- **Remember Me**: Extended session duration option on login page
+  - Checkbox to enable extended sessions
+  - Duration selector: 1 week, 1 month, 3 months, or 1 year
+  - Default session remains 2 days when not enabled
+  - JWT token expiration dynamically set based on user preference
+
 ## [0.8.0] - 2026-02-01
 
 ### Added
