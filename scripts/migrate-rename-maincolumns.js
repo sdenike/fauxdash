@@ -30,11 +30,8 @@ try {
     console.log('✓ No mainColumns migration needed');
   }
 
-  // Clean up any orphaned global settings (user_id IS NULL)
-  const orphanedCount = db.prepare("DELETE FROM settings WHERE user_id IS NULL").run();
-  if (orphanedCount.changes > 0) {
-    console.log(`✓ Cleaned up ${orphanedCount.changes} orphaned global settings`);
-  }
+  // Note: Global settings (user_id IS NULL) are now used for OIDC, SMTP, and GeoIP
+  // Do NOT delete them - they are intentionally global
 
   db.exec('COMMIT');
   console.log('✓ Migration completed successfully');

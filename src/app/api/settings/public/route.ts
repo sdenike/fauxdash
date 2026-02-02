@@ -3,6 +3,9 @@ import { getDb } from '@/db';
 import { settings } from '@/db/schema';
 import { isNull } from 'drizzle-orm';
 
+// Force dynamic rendering - this route must query the database at request time
+export const dynamic = 'force-dynamic';
+
 // Public settings endpoint for login page (unauthenticated access)
 // Only returns non-sensitive settings needed for login UI
 export async function GET() {
