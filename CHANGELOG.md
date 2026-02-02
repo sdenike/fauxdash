@@ -20,7 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Public Settings API**: New `/api/settings/public` endpoint for unauthenticated access to non-sensitive settings
 
 ### Fixed
-- **OIDC Login Button Not Appearing**: Login page now correctly fetches OIDC settings via public API endpoint
+- **OIDC Login Button Not Appearing**: Fixed multiple issues with OIDC button visibility
+  - Login page now correctly fetches OIDC settings via public API endpoint
+  - OIDC, SMTP, and GeoIP settings are now saved as global settings (userId = null) instead of user-specific
+  - Settings API now correctly queries for global settings and merges with user settings
 - **Standalone Theme Application**: Themes like "Nord Dark" and "Dracula" now apply correctly without being mangled by "(Dark)" suffix logic
 - **Uncategorized Items Disappearing**: Category deletion now moves items to "Uncategorized" instead of orphaning them
 - **Orphaned Items on Container Restart**: Migration now catches items with invalid category references (deleted categories), not just NULL categories

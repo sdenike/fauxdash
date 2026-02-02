@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions, clearOidcSettingsCache } from '@/lib/auth';
 import { getDb } from '@/db';
 import { settings } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { logger, LogLevel } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
@@ -16,14 +16,24 @@ export async function GET(request: NextRequest) {
   const db = getDb();
   const userId = (session.user as any).id;
 
+  // Fetch global settings (userId is null)
+  const globalSettings = await db
+    .select()
+    .from(settings)
+    .where(isNull(settings.userId));
+
   // Fetch all settings for this user
   const userSettings = await db
     .select()
     .from(settings)
     .where(eq(settings.userId, parseInt(userId)));
 
-  // Convert to key-value object
+  // Convert to key-value object, starting with global settings
   const settingsObj: Record<string, string> = {};
+  globalSettings.forEach((setting: any) => {
+    settingsObj[setting.key] = setting.value || '';
+  });
+  // User settings override global settings
   userSettings.forEach((setting: any) => {
     settingsObj[setting.key] = setting.value || '';
   });
@@ -251,35 +261,79 @@ export async function POST(request: NextRequest) {
     logger.setLogLevel(body.logLevel as LogLevel);
   }
 
-  for (const setting of settingsToSave) {
-    // Check if setting exists
-    const existing = await db
-      .select()
-      .from(settings)
-      .where(and(
-        eq(settings.userId, parseInt(userId)),
-        eq(settings.key, setting.key)
-      ))
-      .limit(1);
+  // Settings that should be stored globally (userId = null) rather than per-user
+  const globalSettingKeys = [
+    'oidcEnabled', 'oidcProviderName', 'oidcClientId', 'oidcClientSecret',
+    'oidcIssuerUrl', 'disablePasswordLogin',
+    'smtpProvider', 'smtpHost', 'smtpPort', 'smtpUsername', 'smtpPassword',
+    'smtpEncryption', 'smtpFromEmail', 'smtpFromName',
+    'geoipEnabled', 'geoipProvider', 'geoipMaxmindPath', 'geoipMaxmindLicenseKey',
+    'geoipMaxmindAccountId', 'geoipIpinfoToken', 'geoipCacheDuration',
+  ];
 
-    if (existing.length > 0) {
-      // Update
-      await db
-        .update(settings)
-        .set({ value: setting.value, updatedAt: new Date() })
+  for (const setting of settingsToSave) {
+    const isGlobalSetting = globalSettingKeys.includes(setting.key);
+
+    if (isGlobalSetting) {
+      // Global settings: userId = null
+      const existing = await db
+        .select()
+        .from(settings)
+        .where(and(
+          eq(settings.key, setting.key),
+          isNull(settings.userId)
+        ))
+        .limit(1);
+
+      if (existing.length > 0) {
+        // Update global setting
+        await db
+          .update(settings)
+          .set({ value: setting.value, updatedAt: new Date() })
+          .where(and(
+            eq(settings.key, setting.key),
+            isNull(settings.userId)
+          ));
+      } else {
+        // Insert global setting
+        await db
+          .insert(settings)
+          .values({
+            userId: null,
+            key: setting.key,
+            value: setting.value,
+          });
+      }
+    } else {
+      // User-specific settings
+      const existing = await db
+        .select()
+        .from(settings)
         .where(and(
           eq(settings.userId, parseInt(userId)),
           eq(settings.key, setting.key)
-        ));
-    } else {
-      // Insert
-      await db
-        .insert(settings)
-        .values({
-          userId: parseInt(userId),
-          key: setting.key,
-          value: setting.value,
-        });
+        ))
+        .limit(1);
+
+      if (existing.length > 0) {
+        // Update
+        await db
+          .update(settings)
+          .set({ value: setting.value, updatedAt: new Date() })
+          .where(and(
+            eq(settings.userId, parseInt(userId)),
+            eq(settings.key, setting.key)
+          ));
+      } else {
+        // Insert
+        await db
+          .insert(settings)
+          .values({
+            userId: parseInt(userId),
+            key: setting.key,
+            value: setting.value,
+          });
+      }
     }
   }
 
