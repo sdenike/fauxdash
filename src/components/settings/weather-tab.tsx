@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useMemo } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,10 +9,23 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { SettingsTabProps } from './types'
+import { WeatherLocationManager } from './weather-location-manager'
 
 export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+
+  // Parse locations from comma-separated string to array
+  const locations = useMemo(() => {
+    return settings.weatherLocations
+      ? settings.weatherLocations.split(',').map((l: string) => l.trim()).filter(Boolean)
+      : []
+  }, [settings.weatherLocations])
+
+  // Handle location changes from the manager
+  const handleLocationsChange = useCallback((newLocations: string[]) => {
+    onSettingsChange({ ...settings, weatherLocations: newLocations.join(',') })
+  }, [settings, onSettingsChange])
 
   const updateSetting = useCallback(<K extends keyof typeof settings>(key: K, value: typeof settings[K]) => {
     onSettingsChange({ ...settings, [key]: value })
@@ -213,16 +226,10 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
             )}
 
             <div>
-              <Label htmlFor="weatherLocations">Locations (ZIP Codes or City Names)</Label>
-              <Input
-                id="weatherLocations"
-                value={settings.weatherLocations}
-                onChange={(e) => updateSetting('weatherLocations', e.target.value)}
-                placeholder="90210,10001 or New York,Los Angeles"
+              <WeatherLocationManager
+                locations={locations}
+                onChange={handleLocationsChange}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Comma-separated list of ZIP codes or city names
-              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -263,20 +270,6 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
               >
                 latlong.net
               </a>
-            </div>
-
-            <div>
-              <Label htmlFor="weatherAutoRotate">Auto-Rotate Interval (seconds)</Label>
-              <Input
-                id="weatherAutoRotate"
-                type="number"
-                min="0"
-                value={settings.weatherAutoRotate}
-                onChange={(e) => updateSetting('weatherAutoRotate', parseInt(e.target.value) || 0)}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Set to 0 to disable auto-rotation
-              </p>
             </div>
 
             <div className="pt-4 border-t">

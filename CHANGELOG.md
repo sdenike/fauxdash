@@ -5,6 +5,24 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-02-01
+
+### Added
+- **Weather Location Manager**: New drag-and-drop interface for managing multiple weather locations
+  - Add locations by ZIP code or city name
+  - Drag to reorder locations
+  - Set any location as default (moves to first position)
+  - Visual indicators for default location with star icon
+  - Remove individual locations with delete button
+
+### Changed
+- Simplified weather settings by removing auto-rotate feature
+- Weather locations now managed through dedicated UI component instead of comma-separated text input
+
+### Technical
+- New `WeatherLocationManager` component with full drag-and-drop support
+- Locations stored as comma-separated string for backward compatibility
+
 ## [0.7.0] - 2026-01-31
 
 ### Added
@@ -418,7 +436,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **0.7.0** - Mobile-responsive UI, PWA support, offline mode (Current)
+- **0.8.0** - Weather location manager with drag-and-drop UI (Current)
+- **0.7.0** - Mobile-responsive UI, PWA support, offline mode
 - **0.6.0** - Demo content system, N+1 query performance fix
 - **0.5.x** - Release automation, update notifications, memory leak fixes
 - **0.3.0** - Services feature, complete MDI library, pageview analytics

@@ -23,7 +23,6 @@ export function WeatherWidget() {
   const [loading, setLoading] = useState(true)
   const [enabled, setEnabled] = useState(false)
   const [locations, setLocations] = useState<string[]>([])
-  const [autoRotateSeconds, setAutoRotateSeconds] = useState(30)
 
   useEffect(() => {
     fetchSettings()
@@ -37,23 +36,12 @@ export function WeatherWidget() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, locations])
 
-  useEffect(() => {
-    if (weatherData.length > 1 && autoRotateSeconds > 0) {
-      const interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % weatherData.length)
-      }, autoRotateSeconds * 1000)
-
-      return () => clearInterval(interval)
-    }
-  }, [weatherData.length, autoRotateSeconds])
-
   const fetchSettings = async () => {
     try {
       const response = await fetch('/api/settings')
       const data = await response.json()
       setEnabled(data.weatherEnabled || false)
-      setLocations(data.weatherLocations?.split(',').map((l: string) => l.trim()) || [])
-      setAutoRotateSeconds(data.weatherAutoRotate || 30)
+      setLocations(data.weatherLocations?.split(',').map((l: string) => l.trim()).filter(Boolean) || [])
     } catch (error) {
       console.error('Failed to fetch weather settings:', error)
     } finally {
