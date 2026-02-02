@@ -8,8 +8,9 @@ import { cacheDel } from '@/lib/redis';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session || !(session.user as any)?.isAdmin) {
@@ -25,7 +26,7 @@ export async function PATCH(
       ...body,
       updatedAt: new Date(),
     })
-    .where(eq(services.id, parseInt(params.id)))
+    .where(eq(services.id, parseInt(id)))
     .returning();
 
   // Invalidate cache
@@ -39,8 +40,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session || !(session.user as any)?.isAdmin) {
@@ -51,7 +53,7 @@ export async function DELETE(
 
   await db
     .delete(services)
-    .where(eq(services.id, parseInt(params.id)));
+    .where(eq(services.id, parseInt(id)));
 
   // Invalidate cache
   await cacheDel('services:public');

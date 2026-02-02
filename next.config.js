@@ -36,6 +36,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  turbopack: {},
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',

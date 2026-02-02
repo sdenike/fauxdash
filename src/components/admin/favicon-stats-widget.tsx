@@ -57,7 +57,7 @@ export function FaviconStatsWidget() {
 
   if (loading) {
     return (
-      <Card className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+      <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PhotoIcon className="h-5 w-5" />
@@ -66,8 +66,8 @@ export function FaviconStatsWidget() {
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
-            <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+            <div className="h-4 bg-muted rounded w-1/2"></div>
+            <div className="h-4 bg-muted rounded w-3/4"></div>
           </div>
         </CardContent>
       </Card>
@@ -76,7 +76,7 @@ export function FaviconStatsWidget() {
 
   if (!stats || stats.totalFiles === 0) {
     return (
-      <Card className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+      <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PhotoIcon className="h-5 w-5" />
@@ -91,7 +91,7 @@ export function FaviconStatsWidget() {
   }
 
   return (
-    <Card className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+    <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <PhotoIcon className="h-5 w-5" />
@@ -101,12 +101,12 @@ export function FaviconStatsWidget() {
       <CardContent className="space-y-4">
         {/* Summary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-3 rounded-lg bg-slate-100 dark:bg-slate-800">
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalFiles}</p>
+          <div className="text-center p-3 rounded-lg bg-muted/50">
+            <p className="text-2xl font-bold text-foreground">{stats.totalFiles}</p>
             <p className="text-xs text-muted-foreground">Total Files</p>
           </div>
-          <div className="text-center p-3 rounded-lg bg-slate-100 dark:bg-slate-800">
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalSizeFormatted}</p>
+          <div className="text-center p-3 rounded-lg bg-muted/50">
+            <p className="text-2xl font-bold text-foreground">{stats.totalSizeFormatted}</p>
             <p className="text-xs text-muted-foreground">Total Size</p>
           </div>
           <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30">
@@ -128,7 +128,7 @@ export function FaviconStatsWidget() {
         {/* Breakdown */}
         {stats.breakdown.length > 0 && (
           <div>
-            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Breakdown</h4>
+            <h4 className="text-sm font-medium text-foreground mb-2">Breakdown</h4>
             <div className="space-y-2">
               {stats.breakdown.map((item) => (
                 <div key={item.type} className="flex items-center justify-between text-sm">

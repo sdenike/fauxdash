@@ -78,7 +78,7 @@ function ServiceCategoryWithAccordion({
   columns
 }: {
   category: ServiceCategory
-  renderServiceCard: (service: Service, isLastVisibleItem?: boolean, categoryShowDescriptions?: number | null) => JSX.Element
+  renderServiceCard: (service: Service, isLastVisibleItem?: boolean, categoryShowDescriptions?: number | null) => React.ReactNode
   itemSpacing: number
   columns: number
 }) {

@@ -8,8 +8,9 @@ import { cacheDel } from '@/lib/redis';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session || !(session.user as any)?.isAdmin) {
@@ -25,7 +26,7 @@ export async function PATCH(
       ...body,
       updatedAt: new Date(),
     })
-    .where(eq(serviceCategories.id, parseInt(params.id)))
+    .where(eq(serviceCategories.id, parseInt(id)))
     .returning();
 
   // Invalidate cache
@@ -39,8 +40,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session || !(session.user as any)?.isAdmin) {
@@ -48,7 +50,7 @@ export async function DELETE(
   }
 
   const db = getDb();
-  const categoryId = parseInt(params.id);
+  const categoryId = parseInt(id);
 
   // Check if there are services in this category
   const servicesInCategory = await db
