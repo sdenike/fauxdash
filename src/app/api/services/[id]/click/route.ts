@@ -5,10 +5,11 @@ import { eq, sql } from 'drizzle-orm';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const db = getDb();
-  const serviceId = parseInt(params.id);
+  const serviceId = parseInt(id);
 
   // Calculate time-based analytics
   const now = new Date();

@@ -5,10 +5,11 @@ import { existsSync } from 'fs';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { filename: string } }
+  { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
-    let filename = params.filename;
+    const { filename: paramFilename } = await params;
+    let filename = paramFilename;
 
     // Validate filename to prevent path traversal attacks
     // Only allow alphanumeric, underscore, hyphen, and dot characters
