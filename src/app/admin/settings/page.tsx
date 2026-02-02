@@ -16,6 +16,7 @@ import {
   GeoIPTab,
   EmailTab,
   AppearanceTab,
+  AuthenticationTab,
   Settings,
   defaultSettings,
 } from '@/components/settings'
@@ -109,7 +110,7 @@ function SettingsContent() {
 
       <div className="max-w-4xl">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="greeting">Greeting</TabsTrigger>
             <TabsTrigger value="datetime">Date & Time</TabsTrigger>
@@ -117,6 +118,7 @@ function SettingsContent() {
             <TabsTrigger value="geoip">GeoIP</TabsTrigger>
             <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <TabsTrigger value="authentication">Auth</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-4 mt-4">
@@ -145,6 +147,10 @@ function SettingsContent() {
 
           <TabsContent value="appearance" className="space-y-4 mt-4">
             <AppearanceTab settings={settings} onSettingsChange={handleSettingsChange} />
+          </TabsContent>
+
+          <TabsContent value="authentication" className="space-y-4 mt-4">
+            <AuthenticationTab settings={settings} onSettingsChange={handleSettingsChange} />
           </TabsContent>
         </Tabs>
 

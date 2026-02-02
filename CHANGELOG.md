@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.8.2] - 2026-02-02
 
 ### Added
+- **Authentication Settings Tab**: New dedicated tab in Admin Settings for OIDC/SSO configuration
+  - Moved OIDC settings from Profile page to Admin > Settings > Auth tab
+  - OIDC is a global system setting, not a per-user setting
+  - Includes Test Connection button to verify OIDC configuration
+  - Shows callback URL for easy provider configuration
+  - Warning about restart requirement after changes
 - **Description Visibility Settings**: Hierarchical control over description display
   - Global "Show Descriptions" toggle in Settings → Appearance
   - Per-category override (Inherit/Show/Hide dropdown)
@@ -33,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Service Worker Caching**: Excluded backup/restore API routes from PWA cache to prevent download issues
 
 ### Changed
+- **Profile Page Simplified**: Now contains only user-specific settings (Account Info, Password Change)
 - Dark themes now use GitHub Dark Default as base palette (better contrast)
 - Theme selection dropdown now groups standalone themes separately
 - Migration script refactored for better maintainability
@@ -450,7 +457,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned Features
-- OIDC authentication support
 - Custom SVG icon upload
 - Bookmark import/export (CSV/JSON)
 - Advanced analytics with charts

@@ -92,6 +92,13 @@ export interface Settings {
   smtpFromName: string
   // Logging
   logLevel: 'error' | 'warn' | 'info' | 'debug'
+  // OIDC Authentication
+  oidcEnabled: boolean
+  oidcProviderName: string
+  oidcClientId: string
+  oidcClientSecret: string
+  oidcIssuerUrl: string
+  disablePasswordLogin: boolean
 }
 
 export interface SettingsTabProps {
@@ -186,4 +193,11 @@ export const defaultSettings: Settings = {
   smtpFromEmail: '',
   smtpFromName: 'Faux|Dash',
   logLevel: 'error',
+  // OIDC Authentication
+  oidcEnabled: false,
+  oidcProviderName: '',
+  oidcClientId: '',
+  oidcClientSecret: '',
+  oidcIssuerUrl: '',
+  disablePasswordLogin: false,
 }

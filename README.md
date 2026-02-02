@@ -31,6 +31,7 @@ A modern, self-hosted homepage dashboard for managing bookmarks and services. Bu
 
 ### Authentication & Privacy
 - **User Authentication**: Local user authentication with admin access control
+- **OIDC/SSO Support**: Single sign-on with OpenID Connect providers (Authentik, Keycloak, Okta, etc.)
 - **Auth-Required Items**: Mark specific bookmarks/services as requiring login to view
 - **Password Reset**: Email-based password reset with SMTP configuration
 
@@ -274,6 +275,32 @@ Configure email for password reset functionality.
 1. Enable 2-Step Verification on your Google Account
 2. Generate an App Password at https://myaccount.google.com/apppasswords
 3. Use your Gmail address as username and the 16-character App Password
+
+### Authentication Settings (OIDC/SSO)
+
+Configure Single Sign-On with OpenID Connect providers like Authentik, Keycloak, Okta, Azure AD, etc.
+
+| Setting | Description |
+|---------|-------------|
+| **Enable OIDC** | Enable/disable OIDC authentication |
+| **Provider Name** | Display name shown on login button (e.g., "Authentik", "Okta") |
+| **Client ID** | OAuth Client ID from your OIDC provider |
+| **Client Secret** | OAuth Client Secret from your OIDC provider |
+| **Issuer URL** | The issuer URL from your OIDC provider (usually ends with `/`) |
+| **OIDC-Only Mode** | Disable password login and require OIDC authentication |
+
+**OIDC Setup:**
+1. Create an application in your OIDC provider (Authentik, Keycloak, etc.)
+2. Set the redirect/callback URL to: `https://your-fauxdash-url/api/auth/callback/oidc`
+3. Copy the Client ID, Client Secret, and Issuer URL to Faux|Dash settings
+4. Use the "Test OIDC Connection" button to verify configuration
+5. Save settings and restart the application for changes to take effect
+
+**Important Notes:**
+- OIDC settings are global (configured in Admin > Settings > Auth tab)
+- Changes to OIDC configuration require an application restart
+- Test your OIDC connection before enabling OIDC-Only Mode
+- If locked out, you can disable OIDC via environment variables or database
 
 ### Appearance Settings
 
