@@ -11,7 +11,7 @@ COPY package.json package-lock.json* ./
 # ARGON2_NO_SIMD disables SIMD optimizations that fail under QEMU ARM64 emulation
 ENV npm_config_build_from_source=true
 
-RUN ARGON2_NO_SIMD=1 npm ci && npm cache clean --force
+RUN ARGON2_NO_SIMD=1 npm ci --legacy-peer-deps && npm cache clean --force
 
 # Rebuild the source code only when needed
 FROM base AS builder

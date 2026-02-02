@@ -5,6 +5,15 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3] - 2026-02-02
+
+### Changed
+- **Security**: Upgraded Next.js from 14.2.35 to 16.1.6 (addresses security vulnerabilities)
+- **Security**: Upgraded React from 18 to 19
+- **Security**: Upgraded ESLint from 8 to 9
+- Updated all dynamic route handlers to use async params (Next.js 16 requirement)
+- Added turbopack config for PWA compatibility
+
 ## [0.8.2] - 2026-02-02
 
 ### Added
