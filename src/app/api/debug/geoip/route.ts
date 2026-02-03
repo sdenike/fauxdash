@@ -16,107 +16,116 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-  const db = getDb()
+    const db = getDb()
+    const currentIP = getClientIP(request.headers, 'unknown')
 
-  // Get current IP detection
-  const currentIP = getClientIP(request.headers, 'unknown')
+    // Get GeoIP settings - wrapped in try-catch
+    let settingsMap = new Map<string, string | null>()
+    try {
+      const settingsRows = await db.select()
+        .from(settings)
+        .where(eq(settings.userId, null as any))
 
-  // Get GeoIP settings
-  const settingsRows = await db.select()
-    .from(settings)
-    .where(eq(settings.userId, null as any))
-    .catch(() => [])
-
-  const settingsMap = new Map<string, string | null>(
-    (settingsRows || []).map((r: { key: string; value: string | null }) => [r.key, r.value])
-  )
-
-  const geoipEnabled = settingsMap.get('geoipEnabled') !== 'false'
-  const geoipProvider = settingsMap.get('geoipProvider') || 'maxmind'
-  const maxmindPath = settingsMap.get('geoipMaxmindPath') || '/data/GeoLite2-City.mmdb'
-  const ipinfoToken = settingsMap.get('geoipIpinfoToken') || ''
-
-  // Check if MaxMind database exists
-  const maxmindExists = existsSync(maxmindPath)
-
-  // Get recent pageviews with unique IPs
-  const recentPageviews = await db.select({
-    id: pageviews.id,
-    ipAddress: pageviews.ipAddress,
-    country: pageviews.country,
-    countryName: pageviews.countryName,
-    city: pageviews.city,
-    region: pageviews.region,
-    createdAt: pageviews.createdAt,
-  })
-    .from(pageviews)
-    .where(isNotNull(pageviews.ipAddress))
-    .orderBy(desc(pageviews.createdAt))
-    .limit(20)
-
-  // Get unique IPs from recent pageviews
-  const uniqueIPs = new Map<string, typeof recentPageviews[0]>()
-  for (const pv of recentPageviews) {
-    if (pv.ipAddress && !uniqueIPs.has(pv.ipAddress)) {
-      uniqueIPs.set(pv.ipAddress, pv)
+      settingsMap = new Map<string, string | null>(
+        settingsRows.map((r: { key: string; value: string | null }) => [r.key, r.value])
+      )
+    } catch (e) {
+      console.error('Failed to fetch settings:', e)
     }
-  }
 
-  // Get cache statistics
-  const cacheCount = await db.select()
-    .from(geoCache)
-    .then((rows: any[]) => rows.length)
+    const geoipEnabled = settingsMap.get('geoipEnabled') !== 'false'
+    const geoipProvider = settingsMap.get('geoipProvider') || 'maxmind'
+    const maxmindPath = settingsMap.get('geoipMaxmindPath') || '/data/GeoLite2-City.mmdb'
+    const ipinfoToken = settingsMap.get('geoipIpinfoToken') || ''
+    const maxmindExists = existsSync(maxmindPath)
 
-  // Test current IP lookup
-  let testLookup = null
-  try {
-    const provider = await createGeoIPProvider()
-    const result = await provider.lookup(currentIP)
-    testLookup = {
-      ip: currentIP,
-      result: result.success ? result.data : result.error,
-      success: result.success,
+    // Get recent pageviews - wrapped in try-catch
+    let recentPageviews: any[] = []
+    try {
+      recentPageviews = await db.select({
+        id: pageviews.id,
+        ipAddress: pageviews.ipAddress,
+        country: pageviews.country,
+        countryName: pageviews.countryName,
+        city: pageviews.city,
+        region: pageviews.region,
+        createdAt: pageviews.createdAt,
+      })
+        .from(pageviews)
+        .where(isNotNull(pageviews.ipAddress))
+        .orderBy(desc(pageviews.createdAt))
+        .limit(20)
+    } catch (e) {
+      console.error('Failed to fetch pageviews:', e)
     }
-  } catch (error: any) {
-    testLookup = {
-      ip: currentIP,
-      error: error.message,
-      success: false,
+
+    // Get unique IPs
+    const uniqueIPs = new Map<string, typeof recentPageviews[0]>()
+    for (const pv of recentPageviews) {
+      if (pv?.ipAddress && !uniqueIPs.has(pv.ipAddress)) {
+        uniqueIPs.set(pv.ipAddress, pv)
+      }
     }
-  }
 
-  const responseData = {
-    headers: {
-      'cf-connecting-ip': request.headers.get('cf-connecting-ip'),
-      'x-forwarded-for': request.headers.get('x-forwarded-for'),
-      'x-real-ip': request.headers.get('x-real-ip'),
-      'cf-ipcountry': request.headers.get('cf-ipcountry'),
-    },
-    currentIP,
-    geoipConfig: {
-      enabled: geoipEnabled,
-      provider: geoipProvider,
-      maxmindPath,
-      maxmindExists,
-      hasIpinfoToken: ipinfoToken.length > 0,
-    },
-    testLookup,
-    recentUniqueIPs: Array.from(uniqueIPs.entries()).map(([ip, data]) => ({
-      ip,
-      country: data.country,
-      countryName: data.countryName,
-      city: data.city,
-      region: data.region,
-      lastSeen: data.createdAt,
-    })),
-    cacheSize: cacheCount,
-  }
+    // Get cache statistics - wrapped in try-catch
+    let cacheCount = 0
+    try {
+      const cacheRows = await db.select().from(geoCache)
+      cacheCount = cacheRows.length
+    } catch (e) {
+      console.error('Failed to fetch cache count:', e)
+    }
 
-  return NextResponse.json(responseData, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
+    // Test current IP lookup
+    let testLookup = null
+    try {
+      const provider = await createGeoIPProvider()
+      const result = await provider.lookup(currentIP)
+      testLookup = {
+        ip: currentIP,
+        result: result.success ? result.data : result.error,
+        success: result.success,
+      }
+    } catch (error: any) {
+      testLookup = {
+        ip: currentIP,
+        error: error.message,
+        success: false,
+      }
+    }
+
+    const responseData = {
+      headers: {
+        'cf-connecting-ip': request.headers.get('cf-connecting-ip'),
+        'x-forwarded-for': request.headers.get('x-forwarded-for'),
+        'x-real-ip': request.headers.get('x-real-ip'),
+        'cf-ipcountry': request.headers.get('cf-ipcountry'),
+      },
+      currentIP,
+      geoipConfig: {
+        enabled: geoipEnabled,
+        provider: geoipProvider,
+        maxmindPath,
+        maxmindExists,
+        hasIpinfoToken: ipinfoToken.length > 0,
+      },
+      testLookup,
+      recentUniqueIPs: Array.from(uniqueIPs.entries()).map(([ip, data]) => ({
+        ip,
+        country: data?.country || null,
+        countryName: data?.countryName || null,
+        city: data?.city || null,
+        region: data?.region || null,
+        lastSeen: data?.createdAt || null,
+      })),
+      cacheSize: cacheCount,
+    }
+
+    return NextResponse.json(responseData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
   } catch (error: any) {
     console.error('GeoIP debug error:', error)
     return NextResponse.json({
