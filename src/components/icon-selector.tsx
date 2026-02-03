@@ -235,12 +235,16 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
       return
     }
 
+    // Determine if this is a direct favicon URL or a domain
+    // Direct favicon URLs end with image extensions
+    const isDirectFavicon = /\.(ico|png|jpg|jpeg|svg|gif|webp)$/i.test(faviconUrl)
+
     setFetchingFavicon(true)
     try {
       const response = await fetch('/api/favicons/fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: faviconUrl, isDirectFaviconUrl: true }),
+        body: JSON.stringify({ url: faviconUrl, isDirectFaviconUrl: isDirectFavicon }),
       })
 
       const data = await response.json()
