@@ -25,9 +25,10 @@ export async function GET(request: NextRequest) {
   const settingsRows = await db.select()
     .from(settings)
     .where(eq(settings.userId, null as any))
+    .catch(() => [])
 
   const settingsMap = new Map<string, string | null>(
-    settingsRows.map((r: { key: string; value: string | null }) => [r.key, r.value])
+    (settingsRows || []).map((r: { key: string; value: string | null }) => [r.key, r.value])
   )
 
   const geoipEnabled = settingsMap.get('geoipEnabled') !== 'false'
