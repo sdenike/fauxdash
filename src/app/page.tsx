@@ -8,7 +8,6 @@ import { SearchBar } from '@/components/search-bar'
 import { WeatherWidget } from '@/components/weather-widget'
 import { Header } from '@/components/header'
 import { ServicesSection } from '@/components/services-section'
-import { HomepageDescription } from '@/components/homepage-description'
 import { HomepageGraphic } from '@/components/homepage-graphic'
 import { getTimeBasedWelcomeMessage } from '@/lib/datetime'
 import { substituteVariables } from '@/lib/template'
@@ -227,22 +226,6 @@ export default function HomePage() {
       <Header />
 
       <main className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Homepage Graphic - Above position */}
-        {homepageGraphicPosition === 'above' && (
-          <HomepageGraphic
-            enabled={homepageGraphicEnabled}
-            path={homepageGraphicPath}
-            maxWidth={homepageGraphicMaxWidth}
-            hAlign={homepageGraphicHAlign}
-          />
-        )}
-
-        {/* Homepage Description - visible to all users */}
-        <HomepageDescription
-          enabled={homepageDescriptionEnabled}
-          description={homepageDescription}
-        />
-
         {/* Welcome Message - logged in users only */}
         {welcomeMessageEnabled && session && (
           <div className="mb-6">
@@ -255,16 +238,6 @@ export default function HomePage() {
                 : substituteVariables(welcomeMessage, session.user as any)}
             </h2>
           </div>
-        )}
-
-        {/* Homepage Graphic - Below position */}
-        {homepageGraphicPosition === 'below' && (
-          <HomepageGraphic
-            enabled={homepageGraphicEnabled}
-            path={homepageGraphicPath}
-            maxWidth={homepageGraphicMaxWidth}
-            hAlign={homepageGraphicHAlign}
-          />
         )}
 
         {/* Search Bar (only if not in header and user is logged in) */}
@@ -429,9 +402,38 @@ export default function HomePage() {
                 )}
               </>
             ) : (
-              <h1 className="text-6xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
-                {siteTitle}
-              </h1>
+              <>
+                {/* Homepage Graphic - Above position */}
+                {homepageGraphicPosition === 'above' && (
+                  <HomepageGraphic
+                    enabled={homepageGraphicEnabled}
+                    path={homepageGraphicPath}
+                    maxWidth={homepageGraphicMaxWidth}
+                    hAlign={homepageGraphicHAlign}
+                  />
+                )}
+
+                {/* Custom description OR default site title */}
+                {homepageDescriptionEnabled && homepageDescription ? (
+                  <p className="text-2xl text-muted-foreground whitespace-pre-wrap max-w-2xl mx-auto">
+                    {homepageDescription}
+                  </p>
+                ) : (
+                  <h1 className="text-6xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
+                    {siteTitle}
+                  </h1>
+                )}
+
+                {/* Homepage Graphic - Below position */}
+                {homepageGraphicPosition === 'below' && (
+                  <HomepageGraphic
+                    enabled={homepageGraphicEnabled}
+                    path={homepageGraphicPath}
+                    maxWidth={homepageGraphicMaxWidth}
+                    hAlign={homepageGraphicHAlign}
+                  />
+                )}
+              </>
             )}
           </div>
         )}
