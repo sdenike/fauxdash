@@ -150,6 +150,20 @@ export function HomepageGraphicSettings({ settings, onSettingsChange }: Settings
           />
         </div>
 
+        <div className="flex items-center justify-between">
+          <div>
+            <Label htmlFor="homepageGraphicHideWhenLoggedIn">Hide When Logged In</Label>
+            <p className="text-sm text-muted-foreground">
+              Only show the graphic to logged-out users
+            </p>
+          </div>
+          <Switch
+            id="homepageGraphicHideWhenLoggedIn"
+            checked={settings.homepageGraphicHideWhenLoggedIn}
+            onCheckedChange={(checked) => updateSetting('homepageGraphicHideWhenLoggedIn', checked)}
+          />
+        </div>
+
         {settings.homepageGraphicEnabled && (
           <>
             {/* Preview and Upload */}

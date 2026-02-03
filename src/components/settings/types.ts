@@ -109,6 +109,7 @@ export interface Settings {
   homepageGraphicHAlign: 'left' | 'center' | 'right'
   homepageGraphicVAlign: 'top' | 'center' | 'bottom'
   homepageGraphicPosition: 'above' | 'below'
+  homepageGraphicHideWhenLoggedIn: boolean
 }
 
 export interface SettingsTabProps {
@@ -220,4 +221,5 @@ export const defaultSettings: Settings = {
   homepageGraphicHAlign: 'center',
   homepageGraphicVAlign: 'center',
   homepageGraphicPosition: 'above',
+  homepageGraphicHideWhenLoggedIn: false,
 }

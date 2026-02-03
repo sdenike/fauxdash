@@ -152,6 +152,7 @@ export async function GET(request: NextRequest) {
     homepageGraphicHAlign: settingsObj.homepageGraphicHAlign || 'center',
     homepageGraphicVAlign: settingsObj.homepageGraphicVAlign || 'center',
     homepageGraphicPosition: settingsObj.homepageGraphicPosition || 'above',
+    homepageGraphicHideWhenLoggedIn: settingsObj.homepageGraphicHideWhenLoggedIn === 'true',
   });
 }
 
@@ -280,6 +281,7 @@ export async function POST(request: NextRequest) {
   if (body.homepageGraphicHAlign !== undefined) settingsToSave.push({ key: 'homepageGraphicHAlign', value: body.homepageGraphicHAlign || 'center' });
   if (body.homepageGraphicVAlign !== undefined) settingsToSave.push({ key: 'homepageGraphicVAlign', value: body.homepageGraphicVAlign || 'center' });
   if (body.homepageGraphicPosition !== undefined) settingsToSave.push({ key: 'homepageGraphicPosition', value: body.homepageGraphicPosition || 'above' });
+  if (body.homepageGraphicHideWhenLoggedIn !== undefined) settingsToSave.push({ key: 'homepageGraphicHideWhenLoggedIn', value: body.homepageGraphicHideWhenLoggedIn.toString() });
 
   // Settings that should be stored globally (userId = null) rather than per-user
   const globalSettingKeys = [
@@ -299,6 +301,7 @@ export async function POST(request: NextRequest) {
     // Homepage graphic settings
     'homepageGraphicEnabled', 'homepageGraphicPath', 'homepageGraphicMaxWidth',
     'homepageGraphicHAlign', 'homepageGraphicVAlign', 'homepageGraphicPosition',
+    'homepageGraphicHideWhenLoggedIn',
   ];
 
   for (const setting of settingsToSave) {

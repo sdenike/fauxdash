@@ -89,6 +89,7 @@ export default function HomePage() {
   const [homepageGraphicMaxWidth, setHomepageGraphicMaxWidth] = useState(200)
   const [homepageGraphicHAlign, setHomepageGraphicHAlign] = useState<'left' | 'center' | 'right'>('center')
   const [homepageGraphicPosition, setHomepageGraphicPosition] = useState<'above' | 'below'>('above')
+  const [homepageGraphicHideWhenLoggedIn, setHomepageGraphicHideWhenLoggedIn] = useState(false)
 
   // Check if first-time setup is needed
   useEffect(() => {
@@ -158,6 +159,7 @@ export default function HomePage() {
       setHomepageGraphicMaxWidth(data.homepageGraphicMaxWidth || 200)
       setHomepageGraphicHAlign(data.homepageGraphicHAlign || 'center')
       setHomepageGraphicPosition(data.homepageGraphicPosition || 'above')
+      setHomepageGraphicHideWhenLoggedIn(data.homepageGraphicHideWhenLoggedIn || false)
     } catch (error) {
       console.error('Failed to fetch settings:', error)
     }
@@ -404,7 +406,7 @@ export default function HomePage() {
             ) : (
               <>
                 {/* Homepage Graphic - Above position */}
-                {homepageGraphicPosition === 'above' && (
+                {homepageGraphicPosition === 'above' && !(homepageGraphicHideWhenLoggedIn && session) && (
                   <HomepageGraphic
                     enabled={homepageGraphicEnabled}
                     path={homepageGraphicPath}
@@ -425,7 +427,7 @@ export default function HomePage() {
                 )}
 
                 {/* Homepage Graphic - Below position */}
-                {homepageGraphicPosition === 'below' && (
+                {homepageGraphicPosition === 'below' && !(homepageGraphicHideWhenLoggedIn && session) && (
                   <HomepageGraphic
                     enabled={homepageGraphicEnabled}
                     path={homepageGraphicPath}

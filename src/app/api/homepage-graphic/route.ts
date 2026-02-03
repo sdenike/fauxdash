@@ -83,15 +83,39 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // Validate that the buffer contains valid image data
+    // Check for common image format signatures (magic bytes)
+    const isValidImage =
+      (buffer[0] === 0xFF && buffer[1] === 0xD8) || // JPEG
+      (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) || // PNG
+      (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) || // GIF
+      (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46); // WebP/RIFF
+
+    if (!isValidImage) {
+      return NextResponse.json(
+        { error: 'Invalid image file. The file does not contain valid image data.' },
+        { status: 400 }
+      );
+    }
+
     // Convert to WebP with lossless compression for logos/graphics
     // Resize to max 1024px on longest side to keep file sizes reasonable
-    const processedBuffer = await sharp(buffer)
-      .resize(1024, 1024, {
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-      .webp({ lossless: true })
-      .toBuffer();
+    let processedBuffer: Buffer;
+    try {
+      processedBuffer = await sharp(buffer)
+        .resize(1024, 1024, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .webp({ lossless: true })
+        .toBuffer();
+    } catch (sharpError: any) {
+      logSystem('error', 'Sharp processing failed', { error: sharpError.message });
+      return NextResponse.json(
+        { error: 'Image conversion failed. The file may be corrupted or in an unsupported format.' },
+        { status: 400 }
+      );
+    }
 
     // Save the file
     await writeFile(join(GRAPHIC_DIR, GRAPHIC_FILE), processedBuffer);

@@ -46,6 +46,7 @@ export async function GET() {
       homepageGraphicHAlign: settingsObj.homepageGraphicHAlign || 'center',
       homepageGraphicVAlign: settingsObj.homepageGraphicVAlign || 'center',
       homepageGraphicPosition: settingsObj.homepageGraphicPosition || 'above',
+      homepageGraphicHideWhenLoggedIn: settingsObj.homepageGraphicHideWhenLoggedIn === 'true',
     });
   } catch (error) {
     console.error('Failed to fetch public settings:', error);
@@ -71,6 +72,7 @@ export async function GET() {
       homepageGraphicHAlign: 'center',
       homepageGraphicVAlign: 'center',
       homepageGraphicPosition: 'above',
+      homepageGraphicHideWhenLoggedIn: false,
     });
   }
 }

@@ -328,6 +328,15 @@ export async function convertToPng(
 
     // Standard image processing for PNG, JPEG, GIF, WebP, BMP
     try {
+      // Check if buffer looks like HTML/XML instead of an image
+      const bufferPreview = buffer.toString('utf8', 0, Math.min(buffer.length, 500));
+      if (bufferPreview.includes('<!DOCTYPE') ||
+          bufferPreview.includes('<html') ||
+          (bufferPreview.includes('<?xml') && !bufferPreview.includes('svg'))) {
+        console.log('Buffer contains HTML/XML, not a valid image');
+        return { success: false, error: 'Response is HTML/XML, not an image' };
+      }
+
       let sharpInstance = sharp(buffer);
 
       // Get metadata to check if we can process it
