@@ -49,11 +49,11 @@ export async function GET(request: NextRequest) {
         countryName: pageviews.countryName,
         city: pageviews.city,
         region: pageviews.region,
-        createdAt: pageviews.createdAt,
+        timestamp: pageviews.timestamp,
       })
         .from(pageviews)
         .where(isNotNull(pageviews.ipAddress))
-        .orderBy(desc(pageviews.createdAt))
+        .orderBy(desc(pageviews.timestamp))
         .limit(20)
     } catch (e) {
       console.error('Failed to fetch pageviews:', e)
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
         countryName: data?.countryName || null,
         city: data?.city || null,
         region: data?.region || null,
-        lastSeen: data?.createdAt || null,
+        lastSeen: data?.timestamp || null,
       })),
       cacheSize: cacheCount,
     }

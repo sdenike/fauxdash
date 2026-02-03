@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
         city: pageviews.city,
         region: pageviews.region,
         geoEnriched: pageviews.geoEnriched,
-        createdAt: pageviews.createdAt,
+        timestamp: pageviews.timestamp,
       })
         .from(pageviews)
         .orderBy(desc(pageviews.id))
