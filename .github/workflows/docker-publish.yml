@@ -96,7 +96,9 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
+          # Note: ARM64 temporarily disabled due to argon2 cross-compilation issues
+          # Will re-enable once we find a solution for QEMU emulation problems
 
       # -------------------------------------------------------------------
       # Output image digest
