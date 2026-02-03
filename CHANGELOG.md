@@ -5,6 +5,14 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.7] - 2026-02-03
+
+### Fixed
+- **Pageviews Debug Endpoint**: Rewrote to use SQL aggregation instead of in-memory filtering
+  - Prevents "Cannot convert undefined or null to object" errors
+  - More efficient query pattern for database statistics
+  - Better error handling with proper fallbacks
+
 ## [0.9.6] - 2026-02-03
 
 ### Fixed
