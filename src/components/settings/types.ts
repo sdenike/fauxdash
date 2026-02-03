@@ -99,6 +99,16 @@ export interface Settings {
   oidcClientSecret: string
   oidcIssuerUrl: string
   disablePasswordLogin: boolean
+  // Homepage Content
+  homepageDescriptionEnabled: boolean
+  homepageDescription: string
+  // Homepage Graphic
+  homepageGraphicEnabled: boolean
+  homepageGraphicPath: string
+  homepageGraphicMaxWidth: number
+  homepageGraphicHAlign: 'left' | 'center' | 'right'
+  homepageGraphicVAlign: 'top' | 'center' | 'bottom'
+  homepageGraphicPosition: 'above' | 'below'
 }
 
 export interface SettingsTabProps {
@@ -200,4 +210,14 @@ export const defaultSettings: Settings = {
   oidcClientSecret: '',
   oidcIssuerUrl: '',
   disablePasswordLogin: false,
+  // Homepage Content
+  homepageDescriptionEnabled: false,
+  homepageDescription: '',
+  // Homepage Graphic
+  homepageGraphicEnabled: false,
+  homepageGraphicPath: '',
+  homepageGraphicMaxWidth: 200,
+  homepageGraphicHAlign: 'center',
+  homepageGraphicVAlign: 'center',
+  homepageGraphicPosition: 'above',
 }

@@ -8,6 +8,8 @@ import { SearchBar } from '@/components/search-bar'
 import { WeatherWidget } from '@/components/weather-widget'
 import { Header } from '@/components/header'
 import { ServicesSection } from '@/components/services-section'
+import { HomepageDescription } from '@/components/homepage-description'
+import { HomepageGraphic } from '@/components/homepage-graphic'
 import { getTimeBasedWelcomeMessage } from '@/lib/datetime'
 import { substituteVariables } from '@/lib/template'
 import { BeakerIcon } from '@heroicons/react/24/outline'
@@ -80,6 +82,14 @@ export default function HomePage() {
   const [bookmarksColumns, setBookmarksColumns] = useState(4)
   const [siteTitle, setSiteTitle] = useState('Faux|Dash')
   const [showDescriptions, setShowDescriptions] = useState(false)
+  // Homepage customization
+  const [homepageDescriptionEnabled, setHomepageDescriptionEnabled] = useState(false)
+  const [homepageDescription, setHomepageDescription] = useState('')
+  const [homepageGraphicEnabled, setHomepageGraphicEnabled] = useState(false)
+  const [homepageGraphicPath, setHomepageGraphicPath] = useState('')
+  const [homepageGraphicMaxWidth, setHomepageGraphicMaxWidth] = useState(200)
+  const [homepageGraphicHAlign, setHomepageGraphicHAlign] = useState<'left' | 'center' | 'right'>('center')
+  const [homepageGraphicPosition, setHomepageGraphicPosition] = useState<'above' | 'below'>('above')
 
   // Check if first-time setup is needed
   useEffect(() => {
@@ -116,7 +126,9 @@ export default function HomePage() {
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch('/api/settings')
+      // Use authenticated endpoint if logged in, public endpoint otherwise
+      const endpoint = session ? '/api/settings' : '/api/settings/public'
+      const response = await fetch(endpoint)
       const data = await response.json()
       setSiteTitle(data.siteTitle || 'Faux|Dash')
       setWelcomeMessage(data.welcomeMessage || 'Welcome back')
@@ -139,6 +151,14 @@ export default function HomePage() {
       setServicesColumns(data.servicesColumns || 4)
       setBookmarksColumns(data.bookmarksColumns || 4)
       setShowDescriptions(data.showDescriptions || false)
+      // Homepage customization
+      setHomepageDescriptionEnabled(data.homepageDescriptionEnabled || false)
+      setHomepageDescription(data.homepageDescription || '')
+      setHomepageGraphicEnabled(data.homepageGraphicEnabled || false)
+      setHomepageGraphicPath(data.homepageGraphicPath || '')
+      setHomepageGraphicMaxWidth(data.homepageGraphicMaxWidth || 200)
+      setHomepageGraphicHAlign(data.homepageGraphicHAlign || 'center')
+      setHomepageGraphicPosition(data.homepageGraphicPosition || 'above')
     } catch (error) {
       console.error('Failed to fetch settings:', error)
     }
@@ -207,7 +227,23 @@ export default function HomePage() {
       <Header />
 
       <main className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Welcome Message */}
+        {/* Homepage Graphic - Above position */}
+        {homepageGraphicPosition === 'above' && (
+          <HomepageGraphic
+            enabled={homepageGraphicEnabled}
+            path={homepageGraphicPath}
+            maxWidth={homepageGraphicMaxWidth}
+            hAlign={homepageGraphicHAlign}
+          />
+        )}
+
+        {/* Homepage Description - visible to all users */}
+        <HomepageDescription
+          enabled={homepageDescriptionEnabled}
+          description={homepageDescription}
+        />
+
+        {/* Welcome Message - logged in users only */}
         {welcomeMessageEnabled && session && (
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-foreground">
@@ -219,6 +255,16 @@ export default function HomePage() {
                 : substituteVariables(welcomeMessage, session.user as any)}
             </h2>
           </div>
+        )}
+
+        {/* Homepage Graphic - Below position */}
+        {homepageGraphicPosition === 'below' && (
+          <HomepageGraphic
+            enabled={homepageGraphicEnabled}
+            path={homepageGraphicPath}
+            maxWidth={homepageGraphicMaxWidth}
+            hAlign={homepageGraphicHAlign}
+          />
         )}
 
         {/* Search Bar (only if not in header and user is logged in) */}

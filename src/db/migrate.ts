@@ -29,8 +29,14 @@ async function runMigrations() {
     // Add name fields if they don't exist
     await addNameFields(db);
 
+    // Add description visibility columns if they don't exist
+    await addDescriptionVisibilityColumns(db);
+
     // Create password reset tokens table if it doesn't exist
     await createPasswordResetTokensTable(db);
+
+    // Create analytics and other tables if they don't exist
+    await createMissingTables(db);
 
     // Create default admin user if none exists
     await createDefaultAdmin(db);
@@ -139,6 +145,66 @@ async function addNameFields(db: any) {
   }
 }
 
+async function addDescriptionVisibilityColumns(db: any) {
+  try {
+    console.log('Checking for description visibility columns...');
+
+    if (dbProvider === 'sqlite') {
+      // Check and add show_descriptions to categories
+      const categoriesInfo = db.prepare("PRAGMA table_info(categories)").all();
+      if (!categoriesInfo.some((col: any) => col.name === 'show_descriptions')) {
+        db.prepare(`ALTER TABLE categories ADD COLUMN show_descriptions INTEGER`).run();
+        console.log('Added show_descriptions to categories');
+      }
+
+      // Check and add show_descriptions to service_categories
+      const serviceCategoriesInfo = db.prepare("PRAGMA table_info(service_categories)").all();
+      if (!serviceCategoriesInfo.some((col: any) => col.name === 'show_descriptions')) {
+        db.prepare(`ALTER TABLE service_categories ADD COLUMN show_descriptions INTEGER`).run();
+        console.log('Added show_descriptions to service_categories');
+      }
+
+      // Check and add show_description to bookmarks
+      const bookmarksInfo = db.prepare("PRAGMA table_info(bookmarks)").all();
+      if (!bookmarksInfo.some((col: any) => col.name === 'show_description')) {
+        db.prepare(`ALTER TABLE bookmarks ADD COLUMN show_description INTEGER`).run();
+        console.log('Added show_description to bookmarks');
+      }
+
+      // Check and add show_description to services
+      const servicesInfo = db.prepare("PRAGMA table_info(services)").all();
+      if (!servicesInfo.some((col: any) => col.name === 'show_description')) {
+        db.prepare(`ALTER TABLE services ADD COLUMN show_description INTEGER`).run();
+        console.log('Added show_description to services');
+      }
+
+      console.log('Description visibility columns ready');
+    } else if (dbProvider === 'postgres') {
+      await db.execute(`ALTER TABLE categories ADD COLUMN IF NOT EXISTS show_descriptions INTEGER`);
+      await db.execute(`ALTER TABLE service_categories ADD COLUMN IF NOT EXISTS show_descriptions INTEGER`);
+      await db.execute(`ALTER TABLE bookmarks ADD COLUMN IF NOT EXISTS show_description INTEGER`);
+      await db.execute(`ALTER TABLE services ADD COLUMN IF NOT EXISTS show_description INTEGER`);
+      console.log('Description visibility columns ready');
+    } else if (dbProvider === 'mysql') {
+      try {
+        await db.execute(`ALTER TABLE categories ADD COLUMN show_descriptions INT`);
+      } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
+      try {
+        await db.execute(`ALTER TABLE service_categories ADD COLUMN show_descriptions INT`);
+      } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
+      try {
+        await db.execute(`ALTER TABLE bookmarks ADD COLUMN show_description INT`);
+      } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
+      try {
+        await db.execute(`ALTER TABLE services ADD COLUMN show_description INT`);
+      } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
+      console.log('Description visibility columns ready');
+    }
+  } catch (error) {
+    console.error('Failed to add description visibility columns:', error);
+  }
+}
+
 async function createPasswordResetTokensTable(db: any) {
   try {
     console.log('Checking for password_reset_tokens table...');
@@ -183,6 +249,185 @@ async function createPasswordResetTokensTable(db: any) {
     }
   } catch (error) {
     console.error('Failed to create password_reset_tokens table:', error);
+  }
+}
+
+async function createMissingTables(db: any) {
+  try {
+    console.log('Checking for missing tables...');
+
+    if (dbProvider === 'sqlite') {
+      // Create analytics_daily table if it doesn't exist
+      db.prepare(`
+        CREATE TABLE IF NOT EXISTS analytics_daily (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT NOT NULL,
+          type TEXT NOT NULL,
+          item_id INTEGER,
+          country TEXT,
+          count INTEGER NOT NULL DEFAULT 0,
+          unique_visitors INTEGER DEFAULT 0
+        )
+      `).run();
+
+      // Create geo_cache table if it doesn't exist
+      db.prepare(`
+        CREATE TABLE IF NOT EXISTS geo_cache (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          ip_hash TEXT NOT NULL UNIQUE,
+          country TEXT,
+          country_name TEXT,
+          city TEXT,
+          region TEXT,
+          latitude INTEGER,
+          longitude INTEGER,
+          timezone TEXT,
+          provider TEXT,
+          created_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
+          expires_at INTEGER
+        )
+      `).run();
+
+      // Create bookmark_clicks table if it doesn't exist
+      db.prepare(`
+        CREATE TABLE IF NOT EXISTS bookmark_clicks (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          bookmark_id INTEGER NOT NULL,
+          clicked_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
+          hour_of_day INTEGER NOT NULL,
+          day_of_week INTEGER NOT NULL,
+          day_of_month INTEGER NOT NULL,
+          is_demo INTEGER DEFAULT 0 NOT NULL
+        )
+      `).run();
+
+      // Create service_clicks table if it doesn't exist
+      db.prepare(`
+        CREATE TABLE IF NOT EXISTS service_clicks (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          service_id INTEGER NOT NULL,
+          clicked_at INTEGER DEFAULT (strftime('%s', 'now')) NOT NULL,
+          hour_of_day INTEGER NOT NULL,
+          day_of_week INTEGER NOT NULL,
+          day_of_month INTEGER NOT NULL,
+          is_demo INTEGER DEFAULT 0 NOT NULL
+        )
+      `).run();
+
+      console.log('All tables ready');
+    } else if (dbProvider === 'postgres') {
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS analytics_daily (
+          id SERIAL PRIMARY KEY,
+          date VARCHAR(10) NOT NULL,
+          type VARCHAR(20) NOT NULL,
+          item_id INTEGER,
+          country VARCHAR(2),
+          count INTEGER NOT NULL DEFAULT 0,
+          unique_visitors INTEGER DEFAULT 0
+        )
+      `);
+
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS geo_cache (
+          id SERIAL PRIMARY KEY,
+          ip_hash VARCHAR(64) NOT NULL UNIQUE,
+          country VARCHAR(2),
+          country_name VARCHAR(100),
+          city VARCHAR(100),
+          region VARCHAR(100),
+          latitude REAL,
+          longitude REAL,
+          timezone VARCHAR(50),
+          provider VARCHAR(20),
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          expires_at TIMESTAMP
+        )
+      `);
+
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS bookmark_clicks (
+          id SERIAL PRIMARY KEY,
+          bookmark_id INTEGER NOT NULL,
+          clicked_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          hour_of_day INTEGER NOT NULL,
+          day_of_week INTEGER NOT NULL,
+          day_of_month INTEGER NOT NULL,
+          is_demo BOOLEAN DEFAULT FALSE NOT NULL
+        )
+      `);
+
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS service_clicks (
+          id SERIAL PRIMARY KEY,
+          service_id INTEGER NOT NULL,
+          clicked_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          hour_of_day INTEGER NOT NULL,
+          day_of_week INTEGER NOT NULL,
+          day_of_month INTEGER NOT NULL,
+          is_demo BOOLEAN DEFAULT FALSE NOT NULL
+        )
+      `);
+
+      console.log('All tables ready');
+    } else if (dbProvider === 'mysql') {
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS analytics_daily (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          date VARCHAR(10) NOT NULL,
+          type VARCHAR(20) NOT NULL,
+          item_id INT,
+          country VARCHAR(2),
+          count INT NOT NULL DEFAULT 0,
+          unique_visitors INT DEFAULT 0
+        )
+      `);
+
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS geo_cache (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          ip_hash VARCHAR(64) NOT NULL UNIQUE,
+          country VARCHAR(2),
+          country_name VARCHAR(100),
+          city VARCHAR(100),
+          region VARCHAR(100),
+          latitude DOUBLE,
+          longitude DOUBLE,
+          timezone VARCHAR(50),
+          provider VARCHAR(20),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+          expires_at TIMESTAMP NULL
+        )
+      `);
+
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS bookmark_clicks (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          bookmark_id INT NOT NULL,
+          clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+          hour_of_day INT NOT NULL,
+          day_of_week INT NOT NULL,
+          day_of_month INT NOT NULL,
+          is_demo BOOLEAN DEFAULT FALSE NOT NULL
+        )
+      `);
+
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS service_clicks (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          service_id INT NOT NULL,
+          clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+          hour_of_day INT NOT NULL,
+          day_of_week INT NOT NULL,
+          day_of_month INT NOT NULL,
+          is_demo BOOLEAN DEFAULT FALSE NOT NULL
+        )
+      `);
+
+      console.log('All tables ready');
+    }
+  } catch (error) {
+    console.error('Failed to create missing tables:', error);
   }
 }
 

@@ -142,6 +142,16 @@ export async function GET(request: NextRequest) {
     smtpFromName: settingsObj.smtpFromName || process.env.SMTP_FROM_NAME || 'Faux|Dash',
     // Logging settings
     logLevel: settingsObj.logLevel || process.env.LOG_LEVEL || 'error',
+    // Homepage content settings
+    homepageDescriptionEnabled: settingsObj.homepageDescriptionEnabled === 'true',
+    homepageDescription: settingsObj.homepageDescription || '',
+    // Homepage graphic settings
+    homepageGraphicEnabled: settingsObj.homepageGraphicEnabled === 'true',
+    homepageGraphicPath: settingsObj.homepageGraphicPath || '',
+    homepageGraphicMaxWidth: parseInt(settingsObj.homepageGraphicMaxWidth || '200'),
+    homepageGraphicHAlign: settingsObj.homepageGraphicHAlign || 'center',
+    homepageGraphicVAlign: settingsObj.homepageGraphicVAlign || 'center',
+    homepageGraphicPosition: settingsObj.homepageGraphicPosition || 'above',
   });
 }
 
@@ -260,15 +270,35 @@ export async function POST(request: NextRequest) {
     // Update the logger's log level immediately
     logger.setLogLevel(body.logLevel as LogLevel);
   }
+  // Homepage content settings
+  if (body.homepageDescriptionEnabled !== undefined) settingsToSave.push({ key: 'homepageDescriptionEnabled', value: body.homepageDescriptionEnabled.toString() });
+  if (body.homepageDescription !== undefined) settingsToSave.push({ key: 'homepageDescription', value: body.homepageDescription || '' });
+  // Homepage graphic settings
+  if (body.homepageGraphicEnabled !== undefined) settingsToSave.push({ key: 'homepageGraphicEnabled', value: body.homepageGraphicEnabled.toString() });
+  if (body.homepageGraphicPath !== undefined) settingsToSave.push({ key: 'homepageGraphicPath', value: body.homepageGraphicPath || '' });
+  if (body.homepageGraphicMaxWidth !== undefined) settingsToSave.push({ key: 'homepageGraphicMaxWidth', value: body.homepageGraphicMaxWidth.toString() });
+  if (body.homepageGraphicHAlign !== undefined) settingsToSave.push({ key: 'homepageGraphicHAlign', value: body.homepageGraphicHAlign || 'center' });
+  if (body.homepageGraphicVAlign !== undefined) settingsToSave.push({ key: 'homepageGraphicVAlign', value: body.homepageGraphicVAlign || 'center' });
+  if (body.homepageGraphicPosition !== undefined) settingsToSave.push({ key: 'homepageGraphicPosition', value: body.homepageGraphicPosition || 'above' });
 
   // Settings that should be stored globally (userId = null) rather than per-user
   const globalSettingKeys = [
+    // Authentication settings
     'oidcEnabled', 'oidcProviderName', 'oidcClientId', 'oidcClientSecret',
     'oidcIssuerUrl', 'disablePasswordLogin',
+    // Email settings
     'smtpProvider', 'smtpHost', 'smtpPort', 'smtpUsername', 'smtpPassword',
     'smtpEncryption', 'smtpFromEmail', 'smtpFromName',
+    // GeoIP settings
     'geoipEnabled', 'geoipProvider', 'geoipMaxmindPath', 'geoipMaxmindLicenseKey',
     'geoipMaxmindAccountId', 'geoipIpinfoToken', 'geoipCacheDuration',
+    // Theme settings (shared across all users)
+    'defaultTheme', 'themeColor', 'siteTitle', 'siteTitleEnabled',
+    // Homepage content settings
+    'homepageDescriptionEnabled', 'homepageDescription',
+    // Homepage graphic settings
+    'homepageGraphicEnabled', 'homepageGraphicPath', 'homepageGraphicMaxWidth',
+    'homepageGraphicHAlign', 'homepageGraphicVAlign', 'homepageGraphicPosition',
   ];
 
   for (const setting of settingsToSave) {

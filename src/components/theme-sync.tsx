@@ -1,19 +1,23 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { useSession } from 'next-auth/react'
 import { getThemeByName, applyTheme, STANDALONE_THEMES } from '@/lib/themes'
 
 export function ThemeSync() {
   const { setTheme, resolvedTheme } = useTheme()
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
+  const [themeApplied, setThemeApplied] = useState(false)
 
   // Fetch and apply theme mode preference
+  // Works for both authenticated and unauthenticated users
   useEffect(() => {
     const fetchThemeMode = async () => {
       try {
-        const response = await fetch('/api/settings')
+        // Use authenticated endpoint if logged in, public endpoint otherwise
+        const endpoint = session ? '/api/settings' : '/api/settings/public'
+        const response = await fetch(endpoint)
         const data = await response.json()
         if (data.defaultTheme) {
           setTheme(data.defaultTheme)
@@ -23,16 +27,20 @@ export function ThemeSync() {
       }
     }
 
-    if (session) {
+    // Only fetch when session status is determined (not 'loading')
+    if (status !== 'loading') {
       fetchThemeMode()
     }
-  }, [session, setTheme])
+  }, [session, status, setTheme])
 
   // Apply theme colors when mode changes
+  // Works for both authenticated and unauthenticated users
   useEffect(() => {
     const applyThemeColors = async () => {
       try {
-        const response = await fetch('/api/settings')
+        // Use authenticated endpoint if logged in, public endpoint otherwise
+        const endpoint = session ? '/api/settings' : '/api/settings/public'
+        const response = await fetch(endpoint)
         const data = await response.json()
 
         if (data.themeColor && resolvedTheme) {
@@ -52,6 +60,7 @@ export function ThemeSync() {
 
           if (selectedTheme) {
             applyTheme(selectedTheme)
+            setThemeApplied(true)
           }
         }
       } catch (error) {
@@ -59,10 +68,11 @@ export function ThemeSync() {
       }
     }
 
-    if (session && resolvedTheme) {
+    // Only apply when session status is determined and we have a resolved theme
+    if (status !== 'loading' && resolvedTheme) {
       applyThemeColors()
     }
-  }, [session, resolvedTheme])
+  }, [session, status, resolvedTheme])
 
   return null
 }

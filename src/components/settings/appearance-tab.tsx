@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { THEMES, STANDALONE_THEMES, getThemeByName, applyTheme } from '@/lib/themes'
 import { SettingsTabProps } from './types'
 import { BackgroundImageSettings } from './background-image-settings'
+import { HomepageContentSettings } from './homepage-content-settings'
+import { HomepageGraphicSettings } from './homepage-graphic-settings'
 
 export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) {
   const { setTheme: setNextTheme, resolvedTheme } = useTheme()
@@ -154,6 +156,12 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
           )}
         </CardContent>
       </Card>
+
+      {/* Homepage Graphic Settings */}
+      <HomepageGraphicSettings settings={settings} onSettingsChange={onSettingsChange} />
+
+      {/* Homepage Content Settings */}
+      <HomepageContentSettings settings={settings} onSettingsChange={onSettingsChange} />
 
       {/* Description Visibility Card */}
       <Card>
