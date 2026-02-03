@@ -35,9 +35,9 @@ export async function GET(request: NextRequest) {
     // Get counts
     const allPageviews = await db.select().from(pageviews)
     const total = allPageviews.length
-    const withIP = allPageviews.filter(pv => pv.ipAddress).length
-    const withGeo = allPageviews.filter(pv => pv.country).length
-    const enriched = allPageviews.filter(pv => pv.geoEnriched).length
+    const withIP = allPageviews.filter((pv: any) => pv.ipAddress).length
+    const withGeo = allPageviews.filter((pv: any) => pv.country).length
+    const enriched = allPageviews.filter((pv: any) => pv.geoEnriched).length
 
     return NextResponse.json({
       recentPageviews: recent,
