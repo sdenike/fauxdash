@@ -9,11 +9,12 @@ import { createGeoIPProvider } from '@/lib/geoip/factory'
 import { existsSync } from 'fs'
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  try {
+    const session = await getServerSession(authOptions)
 
-  if (!session || !(session.user as any)?.isAdmin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+    if (!session || !(session.user as any)?.isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
   const db = getDb()
 
@@ -83,7 +84,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({
+  const responseData = {
     headers: {
       'cf-connecting-ip': request.headers.get('cf-connecting-ip'),
       'x-forwarded-for': request.headers.get('x-forwarded-for'),
@@ -108,5 +109,19 @@ export async function GET(request: NextRequest) {
       lastSeen: data.createdAt,
     })),
     cacheSize: cacheCount,
+  }
+
+  return NextResponse.json(responseData, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
   })
+  } catch (error: any) {
+    console.error('GeoIP debug error:', error)
+    return NextResponse.json({
+      error: 'Failed to generate debug info',
+      message: error.message,
+      stack: error.stack,
+    }, { status: 500 })
+  }
 }
