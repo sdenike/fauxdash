@@ -5,6 +5,87 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4] - 2026-02-03
+
+### Fixed
+- **GeoIP Debug Endpoint**: Wrapped all database queries in individual try-catch blocks for robust error handling
+- Improved error logging and graceful degradation when database queries fail
+
+## [0.9.3] - 2026-02-03
+
+### Fixed
+- **GeoIP Debug Endpoint**: Added null checking for settings query to prevent crashes
+
+## [0.9.2] - 2026-02-03
+
+### Fixed
+- **GeoIP Debug Endpoint**: Improved error handling and explicit Content-Type headers
+- Fixed endpoint returning zero-byte file instead of JSON
+
+## [0.9.1] - 2026-02-03
+
+### Added
+- **GeoIP Debug Endpoint**: New `/api/debug/geoip` endpoint for troubleshooting location issues
+  - Shows current IP detection from request headers
+  - Displays GeoIP configuration and database status
+  - Tests live lookup of current IP
+  - Lists recent unique IPs and their resolved locations
+
+## [0.9.0] - 2026-02-03
+
+### Changed
+- **Centralized Favicon System**: Eliminated code duplication across the codebase
+  - All favicon operations now use single `fetchAndSaveFavicon` function
+  - Removed ~150 lines of duplicate code from batch and CSV import endpoints
+  - Improved performance through code reuse and consistency
+  - Single source of truth for favicon fetching logic
+
+### Added
+- **Site Favicon Customization**: Upload custom browser tab icon
+  - Upload your own favicon or fetch from URL
+  - Automatic favicon discovery from domain URLs
+  - Real-time favicon updates without page reload
+  - Settings UI in Appearance section
+
+## [0.8.7] - 2026-02-03
+
+### Fixed
+- **Automatic Favicon Discovery**: When entering domain URLs (e.g., `https://manageengine.com`), system now automatically searches for favicons using multiple sources
+- Direct favicon URLs (ending in .ico, .png, etc.) still work as expected
+- Applies to both icon selector and site favicon settings
+
+## [0.8.6] - 2026-02-03
+
+### Added
+- **Homepage Graphic Visibility Control**: New "Hide When Logged In" setting
+  - Show homepage graphic only to logged-out users
+  - Perfect for branding the login page without cluttering authenticated dashboard
+
+### Fixed
+- **Image Upload Error Handling**: Better validation and error messages
+  - Added magic byte validation for uploaded images
+  - Detect HTML/XML error pages when fetching favicons by URL
+  - Clear error messages instead of cryptic Sharp errors
+
+## [0.8.5] - 2026-02-03
+
+### Fixed
+- **Homepage Description Placement**: Custom homepage description now replaces the centered "Faux|Dash" text instead of appearing above it
+- Removed unused `HomepageDescription` component import
+
+## [0.8.4] - 2026-02-02
+
+### Added
+- **Homepage Customization**: Three new features for customizing the homepage
+  - **Theme Persistence for Logged-Out Users**: Admin's theme settings now visible to all visitors including login page
+  - **Homepage Text Customization**: Editable description with enable/disable option that replaces the default "Faux|Dash" text
+  - **Homepage Graphic Upload**: Custom image with alignment (left/center/right) and position (above/below content) options
+  - Image processing with WebP conversion and automatic resizing
+
+### Changed
+- **Database Migrations**: Added automatic column creation for `show_descriptions` field
+- **Migration Safety**: Automatic table creation for analytics_daily, geo_cache, bookmark_clicks, service_clicks
+
 ## [0.8.3] - 2026-02-02
 
 ### Changed
