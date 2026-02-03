@@ -4,10 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { getDb } from '@/db';
 import { bookmarks, categories, services, serviceCategories } from '@/db/schema';
 import { cacheDel } from '@/lib/redis';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
-import sharp from 'sharp';
+import { fetchAndSaveFavicon } from '@/lib/favicon-utils';
 
 interface ParsedItem {
   section: 'bookmarks' | 'services';
@@ -89,79 +86,10 @@ function parseCSVLine(line: string): string[] {
   return values;
 }
 
+// Use centralized favicon fetching - wraps fetchAndSaveFavicon for consistent return type
 async function fetchFavicon(url: string): Promise<{ success: boolean; path?: string; error?: string }> {
-  try {
-    const urlObj = new URL(url);
-    const domain = urlObj.hostname.replace('www.', '');
-
-    const faviconUrls = [
-      `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
-      `${urlObj.protocol}//${urlObj.hostname}/favicon.ico`,
-      `https://icons.duckduckgo.com/ip3/${domain}.ico`,
-    ];
-
-    let faviconData: ArrayBuffer | null = null;
-    let contentType = 'image/x-icon';
-
-    for (const faviconUrl of faviconUrls) {
-      try {
-        const response = await fetch(faviconUrl, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FauxDash/1.0)' },
-          signal: AbortSignal.timeout(5000),
-        });
-
-        if (response.ok) {
-          faviconData = await response.arrayBuffer();
-          contentType = response.headers.get('content-type') || 'image/x-icon';
-          break;
-        }
-      } catch {
-        continue;
-      }
-    }
-
-    if (!faviconData) {
-      return { success: false, error: 'No favicon found' };
-    }
-
-    const publicDir = join(process.cwd(), 'public', 'favicons');
-    if (!existsSync(publicDir)) {
-      mkdirSync(publicDir, { recursive: true });
-    }
-
-    let ext = 'png';
-    if (contentType.includes('x-icon')) ext = 'ico';
-    else if (contentType.includes('png')) ext = 'png';
-    else if (contentType.includes('jpg') || contentType.includes('jpeg')) ext = 'jpg';
-
-    const filename = `${domain.replace(/\./g, '_')}_${Date.now()}.png`;
-    const pngPath = join(publicDir, filename);
-
-    try {
-      const buffer = Buffer.from(faviconData);
-      let sharpInstance = sharp(buffer);
-
-      try {
-        const metadata = await sharpInstance.metadata();
-        if (metadata.pages && metadata.pages > 1) {
-          sharpInstance = sharp(buffer, { page: 0 });
-        }
-      } catch {
-        // Proceed with conversion
-      }
-
-      await sharpInstance
-        .png()
-        .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
-        .toFile(pngPath);
-
-      return { success: true, path: `/api/favicons/serve/${filename}` };
-    } catch (convertError: any) {
-      return { success: false, error: `Conversion failed: ${convertError.message}` };
-    }
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
+  const result = await fetchAndSaveFavicon(url);
+  return result;
 }
 
 export async function POST(request: NextRequest) {
