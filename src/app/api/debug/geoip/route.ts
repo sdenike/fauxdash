@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
   // Get cache statistics
   const cacheCount = await db.select()
     .from(geoCache)
-    .then(rows => rows.length)
+    .then((rows: any[]) => rows.length)
 
   // Test current IP lookup
   let testLookup = null
