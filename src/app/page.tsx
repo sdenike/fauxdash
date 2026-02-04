@@ -80,6 +80,11 @@ export default function HomePage() {
   const [servicesColumns, setServicesColumns] = useState(4)
   const [bookmarksColumns, setBookmarksColumns] = useState(4)
   const [siteTitle, setSiteTitle] = useState('Faux|Dash')
+  const [siteTitleEnabled, setSiteTitleEnabled] = useState(true)
+  const [siteTitleUseGradient, setSiteTitleUseGradient] = useState(true)
+  const [siteTitleGradientFrom, setSiteTitleGradientFrom] = useState('#0f172a')
+  const [siteTitleGradientTo, setSiteTitleGradientTo] = useState('#475569')
+  const [siteTitleColor, setSiteTitleColor] = useState('#0f172a')
   const [showDescriptions, setShowDescriptions] = useState(false)
   // Homepage customization
   const [homepageDescriptionEnabled, setHomepageDescriptionEnabled] = useState(false)
@@ -131,6 +136,11 @@ export default function HomePage() {
       const response = await fetch(endpoint)
       const data = await response.json()
       setSiteTitle(data.siteTitle || 'Faux|Dash')
+      setSiteTitleEnabled(data.siteTitleEnabled !== false)
+      setSiteTitleUseGradient(data.siteTitleUseGradient !== false)
+      setSiteTitleGradientFrom(data.siteTitleGradientFrom || '#0f172a')
+      setSiteTitleGradientTo(data.siteTitleGradientTo || '#475569')
+      setSiteTitleColor(data.siteTitleColor || '#0f172a')
       setWelcomeMessage(data.welcomeMessage || 'Welcome back')
       setWelcomeMessageEnabled(data.welcomeMessageEnabled !== false)
       setWelcomeMessageTimeBased(data.welcomeMessageTimeBased || false)
@@ -420,11 +430,25 @@ export default function HomePage() {
                   <p className="text-2xl text-muted-foreground whitespace-pre-wrap max-w-2xl mx-auto">
                     {homepageDescription}
                   </p>
-                ) : (
-                  <h1 className="text-6xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
+                ) : siteTitleEnabled ? (
+                  <h1
+                    className="text-6xl font-bold"
+                    style={
+                      siteTitleUseGradient
+                        ? {
+                            background: `linear-gradient(to right, ${siteTitleGradientFrom}, ${siteTitleGradientTo})`,
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                          }
+                        : {
+                            color: siteTitleColor,
+                          }
+                    }
+                  >
                     {siteTitle}
                   </h1>
-                )}
+                ) : null}
 
                 {/* Homepage Graphic - Below position */}
                 {homepageGraphicPosition === 'below' && !(homepageGraphicHideWhenLoggedIn && session) && (

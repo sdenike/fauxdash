@@ -55,6 +55,10 @@ export async function GET(request: NextRequest) {
     themeColor: settingsObj.themeColor || 'Slate',
     siteTitle: settingsObj.siteTitle || 'Faux|Dash',
     siteTitleEnabled: settingsObj.siteTitleEnabled === 'false' ? false : true,
+    siteTitleUseGradient: settingsObj.siteTitleUseGradient === 'false' ? false : true,
+    siteTitleGradientFrom: settingsObj.siteTitleGradientFrom || '#0f172a',
+    siteTitleGradientTo: settingsObj.siteTitleGradientTo || '#475569',
+    siteTitleColor: settingsObj.siteTitleColor || '#0f172a',
     showDescriptions: settingsObj.showDescriptions === 'true' || false,
     // Background Image
     backgroundImage: settingsObj.backgroundImage || '',
@@ -180,6 +184,10 @@ export async function POST(request: NextRequest) {
   if (body.themeColor !== undefined) settingsToSave.push({ key: 'themeColor', value: body.themeColor || 'Slate' });
   if (body.siteTitle !== undefined) settingsToSave.push({ key: 'siteTitle', value: body.siteTitle || 'Faux|Dash' });
   if (body.siteTitleEnabled !== undefined) settingsToSave.push({ key: 'siteTitleEnabled', value: body.siteTitleEnabled.toString() });
+  if (body.siteTitleUseGradient !== undefined) settingsToSave.push({ key: 'siteTitleUseGradient', value: body.siteTitleUseGradient.toString() });
+  if (body.siteTitleGradientFrom !== undefined) settingsToSave.push({ key: 'siteTitleGradientFrom', value: body.siteTitleGradientFrom });
+  if (body.siteTitleGradientTo !== undefined) settingsToSave.push({ key: 'siteTitleGradientTo', value: body.siteTitleGradientTo });
+  if (body.siteTitleColor !== undefined) settingsToSave.push({ key: 'siteTitleColor', value: body.siteTitleColor });
   if (body.showDescriptions !== undefined) settingsToSave.push({ key: 'showDescriptions', value: body.showDescriptions.toString() });
   // Background Image
   if (body.backgroundImage !== undefined) settingsToSave.push({ key: 'backgroundImage', value: body.backgroundImage || '' });
@@ -296,6 +304,7 @@ export async function POST(request: NextRequest) {
     'geoipMaxmindAccountId', 'geoipIpinfoToken', 'geoipCacheDuration',
     // Theme settings (shared across all users)
     'defaultTheme', 'themeColor', 'siteTitle', 'siteTitleEnabled',
+    'siteTitleUseGradient', 'siteTitleGradientFrom', 'siteTitleGradientTo', 'siteTitleColor',
     // Homepage content settings
     'homepageDescriptionEnabled', 'homepageDescription',
     // Homepage graphic settings

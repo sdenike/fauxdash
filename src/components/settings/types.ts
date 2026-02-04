@@ -18,6 +18,10 @@ export interface Settings {
   themeColor: string
   siteTitle: string
   siteTitleEnabled: boolean
+  siteTitleUseGradient: boolean
+  siteTitleGradientFrom: string
+  siteTitleGradientTo: string
+  siteTitleColor: string
   showDescriptions: boolean // Global default for description visibility
   // Background Image
   backgroundImage: string
@@ -134,6 +138,10 @@ export const defaultSettings: Settings = {
   themeColor: 'Slate',
   siteTitle: 'Faux|Dash',
   siteTitleEnabled: true,
+  siteTitleUseGradient: true,
+  siteTitleGradientFrom: '#0f172a', // slate-900
+  siteTitleGradientTo: '#475569', // slate-600
+  siteTitleColor: '#0f172a', // slate-900
   showDescriptions: false, // Default: descriptions are hidden
   // Background Image
   backgroundImage: '',

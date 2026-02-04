@@ -36,6 +36,10 @@ export async function GET() {
       // Site branding (visible to all users)
       siteTitle: settingsObj.siteTitle || 'Faux|Dash',
       siteTitleEnabled: settingsObj.siteTitleEnabled !== 'false',
+      siteTitleUseGradient: settingsObj.siteTitleUseGradient !== 'false',
+      siteTitleGradientFrom: settingsObj.siteTitleGradientFrom || '#0f172a',
+      siteTitleGradientTo: settingsObj.siteTitleGradientTo || '#475569',
+      siteTitleColor: settingsObj.siteTitleColor || '#0f172a',
       // Homepage content settings (visible to all users)
       homepageDescriptionEnabled: settingsObj.homepageDescriptionEnabled === 'true',
       homepageDescription: settingsObj.homepageDescription || '',
@@ -62,6 +66,10 @@ export async function GET() {
       // Site branding defaults
       siteTitle: 'Faux|Dash',
       siteTitleEnabled: true,
+      siteTitleUseGradient: true,
+      siteTitleGradientFrom: '#0f172a',
+      siteTitleGradientTo: '#475569',
+      siteTitleColor: '#0f172a',
       // Homepage content defaults
       homepageDescriptionEnabled: false,
       homepageDescription: '',

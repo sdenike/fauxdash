@@ -12,6 +12,7 @@ import { SettingsTabProps } from './types'
 import { BackgroundImageSettings } from './background-image-settings'
 import { HomepageContentSettings } from './homepage-content-settings'
 import { HomepageGraphicSettings } from './homepage-graphic-settings'
+import { SiteTitleSettings } from './site-title-settings'
 
 export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) {
   const { setTheme: setNextTheme, resolvedTheme } = useTheme()
@@ -159,6 +160,13 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
 
       {/* Homepage Graphic Settings */}
       <HomepageGraphicSettings settings={settings} onSettingsChange={onSettingsChange} />
+
+      {/* Site Title Settings */}
+      <Card>
+        <CardContent className="pt-6">
+          <SiteTitleSettings settings={settings} onSettingsChange={onSettingsChange} />
+        </CardContent>
+      </Card>
 
       {/* Homepage Content Settings */}
       <HomepageContentSettings settings={settings} onSettingsChange={onSettingsChange} />

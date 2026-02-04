@@ -5,6 +5,17 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.13] - 2026-02-04
+
+### Added
+- **Site Title Customization**: Full control over homepage title display
+  - Enable/disable site title display
+  - Choose between gradient or solid color
+  - Customize gradient colors (start and end colors)
+  - Choose solid color when not using gradient
+  - Live preview in settings
+  - Works for logged-out users
+
 ## [0.9.12] - 2026-02-04
 
 ### Added
