@@ -5,6 +5,21 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.24] - 2026-02-04
+
+### Fixed
+- **Theme Toggle**: Fixed completely non-functional toggle
+  - Removed `resolvedTheme` dependency from useEffect that caused race condition
+  - Settings now only fetch on mount, preventing state overwrites during toggle
+  - Removed unnecessary ref flag logic that didn't solve the issue
+  - Toggle now works reliably for standard themes and special theme counterparts
+
+- **Drag & Drop Persistence**: Fixed changes not being saved
+  - Re-added `onContentChange()` call after successful reorder
+  - Added 500ms delay to allow visual transition before refresh
+  - Changes now persist correctly to database
+  - Balance between smooth animation and reliable persistence
+
 ## [0.9.23] - 2026-02-04
 
 ### Fixed

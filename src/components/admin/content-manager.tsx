@@ -396,8 +396,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
 
     console.log('[Drag] Updating order for', updates.length, 'items')
 
-    // Update each item's order in the background without refreshing
-    // The UI already shows the correct order from the drag animation
+    // Update each item's order in parallel
     Promise.all(
       updates.map(update =>
         fetch(`${endpoint}/${update.id}`, {
@@ -408,9 +407,14 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
       )
     ).then(() => {
       console.log('[Drag] Order updated successfully')
+      // Refresh after a delay to allow drag animation to complete
+      setTimeout(() => {
+        console.log('[Drag] Triggering content refresh')
+        onContentChange()
+      }, 500)
     }).catch(error => {
       console.error('[Drag] Failed to update order:', error)
-      // On error, refresh to restore correct state
+      // On error, refresh immediately to restore correct state
       onContentChange()
     })
   }
