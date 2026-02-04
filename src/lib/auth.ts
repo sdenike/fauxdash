@@ -249,6 +249,10 @@ export const authOptions: NextAuthOptions = {
           token.isAdmin = dbUser[0].isAdmin;
           token.firstname = dbUser[0].firstname;
           token.lastname = dbUser[0].lastname;
+
+          // Set token expiration for OIDC logins (same as credentials default: 2 days)
+          const maxAgeSeconds = 2 * 24 * 60 * 60; // 2 days
+          token.exp = Math.floor(Date.now() / 1000) + maxAgeSeconds;
         }
       }
 

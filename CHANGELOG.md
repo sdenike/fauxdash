@@ -5,6 +5,14 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.14] - 2026-02-04
+
+### Fixed
+- **OIDC Authentication**: Fixed session expiration issue causing immediate logout
+  - OIDC logins now properly set token expiration (2 days)
+  - Prevents redirect loop where user sees green check then gets sent back to login
+  - OIDC sessions now persist correctly like password logins
+
 ## [0.9.13] - 2026-02-04
 
 ### Added
