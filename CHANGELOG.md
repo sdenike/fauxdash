@@ -5,6 +5,15 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.27] - 2026-02-04
+
+### Fixed
+- **Favicon Update Display**: Page now reloads after favicon changes
+  - Ensures new favicon shows immediately in browser tab
+  - Works around aggressive browser favicon caching
+  - Applies to all favicon operations: upload, library selection, URL fetch, color transformations, and reset
+  - Users see success toast for 1 second before automatic reload
+
 ## [0.9.26] - 2026-02-04
 
 ### Added

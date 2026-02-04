@@ -83,8 +83,12 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
         toast({
           variant: 'success',
           title: 'Favicon uploaded',
-          description: 'Your site favicon has been updated.',
+          description: 'Your site favicon has been updated. Reloading page...',
         })
+        // Reload page after a short delay to ensure the new favicon shows
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       } else {
         toast({
           variant: 'destructive',
@@ -139,8 +143,12 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
         toast({
           variant: 'success',
           title: 'Favicon fetched',
-          description: 'Your site favicon has been updated.',
+          description: 'Your site favicon has been updated. Reloading page...',
         })
+        // Reload page after a short delay to ensure the new favicon shows
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       } else {
         toast({
           variant: 'destructive',
@@ -168,7 +176,16 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
       body: JSON.stringify({ siteFavicon: iconName, siteFaviconType: 'library' }),
     })
     triggerFaviconRefresh()
-  }, [onChange])
+    toast({
+      variant: 'success',
+      title: 'Favicon updated',
+      description: 'Reloading page...',
+    })
+    // Reload page after a short delay to ensure the new favicon shows
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
+  }, [onChange, toast])
 
   const handleClear = useCallback(async () => {
     onChange('', 'default')
@@ -182,8 +199,11 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
     triggerFaviconRefresh()
     toast({
       title: 'Favicon reset',
-      description: 'Using default Faux|Dash favicon.',
+      description: 'Using default Faux|Dash favicon. Reloading page...',
     })
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
   }, [onChange, toast])
 
   const handleConvertColor = useCallback(async () => {
@@ -230,8 +250,11 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
         toast({
           variant: 'success',
           title: 'Color converted',
-          description: 'Favicon converted to theme color.',
+          description: 'Favicon converted to theme color. Reloading page...',
         })
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       } else {
         toast({
           variant: 'destructive',
@@ -288,8 +311,11 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
         toast({
           variant: 'success',
           title: 'Grayscale applied',
-          description: 'Favicon converted to grayscale.',
+          description: 'Favicon converted to grayscale. Reloading page...',
         })
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       } else {
         toast({
           variant: 'destructive',
@@ -346,8 +372,11 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
         toast({
           variant: 'success',
           title: 'Colors inverted',
-          description: 'Favicon colors have been inverted.',
+          description: 'Favicon colors have been inverted. Reloading page...',
         })
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       } else {
         toast({
           variant: 'destructive',
@@ -378,8 +407,11 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
       triggerFaviconRefresh()
       toast({
         title: 'Reverted',
-        description: 'Favicon restored to original.',
+        description: 'Favicon restored to original. Reloading page...',
       })
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
     }
   }, [originalFavicon, onChange, toast])
 
