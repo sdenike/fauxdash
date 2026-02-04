@@ -5,6 +5,16 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.17] - 2026-02-04
+
+### Added
+- **Test Authentication Flow Button**: Test actual OIDC authentication from admin panel
+  - Opens popup window for full OAuth flow testing
+  - Tests real authentication without logging out
+  - Reports success/failure with user email
+  - Separates config validation from auth testing
+  - No impact on current admin session
+
 ## [0.9.16] - 2026-02-04
 
 ### Added
