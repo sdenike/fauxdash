@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { Button } from './ui/button'
@@ -185,6 +185,7 @@ export function Header() {
   const [showSeconds, setShowSeconds] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [themeColor, setThemeColor] = useState('Slate')
+  const isTogglingTheme = useRef(false)
 
   useEffect(() => {
     setMounted(true)
@@ -192,6 +193,12 @@ export function Header() {
 
   useEffect(() => {
     const fetchSettings = async () => {
+      // Skip refetch if we're in the middle of toggling theme
+      if (isTogglingTheme.current) {
+        console.log('[Theme] Skipping settings fetch during theme toggle')
+        return
+      }
+
       try {
         const response = await fetch('/api/settings')
         const data = await response.json()
@@ -230,7 +237,10 @@ export function Header() {
   }
 
   const toggleTheme = async () => {
-    console.log('[Theme] Current state:', { themeColor, resolvedTheme })
+    console.log('[Theme] Toggle clicked - Current state:', { themeColor, resolvedTheme })
+
+    // Set flag to prevent settings refetch during toggle
+    isTogglingTheme.current = true
 
     let newTheme: string
     let newThemeColor: string | null = null
@@ -249,10 +259,10 @@ export function Header() {
     }
 
     // Update local state immediately
-    setTheme(newTheme)
     if (newThemeColor) {
       setThemeColor(newThemeColor)
     }
+    setTheme(newTheme)
 
     // Save to database
     try {
@@ -275,6 +285,12 @@ export function Header() {
       }
     } catch (error) {
       console.error('[Theme] Failed to save theme preference:', error)
+    } finally {
+      // Clear flag after a delay to allow theme to apply
+      setTimeout(() => {
+        isTogglingTheme.current = false
+        console.log('[Theme] Toggle complete, refetch allowed')
+      }, 1000)
     }
   }
 

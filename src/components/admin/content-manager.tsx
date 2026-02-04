@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, memo } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog'
@@ -81,7 +81,7 @@ interface ContentManagerProps {
 
 type ContentItem = (Bookmark | Service) & { type: 'bookmark' | 'service' }
 
-function SortableContentItem({ item, onEdit, onDelete, onConvert, isSelected, onToggleSelect }: any) {
+const SortableContentItem = memo(function SortableContentItem({ item, onEdit, onDelete, onConvert, isSelected, onToggleSelect }: any) {
   const { theme } = useTheme()
   const {
     attributes,
@@ -103,9 +103,10 @@ function SortableContentItem({ item, onEdit, onDelete, onConvert, isSelected, on
   const itemIconData = !isFavicon && !isSelfhst && item.icon ? getIconByName(item.icon) : null
   const ItemIcon = itemIconData?.component
 
-  // Handle favicon path with grayscale/monotone support
-  let faviconPath = null
-  if (isFavicon && item.icon) {
+  // Memoize favicon path to prevent recalculation on every render
+  const faviconPath = useMemo(() => {
+    if (!isFavicon || !item.icon) return null
+
     let path = item.icon.replace('favicon:', '')
     // Handle grayscale/monotone suffix
     if (path.includes('_monotone') || path.includes('_grayscale')) {
@@ -114,15 +115,17 @@ function SortableContentItem({ item, onEdit, onDelete, onConvert, isSelected, on
     }
     // Use API route if it starts with /api, otherwise prepend /api/favicons/serve/
     if (!path.startsWith('/api/favicons/serve/')) {
-      faviconPath = `/api/favicons/serve/${path}`
-    } else {
-      faviconPath = path
+      return `/api/favicons/serve/${path}`
     }
-  }
+    return path
+  }, [isFavicon, item.icon, theme])
 
   // Handle selfhst icons
-  const selfhstId = isSelfhst && item.icon ? item.icon.replace('selfhst:', '') : null
-  const selfhstPath = selfhstId ? `https://cdn.jsdelivr.net/gh/selfhst/icons@latest/png/${selfhstId}.png` : null
+  const selfhstPath = useMemo(() => {
+    if (!isSelfhst || !item.icon) return null
+    const selfhstId = item.icon.replace('selfhst:', '')
+    return `https://cdn.jsdelivr.net/gh/selfhst/icons@latest/png/${selfhstId}.png`
+  }, [isSelfhst, item.icon])
 
   return (
     <div
@@ -211,7 +214,7 @@ function SortableContentItem({ item, onEdit, onDelete, onConvert, isSelected, on
       </div>
     </div>
   )
-}
+})
 
 export function ContentManager({ categories, serviceCategories, onContentChange }: ContentManagerProps) {
   const { toast } = useToast()

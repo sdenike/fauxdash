@@ -5,6 +5,23 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.23] - 2026-02-04
+
+### Fixed
+- **Theme Toggle**: Resolved race condition preventing toggle from working
+  - Added ref-based flag to prevent settings refetch during theme toggle
+  - Fixed issue where resolvedTheme change triggered premature settings fetch
+  - Theme color state now stays synchronized correctly
+  - Toggle works reliably for all clicks
+  - Added 1-second delay before allowing refetch after toggle
+
+- **Drag & Drop Icon Redraw**: Minimized icon flashing after drag
+  - Wrapped SortableContentItem with React.memo to prevent unnecessary re-renders
+  - Memoized favicon path calculation to avoid recomputation
+  - Memoized selfhst icon path calculation
+  - Reduced visual flicker when items are reordered
+  - Icons load once and stay loaded during drag operations
+
 ## [0.9.22] - 2026-02-04
 
 ### Fixed
