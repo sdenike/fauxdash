@@ -51,6 +51,19 @@ function latLngToPixel(lat: number, lng: number, zoom: number, centerLat: number
   return { x, y }
 }
 
+// Convert country code to flag emoji
+function getCountryFlag(countryCode?: string): string {
+  if (!countryCode || countryCode.length !== 2) return '🌍'
+
+  // Convert country code to regional indicator symbols
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 0x1F1E6 + char.charCodeAt(0) - 65)
+
+  return String.fromCodePoint(...codePoints)
+}
+
 // Map component with zoom controls
 function ZoomableMap({ locations }: { locations: Location[] }) {
   const [zoom, setZoom] = useState(2)
@@ -75,7 +88,7 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
   }, [locations])
 
   const handleZoomIn = useCallback(() => {
-    setZoom(z => Math.min(8, z + 1))
+    setZoom(z => Math.min(16, z + 1))
   }, [])
 
   const handleZoomOut = useCallback(() => {
@@ -223,7 +236,10 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
               {/* Tooltip */}
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20">
                 <div className="bg-popover border rounded px-2 py-1 text-xs whitespace-nowrap shadow-lg">
-                  <div className="font-medium">{loc.name || loc.code}</div>
+                  <div className="font-medium flex items-center gap-1.5">
+                    <span className="text-base">{getCountryFlag(loc.code || loc.country)}</span>
+                    <span>{loc.name || loc.code}</span>
+                  </div>
                   <div className="text-muted-foreground">{loc.count.toLocaleString()} visits</div>
                 </div>
               </div>
@@ -338,11 +354,12 @@ export const VisitorMap = memo(function VisitorMap({
               onClick={() => onCountryClick?.(loc.code || '')}
             >
               <div
-                className="w-2 h-2 rounded-full bg-primary"
+                className="w-2 h-2 rounded-full bg-primary flex-shrink-0"
                 style={{ opacity: 0.3 + (loc.count / Math.max(...locations.map(l => l.count))) * 0.7 }}
               />
+              <span className="text-sm flex-shrink-0">{getCountryFlag(loc.code || loc.country)}</span>
               <span className="truncate flex-1">{loc.name || loc.code}</span>
-              <span className="text-muted-foreground">{loc.count.toLocaleString()}</span>
+              <span className="text-muted-foreground flex-shrink-0">{loc.count.toLocaleString()}</span>
             </div>
           ))}
         </div>
