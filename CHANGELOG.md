@@ -5,6 +5,16 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.18] - 2026-02-04
+
+### Fixed
+- **OIDC Test Flow Redirect**: Fixed popup authentication test showing login screen after success
+  - Resolved duplicate redirect callback causing TypeScript compilation error
+  - Added proper redirect callback to respect callbackUrl parameter
+  - Improved test-signin route to check for existing session
+  - Popup now correctly redirects to success page after authentication
+  - Enhanced logging for redirect flow debugging
+
 ## [0.9.17] - 2026-02-04
 
 ### Added
