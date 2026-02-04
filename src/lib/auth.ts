@@ -4,6 +4,7 @@ import { getDb } from '@/db';
 import { users, settings } from '@/db/schema';
 import { eq, isNull } from 'drizzle-orm';
 import * as argon2 from 'argon2';
+import { logAuth, logSecurity } from '@/lib/logger';
 
 // Synchronously read OIDC settings from database at startup
 function getOidcSettingsSync(): {
@@ -118,13 +119,14 @@ function buildProviders(config: ReturnType<typeof getOidcSettingsSync>): any[] {
     },
     async authorize(credentials) {
       if (!credentials?.email || !credentials?.password) {
+        logAuth('warn', 'Login attempt with missing credentials');
         return null;
       }
 
       // Check if password login is disabled (re-check from DB for real-time settings)
       const currentOidcSettings = await getOidcSettings();
       if (currentOidcSettings.disablePasswordLogin && currentOidcSettings.enabled) {
-        console.log('Password login is disabled, OIDC only mode');
+        logSecurity('warn', 'Password login attempt blocked - OIDC only mode', { email: credentials.email });
         return null;
       }
 
@@ -137,12 +139,14 @@ function buildProviders(config: ReturnType<typeof getOidcSettingsSync>): any[] {
         .limit(1);
 
       if (!user || user.length === 0) {
+        logAuth('warn', 'Login failed - user not found', { email: credentials.email });
         return null;
       }
 
       const foundUser = user[0];
 
       if (!foundUser.passwordHash) {
+        logAuth('warn', 'Login failed - user has no password hash', { email: credentials.email });
         return null;
       }
 
@@ -152,9 +156,11 @@ function buildProviders(config: ReturnType<typeof getOidcSettingsSync>): any[] {
       );
 
       if (!isValid) {
+        logSecurity('warn', 'Login failed - invalid password', { email: credentials.email, userId: foundUser.id });
         return null;
       }
 
+      logAuth('info', 'Login successful', { email: foundUser.email, userId: foundUser.id, isAdmin: foundUser.isAdmin });
       return {
         id: foundUser.id.toString(),
         email: foundUser.email,

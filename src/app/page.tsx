@@ -253,7 +253,7 @@ export default function HomePage() {
         )}
 
         {/* Search Bar (only if not in header and user is logged in) */}
-        {session && searchEnabled && !searchInHeader && (
+        {session && searchEnabled && !searchInHeader && !loading && (
           <div className="mb-8">
             <SearchBar />
           </div>

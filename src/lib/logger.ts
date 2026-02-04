@@ -182,3 +182,11 @@ export const logDb = (level: LogLevel, message: string, details?: any) => {
 export const logSystem = (level: LogLevel, message: string, details?: any) => {
   logger[level]('SYSTEM', message, details);
 };
+
+export const logGeoIP = (level: LogLevel, message: string, details?: any) => {
+  logger[level]('GEOIP', message, details);
+};
+
+export const logSecurity = (level: LogLevel, message: string, details?: any) => {
+  logger[level]('SECURITY', message, details);
+};

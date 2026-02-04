@@ -5,6 +5,25 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.28] - 2026-02-04
+
+### Fixed
+- **Favicon Upload Persistence**: Critical fix for disappearing uploaded favicons
+  - Now validates settings API response before reloading page
+  - Shows error if settings save fails instead of silently reloading
+  - Prevents data loss when database write fails
+  - Applies to all favicon operations (upload, URL, library, transformations)
+
+- **Search Bar Duplicate Display**: Fixed race condition
+  - Added loading check to prevent search bar from rendering twice
+  - Eliminates brief moment where search bar shows in both header and page
+
+- **Enhanced Application Logging**: Added comprehensive logging system
+  - Authentication: Login attempts, failures, OIDC flows
+  - Security: Invalid passwords, blocked attempts, suspicious activity
+  - GeoIP: Lookups, cache hits/misses, provider errors (coming soon)
+  - All logs visible in Admin → Application Log
+
 ## [0.9.27] - 2026-02-04
 
 ### Fixed

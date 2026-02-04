@@ -72,13 +72,23 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
       const data = await response.json()
 
       if (data.success) {
-        onChange(data.path, 'upload')
         // Save immediately so it takes effect right away
-        await fetch('/api/settings', {
+        const settingsResponse = await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ siteFavicon: data.path, siteFaviconType: 'upload' }),
         })
+
+        if (!settingsResponse.ok) {
+          toast({
+            variant: 'destructive',
+            title: 'Settings save failed',
+            description: 'Failed to save favicon settings to database.',
+          })
+          return
+        }
+
+        onChange(data.path, 'upload')
         triggerFaviconRefresh()
         toast({
           variant: 'success',
@@ -131,13 +141,23 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
       const data = await response.json()
 
       if (data.success) {
-        onChange(data.path, 'url')
         // Save immediately
-        await fetch('/api/settings', {
+        const settingsResponse = await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ siteFavicon: data.path, siteFaviconType: 'url' }),
         })
+
+        if (!settingsResponse.ok) {
+          toast({
+            variant: 'destructive',
+            title: 'Settings save failed',
+            description: 'Failed to save favicon settings to database.',
+          })
+          return
+        }
+
+        onChange(data.path, 'url')
         setUrlInput('')
         triggerFaviconRefresh()
         toast({
@@ -168,13 +188,23 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
   }, [urlInput, onChange, toast])
 
   const handleIconSelect = useCallback(async (iconName: string) => {
-    onChange(iconName, 'library')
     // Save immediately
-    await fetch('/api/settings', {
+    const settingsResponse = await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ siteFavicon: iconName, siteFaviconType: 'library' }),
     })
+
+    if (!settingsResponse.ok) {
+      toast({
+        variant: 'destructive',
+        title: 'Settings save failed',
+        description: 'Failed to save favicon settings to database.',
+      })
+      return
+    }
+
+    onChange(iconName, 'library')
     triggerFaviconRefresh()
     toast({
       variant: 'success',
@@ -188,14 +218,24 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
   }, [onChange, toast])
 
   const handleClear = useCallback(async () => {
-    onChange('', 'default')
-    setOriginalFavicon(null)
     // Save immediately
-    await fetch('/api/settings', {
+    const settingsResponse = await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ siteFavicon: '', siteFaviconType: 'default' }),
     })
+
+    if (!settingsResponse.ok) {
+      toast({
+        variant: 'destructive',
+        title: 'Settings save failed',
+        description: 'Failed to save favicon settings to database.',
+      })
+      return
+    }
+
+    onChange('', 'default')
+    setOriginalFavicon(null)
     triggerFaviconRefresh()
     toast({
       title: 'Favicon reset',
@@ -240,12 +280,22 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
 
       if (data.success && data.filename) {
         const newIconPath = `favicon:${data.filename}`
-        onChange(newIconPath, 'library')
-        await fetch('/api/settings', {
+        const settingsResponse = await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ siteFavicon: newIconPath, siteFaviconType: 'library' }),
         })
+
+        if (!settingsResponse.ok) {
+          toast({
+            variant: 'destructive',
+            title: 'Settings save failed',
+            description: 'Failed to save favicon settings to database.',
+          })
+          return
+        }
+
+        onChange(newIconPath, 'library')
         triggerFaviconRefresh()
         toast({
           variant: 'success',
@@ -301,12 +351,22 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
 
       if (data.success && data.filename) {
         const newIconPath = `favicon:${data.filename}`
-        onChange(newIconPath, 'library')
-        await fetch('/api/settings', {
+        const settingsResponse = await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ siteFavicon: newIconPath, siteFaviconType: 'library' }),
         })
+
+        if (!settingsResponse.ok) {
+          toast({
+            variant: 'destructive',
+            title: 'Settings save failed',
+            description: 'Failed to save favicon settings to database.',
+          })
+          return
+        }
+
+        onChange(newIconPath, 'library')
         triggerFaviconRefresh()
         toast({
           variant: 'success',
@@ -362,12 +422,22 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
 
       if (data.success && data.filename) {
         const newIconPath = `favicon:${data.filename}`
-        onChange(newIconPath, 'library')
-        await fetch('/api/settings', {
+        const settingsResponse = await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ siteFavicon: newIconPath, siteFaviconType: 'library' }),
         })
+
+        if (!settingsResponse.ok) {
+          toast({
+            variant: 'destructive',
+            title: 'Settings save failed',
+            description: 'Failed to save favicon settings to database.',
+          })
+          return
+        }
+
+        onChange(newIconPath, 'library')
         triggerFaviconRefresh()
         toast({
           variant: 'success',
@@ -397,12 +467,22 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
 
   const handleRevertFavicon = useCallback(async () => {
     if (originalFavicon) {
-      onChange(originalFavicon, 'library')
-      await fetch('/api/settings', {
+      const settingsResponse = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ siteFavicon: originalFavicon, siteFaviconType: 'library' }),
       })
+
+      if (!settingsResponse.ok) {
+        toast({
+          variant: 'destructive',
+          title: 'Settings save failed',
+          description: 'Failed to save favicon settings to database.',
+        })
+        return
+      }
+
+      onChange(originalFavicon, 'library')
       setOriginalFavicon(null)
       triggerFaviconRefresh()
       toast({
