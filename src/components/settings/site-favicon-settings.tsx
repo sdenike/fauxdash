@@ -79,14 +79,25 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
           body: JSON.stringify({ siteFavicon: data.path, siteFaviconType: 'upload' }),
         })
 
+        console.log('[Favicon Upload] Settings API response:', {
+          ok: settingsResponse.ok,
+          status: settingsResponse.status,
+          statusText: settingsResponse.statusText,
+        })
+
         if (!settingsResponse.ok) {
+          const errorText = await settingsResponse.text()
+          console.error('[Favicon Upload] Settings save failed:', errorText)
           toast({
             variant: 'destructive',
             title: 'Settings save failed',
-            description: 'Failed to save favicon settings to database.',
+            description: `Status: ${settingsResponse.status}. Check console for details.`,
           })
           return
         }
+
+        const settingsData = await settingsResponse.json()
+        console.log('[Favicon Upload] Settings saved successfully:', settingsData)
 
         onChange(data.path, 'upload')
         triggerFaviconRefresh()
