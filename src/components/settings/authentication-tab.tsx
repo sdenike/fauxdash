@@ -14,7 +14,13 @@ import { SettingsTabProps } from './types'
 export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabProps) {
   const { toast } = useToast()
   const [testing, setTesting] = useState(false)
-  const [testResult, setTestResult] = useState<{ success: boolean; message?: string; error?: string } | null>(null)
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    callbackUrl?: { url: string; format: string; notes: string[] };
+    details?: { stage?: string; [key: string]: any };
+  } | null>(null)
   const [callbackUrl, setCallbackUrl] = useState('/api/auth/callback/oidc')
 
   useEffect(() => {
@@ -176,13 +182,30 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
                 )}
               </Button>
               {testResult && (
-                <div className={`mt-2 p-2 rounded-md flex items-center gap-2 text-sm animate-in fade-in slide-in-from-top-1 duration-200 ${testResult.success ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'}`}>
-                  {testResult.success ? (
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-                  ) : (
-                    <XCircle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                <div className={`mt-2 p-3 rounded-md animate-in fade-in slide-in-from-top-1 duration-200 ${testResult.success ? 'bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800'}`}>
+                  <div className="flex items-center gap-2 text-sm">
+                    {testResult.success ? (
+                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" aria-hidden="true" />
+                    ) : (
+                      <XCircle className="h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-400" aria-hidden="true" />
+                    )}
+                    <span className={testResult.success ? 'text-green-700 dark:text-green-300 font-medium' : 'text-red-700 dark:text-red-300 font-medium'}>
+                      {testResult.success ? (testResult.message || 'OIDC configuration is valid') : (testResult.error || 'OIDC test failed')}
+                    </span>
+                  </div>
+                  {testResult.success && testResult.callbackUrl && (
+                    <div className="mt-2 pl-6 text-xs text-green-700 dark:text-green-300 space-y-1">
+                      <div className="font-medium">Callback URL to configure:</div>
+                      <code className="block px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded">
+                        {testResult.callbackUrl.url}
+                      </code>
+                    </div>
                   )}
-                  <span>{testResult.success ? (testResult.message || 'OIDC configuration is valid') : (testResult.error || 'OIDC test failed')}</span>
+                  {testResult.details && testResult.details.stage && (
+                    <div className="mt-2 pl-6 text-xs text-red-700 dark:text-red-300">
+                      Failed at stage: {testResult.details.stage}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -212,8 +235,8 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
 
         <div className="pt-4 border-t">
           <AlertMessage
-            variant="warning"
-            message="Changes to OIDC settings require an application restart to take effect."
+            variant="info"
+            message="✨ OIDC settings now reload automatically! No container restart needed - changes take effect immediately after saving."
           />
         </div>
       </CardContent>

@@ -131,10 +131,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Test 4: Validate callback URL format and provide guidance
+    const callbackUrl = `${request.headers.get('origin') || process.env.NEXTAUTH_URL || 'https://your-domain.com'}/api/auth/callback/oidc`;
+    const callbackValidation = {
+      url: callbackUrl,
+      format: 'https://your-domain.com/api/auth/callback/oidc',
+      notes: [
+        'Must use HTTPS in production',
+        'Path must be exactly /api/auth/callback/oidc',
+        'Configure this URL in your OIDC provider\'s allowed redirect URIs',
+      ],
+    };
+
     // All tests passed
     return NextResponse.json({
       success: true,
-      message: 'OIDC configuration is valid',
+      message: 'OIDC configuration is valid and ready to use',
+      callbackUrl: callbackValidation,
       details: {
         issuer: config.issuer,
         authorizationEndpoint: config.authorization_endpoint,

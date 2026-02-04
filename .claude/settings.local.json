@@ -122,7 +122,13 @@
       "Bash(Dash\" text instead of appearing as a separate element above it\n- This makes the homepage branding more intuitive to customize\n\n### Upgrade Notes\nNo database migration required. The Docker image will be built automatically.\n\n**Full Changelog**: https://github.com/sdenike/fauxdash/compare/v0.8.4...v0.8.5\nEOF\n\\)\")",
       "Bash(env)",
       "Bash(unset:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(sqlite3:*)",
+      "Bash(npx next build:*)",
+      "Bash(git log:*)",
+      "Bash(sort:*)",
+      "Bash(gh issue list:*)",
+      "Bash(npm outdated:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

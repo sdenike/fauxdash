@@ -104,9 +104,10 @@ export function clearOidcSettingsCache() {
 // Get OIDC settings at module load time
 const oidcConfig = getOidcSettingsSync();
 
-// Build providers array
-const providers: any[] = [
-  CredentialsProvider({
+// Build providers array based on configuration
+function buildProviders(config: ReturnType<typeof getOidcSettingsSync>): any[] {
+  const providers: any[] = [
+    CredentialsProvider({
     id: 'credentials',
     name: 'Credentials',
     credentials: {
@@ -165,51 +166,87 @@ const providers: any[] = [
       };
     },
   }),
-];
+  ];
+
+  return providers;
+}
 
 // Add OIDC provider if enabled and configured
-if (oidcConfig.enabled && oidcConfig.clientId && oidcConfig.issuerUrl) {
-  const normalizedIssuerUrl = oidcConfig.issuerUrl.endsWith('/')
-    ? oidcConfig.issuerUrl
-    : oidcConfig.issuerUrl + '/';
+function addOidcProvider(providers: any[], config: ReturnType<typeof getOidcSettingsSync>) {
+  if (config.enabled && config.clientId && config.issuerUrl) {
+    const normalizedIssuerUrl = config.issuerUrl.endsWith('/')
+      ? config.issuerUrl
+      : config.issuerUrl + '/';
 
-  console.log('OIDC provider configuration:', {
-    enabled: oidcConfig.enabled,
-    issuerUrl: normalizedIssuerUrl,
-    clientId: oidcConfig.clientId ? `${oidcConfig.clientId.substring(0, 8)}...` : 'MISSING',
-    clientSecret: oidcConfig.clientSecret ? '***SET***' : 'MISSING',
-  });
+    console.log('OIDC provider configuration:', {
+      enabled: config.enabled,
+      issuerUrl: normalizedIssuerUrl,
+      clientId: config.clientId ? `${config.clientId.substring(0, 8)}...` : 'MISSING',
+      clientSecret: config.clientSecret ? '***SET***' : 'MISSING',
+    });
 
-  providers.push({
-    id: 'oidc',
-    name: 'OIDC',
-    type: 'oauth',
-    wellKnown: `${normalizedIssuerUrl}.well-known/openid-configuration`,
-    authorization: { params: { scope: 'openid email profile' } },
-    clientId: oidcConfig.clientId,
-    clientSecret: oidcConfig.clientSecret,
-    idToken: true,
-    checks: ['pkce', 'state'],
-    profile(profile: any) {
-      return {
-        id: profile.sub,
-        email: profile.email,
-        name: profile.name || profile.preferred_username || profile.email,
-        isAdmin: false,
-      };
-    },
-  });
-  console.log('OIDC provider configured successfully');
-} else {
-  console.log('OIDC provider NOT configured:', {
-    enabled: oidcConfig.enabled,
-    hasClientId: !!oidcConfig.clientId,
-    hasIssuerUrl: !!oidcConfig.issuerUrl,
-  });
+    providers.push({
+      id: 'oidc',
+      name: 'OIDC',
+      type: 'oauth',
+      wellKnown: `${normalizedIssuerUrl}.well-known/openid-configuration`,
+      authorization: { params: { scope: 'openid email profile' } },
+      clientId: config.clientId,
+      clientSecret: config.clientSecret,
+      idToken: true,
+      checks: ['pkce', 'state'],
+      profile(profile: any) {
+        return {
+          id: profile.sub,
+          email: profile.email,
+          name: profile.name || profile.preferred_username || profile.email,
+          isAdmin: false,
+        };
+      },
+    });
+    console.log('OIDC provider configured successfully');
+  } else {
+    console.log('OIDC provider NOT configured:', {
+      enabled: config.enabled,
+      hasClientId: !!config.clientId,
+      hasIssuerUrl: !!config.issuerUrl,
+    });
+  }
+}
+
+// Build initial providers array
+const initialProviders = buildProviders(oidcConfig);
+addOidcProvider(initialProviders, oidcConfig);
+
+// Dynamic provider management for hot-reload
+let dynamicProviders: any[] = [...initialProviders];
+
+// Function to reload OIDC provider configuration without restart
+export async function reloadOidcProvider() {
+  console.log('Reloading OIDC provider configuration...');
+  try {
+    const currentConfig = await getOidcSettings();
+
+    // Rebuild providers array
+    const newProviders = buildProviders(currentConfig);
+    addOidcProvider(newProviders, currentConfig);
+
+    // Update dynamic providers
+    dynamicProviders = newProviders;
+
+    console.log('OIDC provider reloaded successfully');
+    return { success: true, message: 'OIDC configuration reloaded' };
+  } catch (error) {
+    console.error('Failed to reload OIDC provider:', error);
+    return { success: false, error: 'Failed to reload OIDC configuration' };
+  }
 }
 
 export const authOptions: NextAuthOptions = {
-  providers,
+  get providers() {
+    // Return dynamic providers to support hot-reload
+    return dynamicProviders;
+  },
   callbacks: {
     async jwt({ token, user, account, profile, trigger }) {
       const db = getDb();

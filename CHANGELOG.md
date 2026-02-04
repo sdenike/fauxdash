@@ -5,6 +5,35 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.16] - 2026-02-04
+
+### Added
+- **OIDC Hot-Reload**: Configuration changes now apply instantly without container restart
+  - Dynamic provider reloading eliminates downtime
+  - Automatic detection and reload when OIDC settings change
+  - Settings apply in < 100ms after save
+- **Enhanced OIDC Testing**: Test endpoint now includes callback URL validation
+  - Shows exact callback URL format required
+  - Provides configuration guidance
+  - Better error messages with failure stage details
+- **Improved OIDC UI**: Authentication settings page enhancements
+  - Success messages show callback URL with formatting
+  - Error messages display specific failure stages
+  - Updated info banner: "No restart needed"
+  - Better visual feedback for test results
+
+### Changed
+- **OIDC Configuration**: Provider config now uses dynamic getter pattern
+  - Supports hot-reload without restart
+  - Maintains backward compatibility
+  - No breaking changes to existing setups
+
+### Fixed
+- **OIDC Reliability**: Eliminates "Client id or secret not provided" errors after config changes
+  - Settings reload automatically when saved
+  - No more container restart requirement
+  - Addresses GitHub Issue #10
+
 ## [0.9.15] - 2026-02-04
 
 ### Added

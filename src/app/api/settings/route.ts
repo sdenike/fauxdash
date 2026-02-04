@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions, clearOidcSettingsCache } from '@/lib/auth';
+import { authOptions, clearOidcSettingsCache, reloadOidcProvider } from '@/lib/auth';
 import { getDb } from '@/db';
 import { settings } from '@/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
@@ -381,6 +381,16 @@ export async function POST(request: NextRequest) {
 
   // Clear OIDC settings cache so changes take effect immediately
   clearOidcSettingsCache();
+
+  // Check if any OIDC settings were changed
+  const oidcSettingKeys = ['oidcEnabled', 'oidcProviderName', 'oidcClientId', 'oidcClientSecret', 'oidcIssuerUrl', 'disablePasswordLogin'];
+  const oidcSettingsChanged = settingsToSave.some(s => oidcSettingKeys.includes(s.key));
+
+  if (oidcSettingsChanged) {
+    // Reload OIDC provider configuration without restart
+    console.log('OIDC settings changed, reloading provider...');
+    await reloadOidcProvider();
+  }
 
   return NextResponse.json({ success: true });
 }
