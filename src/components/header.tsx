@@ -206,7 +206,10 @@ export function Header() {
         setTimeEnabled(data.timeEnabled || false)
         setTimeFormat(data.timeFormat || '12')
         setShowSeconds(data.showSeconds || false)
-        if (data.themeColor) setThemeColor(data.themeColor)
+        if (data.themeColor) {
+          console.log('[Theme] Fetched themeColor from settings:', data.themeColor)
+          setThemeColor(data.themeColor)
+        }
       } catch (error) {
         console.error('Failed to fetch settings:', error)
       }
@@ -214,7 +217,7 @@ export function Header() {
     if (session) {
       fetchSettings()
     }
-  }, [session])
+  }, [session, resolvedTheme])
 
   // Check if theme toggle should be shown
   const shouldShowThemeToggle = () => {
@@ -227,6 +230,8 @@ export function Header() {
   }
 
   const toggleTheme = async () => {
+    console.log('[Theme] Current state:', { themeColor, resolvedTheme })
+
     let newTheme: string
     let newThemeColor: string | null = null
 
@@ -236,28 +241,40 @@ export function Header() {
       newThemeColor = THEME_COUNTERPARTS[themeColor]
       // Determine if counterpart is light or dark based on name
       newTheme = newThemeColor.includes('Dark') ? 'dark' : 'light'
+      console.log('[Theme] Toggling counterpart:', { from: themeColor, to: newThemeColor, theme: newTheme })
     } else {
       // Standard theme - toggle between light and dark mode
       newTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
+      console.log('[Theme] Toggling mode:', { from: resolvedTheme, to: newTheme })
     }
 
+    // Update local state immediately
     setTheme(newTheme)
+    if (newThemeColor) {
+      setThemeColor(newThemeColor)
+    }
 
     // Save to database
     try {
       const body: any = { defaultTheme: newTheme }
       if (newThemeColor) {
         body.themeColor = newThemeColor
-        setThemeColor(newThemeColor)
       }
 
-      await fetch('/api/settings', {
+      console.log('[Theme] Saving to database:', body)
+      const response = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
+
+      if (!response.ok) {
+        console.error('[Theme] Save failed:', response.status)
+      } else {
+        console.log('[Theme] Saved successfully')
+      }
     } catch (error) {
-      console.error('Failed to save theme preference:', error)
+      console.error('[Theme] Failed to save theme preference:', error)
     }
   }
 

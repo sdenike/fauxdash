@@ -5,6 +5,23 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.22] - 2026-02-04
+
+### Fixed
+- **Drag & Drop**: Eliminated refresh delay completely
+  - Items stay in place instantly when dropped
+  - No page refresh for same-category reordering
+  - Database updates happen silently in background
+  - Only refreshes on error to restore correct state
+  - Truly instant visual feedback
+
+- **Theme Toggle**: Fixed toggle becoming unresponsive after first click
+  - Header now refetches settings when theme changes
+  - Theme color state stays synchronized with applied theme
+  - Added comprehensive console logging for debugging
+  - Toggle works reliably for all theme types
+  - Counterpart themes switch back and forth correctly
+
 ## [0.9.21] - 2026-02-04
 
 ### Improved
