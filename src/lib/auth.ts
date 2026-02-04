@@ -173,6 +173,13 @@ if (oidcConfig.enabled && oidcConfig.clientId && oidcConfig.issuerUrl) {
     ? oidcConfig.issuerUrl
     : oidcConfig.issuerUrl + '/';
 
+  console.log('OIDC provider configuration:', {
+    enabled: oidcConfig.enabled,
+    issuerUrl: normalizedIssuerUrl,
+    clientId: oidcConfig.clientId ? `${oidcConfig.clientId.substring(0, 8)}...` : 'MISSING',
+    clientSecret: oidcConfig.clientSecret ? '***SET***' : 'MISSING',
+  });
+
   providers.push({
     id: 'oidc',
     name: 'OIDC',
@@ -192,7 +199,13 @@ if (oidcConfig.enabled && oidcConfig.clientId && oidcConfig.issuerUrl) {
       };
     },
   });
-  console.log('OIDC provider configured with issuer:', normalizedIssuerUrl);
+  console.log('OIDC provider configured successfully');
+} else {
+  console.log('OIDC provider NOT configured:', {
+    enabled: oidcConfig.enabled,
+    hasClientId: !!oidcConfig.clientId,
+    hasIssuerUrl: !!oidcConfig.issuerUrl,
+  });
 }
 
 export const authOptions: NextAuthOptions = {
@@ -200,6 +213,17 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, account, profile, trigger }) {
       const db = getDb();
+
+      // Debug logging for OIDC
+      if (account && account.provider === 'oidc') {
+        console.log('OIDC JWT callback:', {
+          provider: account.provider,
+          hasProfile: !!profile,
+          accountType: account.type,
+          profileSub: profile?.sub,
+          profileEmail: profile?.email,
+        });
+      }
 
       // Handle OIDC login
       if (account && account.provider === 'oidc' && profile) {
@@ -311,5 +335,15 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
     maxAge: 2 * 24 * 60 * 60, // 2 days
   },
+  events: {
+    async signIn({ user, account, profile, isNewUser }) {
+      console.log('Sign in event:', {
+        provider: account?.provider,
+        userEmail: user?.email,
+        isNewUser,
+      });
+    },
+  },
+  debug: process.env.NODE_ENV === 'development',
   secret: process.env.NEXTAUTH_SECRET,
 };

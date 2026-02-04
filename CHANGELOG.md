@@ -5,6 +5,14 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.15] - 2026-02-04
+
+### Added
+- **OIDC Debug Logging**: Added detailed logging for OIDC authentication
+  - Logs callback details for troubleshooting
+  - Shows sign-in events
+  - Helps diagnose OAuthCallback errors
+
 ## [0.9.14] - 2026-02-04
 
 ### Fixed
