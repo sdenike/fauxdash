@@ -151,16 +151,12 @@ function CompactWeather() {
   )
 }
 
-// Theme counterparts for special themes
-const THEME_COUNTERPARTS: Record<string, string> = {
-  'Nord Light': 'Nord Dark',
-  'Nord Dark': 'Nord Light',
-  'Monokai Light': 'Monokai Dark',
-  'Monokai Dark': 'Monokai Light',
-}
-
-// Special themes without counterparts (toggle should be hidden)
-const STANDALONE_THEMES_WITHOUT_COUNTERPARTS = [
+// All special themes (toggle should be hidden for these)
+const SPECIAL_THEMES = [
+  'Nord Light',
+  'Nord Dark',
+  'Monokai Light',
+  'Monokai Dark',
   'Material Dark',
   'Minimal Kiwi',
   'One Dark Pro',
@@ -221,51 +217,27 @@ export function Header() {
 
   // Check if theme toggle should be shown
   const shouldShowThemeToggle = () => {
-    // If it's a standalone theme without counterpart, hide toggle
-    if (STANDALONE_THEMES_WITHOUT_COUNTERPARTS.includes(themeColor)) {
-      return false
-    }
-    // Otherwise show toggle (standard themes or special themes with counterparts)
-    return true
+    // Hide toggle for all special themes, only show for standard themes (Slate, Gray, etc.)
+    return !SPECIAL_THEMES.includes(themeColor)
   }
 
   const toggleTheme = async () => {
     console.log('[Theme] Toggle clicked - Current state:', { themeColor, resolvedTheme })
 
-    let newTheme: string
-    let newThemeColor: string | null = null
-
-    // Check if current theme is a special theme with a counterpart
-    if (THEME_COUNTERPARTS[themeColor]) {
-      // Switch to counterpart
-      newThemeColor = THEME_COUNTERPARTS[themeColor]
-      // Determine if counterpart is light or dark based on name
-      newTheme = newThemeColor.includes('Dark') ? 'dark' : 'light'
-      console.log('[Theme] Toggling counterpart:', { from: themeColor, to: newThemeColor, theme: newTheme })
-    } else {
-      // Standard theme - toggle between light and dark mode
-      newTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
-      console.log('[Theme] Toggling mode:', { from: resolvedTheme, to: newTheme })
-    }
+    // Toggle between light and dark mode for standard themes
+    const newTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
+    console.log('[Theme] Toggling mode:', { from: resolvedTheme, to: newTheme })
 
     // Update local state immediately
-    if (newThemeColor) {
-      setThemeColor(newThemeColor)
-    }
     setTheme(newTheme)
 
     // Save to database
     try {
-      const body: any = { defaultTheme: newTheme }
-      if (newThemeColor) {
-        body.themeColor = newThemeColor
-      }
-
-      console.log('[Theme] Saving to database:', body)
+      console.log('[Theme] Saving to database:', { defaultTheme: newTheme })
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ defaultTheme: newTheme }),
       })
 
       if (!response.ok) {
@@ -318,7 +290,7 @@ export function Header() {
                   variant="ghost"
                   size="icon"
                   onClick={toggleTheme}
-                  title={THEME_COUNTERPARTS[themeColor] || (resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode')}
+                  title={resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                   className="touch-target"
                 >
                   {resolvedTheme === 'dark' ? (
@@ -406,7 +378,7 @@ export function Header() {
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                title={THEME_COUNTERPARTS[themeColor] ? `Switch to ${THEME_COUNTERPARTS[themeColor]}` : (resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode')}
+                title={resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 className="touch-target"
               >
                 {resolvedTheme === 'dark' ? (
