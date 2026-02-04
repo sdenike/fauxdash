@@ -223,9 +223,21 @@ let dynamicProviders: any[] = [...initialProviders];
 
 // Function to reload OIDC provider configuration without restart
 export async function reloadOidcProvider() {
-  console.log('Reloading OIDC provider configuration...');
+  console.log('===============================================');
+  console.log('OIDC RELOAD: Starting provider reload...');
+  console.log('===============================================');
+
   try {
     const currentConfig = await getOidcSettings();
+
+    console.log('OIDC RELOAD: Current configuration:', {
+      enabled: currentConfig.enabled,
+      hasClientId: !!currentConfig.clientId,
+      clientIdPrefix: currentConfig.clientId ? currentConfig.clientId.substring(0, 8) + '...' : 'MISSING',
+      hasClientSecret: !!currentConfig.clientSecret,
+      issuerUrl: currentConfig.issuerUrl || 'MISSING',
+      disablePasswordLogin: currentConfig.disablePasswordLogin,
+    });
 
     // Rebuild providers array
     const newProviders = buildProviders(currentConfig);
@@ -234,10 +246,15 @@ export async function reloadOidcProvider() {
     // Update dynamic providers
     dynamicProviders = newProviders;
 
-    console.log('OIDC provider reloaded successfully');
+    console.log('OIDC RELOAD: Provider reloaded successfully');
+    console.log('OIDC RELOAD: Active providers:', dynamicProviders.map(p => p.id || p.name));
+    console.log('===============================================');
+
     return { success: true, message: 'OIDC configuration reloaded' };
   } catch (error) {
-    console.error('Failed to reload OIDC provider:', error);
+    console.error('OIDC RELOAD ERROR: Failed to reload provider:', error);
+    console.error('OIDC RELOAD ERROR: Stack trace:', (error as Error).stack);
+    console.log('===============================================');
     return { success: false, error: 'Failed to reload OIDC configuration' };
   }
 }
@@ -264,57 +281,102 @@ export const authOptions: NextAuthOptions = {
 
       // Handle OIDC login
       if (account && account.provider === 'oidc' && profile) {
+        console.log('Processing OIDC login for profile:', {
+          sub: profile.sub,
+          email: profile.email,
+          name: profile.name,
+        });
+
         const oidcSub = profile.sub;
 
-        // Check if user exists by OIDC subject
-        let dbUser = await db
-          .select()
-          .from(users)
-          .where(eq(users.oidcSubject, oidcSub as string))
-          .limit(1);
-
-        if (!dbUser || dbUser.length === 0) {
-          // Check if user exists by email
-          dbUser = await db
+        try {
+          // Check if user exists by OIDC subject
+          let dbUser = await db
             .select()
             .from(users)
-            .where(eq(users.email, profile.email as string))
+            .where(eq(users.oidcSubject, oidcSub as string))
             .limit(1);
 
-          if (dbUser && dbUser.length > 0) {
-            // Link OIDC subject to existing user
-            await db
-              .update(users)
-              .set({ oidcSubject: oidcSub as string, updatedAt: new Date() })
-              .where(eq(users.id, dbUser[0].id));
+          if (!dbUser || dbUser.length === 0) {
+            console.log('No user found with OIDC subject, checking by email:', profile.email);
+
+            // Check if user exists by email
+            dbUser = await db
+              .select()
+              .from(users)
+              .where(eq(users.email, profile.email as string))
+              .limit(1);
+
+            if (dbUser && dbUser.length > 0) {
+              // Link OIDC subject to existing user
+              console.log('Linking OIDC subject to existing user:', {
+                userId: dbUser[0].id,
+                email: dbUser[0].email,
+              });
+
+              await db
+                .update(users)
+                .set({ oidcSubject: oidcSub as string, updatedAt: new Date() })
+                .where(eq(users.id, dbUser[0].id));
+            } else {
+              // Create new user
+              console.log('Creating new user from OIDC profile:', {
+                email: profile.email,
+                oidcSub: oidcSub,
+              });
+
+              const newUser = await db
+                .insert(users)
+                .values({
+                  email: profile.email as string,
+                  username: (profile.name || (profile as any).preferred_username || profile.email) as string,
+                  oidcSubject: oidcSub as string,
+                  isAdmin: false,
+                })
+                .returning();
+
+              dbUser = newUser;
+              console.log('New user created successfully:', { userId: dbUser[0]?.id });
+            }
           } else {
-            // Create new user
-            const newUser = await db
-              .insert(users)
-              .values({
-                email: profile.email as string,
-                username: (profile.name || (profile as any).preferred_username || profile.email) as string,
-                oidcSubject: oidcSub as string,
-                isAdmin: false,
-              })
-              .returning();
-
-            dbUser = newUser;
+            console.log('Found existing user with OIDC subject:', {
+              userId: dbUser[0].id,
+              email: dbUser[0].email,
+            });
           }
-        }
 
-        if (dbUser && dbUser.length > 0) {
-          token.id = dbUser[0].id.toString();
-          token.email = dbUser[0].email;
-          token.name = dbUser[0].username || dbUser[0].email;
-          token.isAdmin = dbUser[0].isAdmin;
-          token.firstname = dbUser[0].firstname;
-          token.lastname = dbUser[0].lastname;
+          if (dbUser && dbUser.length > 0) {
+            token.id = dbUser[0].id.toString();
+            token.email = dbUser[0].email;
+            token.name = dbUser[0].username || dbUser[0].email;
+            token.isAdmin = dbUser[0].isAdmin;
+            token.firstname = dbUser[0].firstname;
+            token.lastname = dbUser[0].lastname;
 
-          // Set token expiration for OIDC logins (same as credentials default: 2 days)
-          const maxAgeSeconds = 2 * 24 * 60 * 60; // 2 days
-          token.exp = Math.floor(Date.now() / 1000) + maxAgeSeconds;
+            // Set token expiration for OIDC logins (same as credentials default: 2 days)
+            const maxAgeSeconds = 2 * 24 * 60 * 60; // 2 days
+            token.exp = Math.floor(Date.now() / 1000) + maxAgeSeconds;
+
+            console.log('OIDC token created successfully:', {
+              userId: token.id,
+              email: token.email,
+              expiresIn: `${maxAgeSeconds / 3600} hours`,
+            });
+          } else {
+            console.error('OIDC ERROR: Failed to create or find user after processing');
+          }
+        } catch (error) {
+          console.error('OIDC ERROR: Exception during user processing:', error);
         }
+      }
+
+      // Log if OIDC callback received but missing profile
+      if (account && account.provider === 'oidc' && !profile) {
+        console.error('OIDC ERROR: Callback received but no profile data', {
+          accountType: account.type,
+          hasAccessToken: !!account.access_token,
+          hasIdToken: !!account.id_token,
+        });
       }
 
       // Handle regular credentials login

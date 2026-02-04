@@ -388,8 +388,22 @@ export async function POST(request: NextRequest) {
 
   if (oidcSettingsChanged) {
     // Reload OIDC provider configuration without restart
-    console.log('OIDC settings changed, reloading provider...');
-    await reloadOidcProvider();
+    console.log('SETTINGS API: OIDC settings changed, triggering reload...');
+    console.log('SETTINGS API: Changed settings:', settingsToSave
+      .filter(s => oidcSettingKeys.includes(s.key))
+      .map(s => ({
+        key: s.key,
+        value: s.key === 'oidcClientSecret' ? '***REDACTED***' : s.value
+      }))
+    );
+
+    const result = await reloadOidcProvider();
+
+    if (result.success) {
+      console.log('SETTINGS API: OIDC reload successful');
+    } else {
+      console.error('SETTINGS API: OIDC reload failed:', result.error);
+    }
   }
 
   return NextResponse.json({ success: true });
