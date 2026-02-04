@@ -19,16 +19,29 @@ export function PWAInstallPrompt() {
       return
     }
 
-    // Check if dismissed recently (within 7 days)
+    // Check if already shown in this session
+    if (sessionStorage.getItem('pwa-prompt-shown')) {
+      return
+    }
+
+    // Check if dismissed recently (within 30 days)
     const dismissedAt = localStorage.getItem('pwa-prompt-dismissed')
     if (dismissedAt) {
       const dismissedDate = new Date(dismissedAt)
-      const sevenDaysAgo = new Date()
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-      if (dismissedDate > sevenDaysAgo) {
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      if (dismissedDate > thirtyDaysAgo) {
         return
       }
     }
+
+    // Check if permanently dismissed
+    if (localStorage.getItem('pwa-prompt-permanent-dismiss') === 'true') {
+      return
+    }
+
+    // Mark as shown in this session
+    sessionStorage.setItem('pwa-prompt-shown', 'true')
 
     // Detect iOS
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
@@ -71,6 +84,11 @@ export function PWAInstallPrompt() {
     localStorage.setItem('pwa-prompt-dismissed', new Date().toISOString())
   }
 
+  const handlePermanentDismiss = () => {
+    setShowPrompt(false)
+    localStorage.setItem('pwa-prompt-permanent-dismiss', 'true')
+  }
+
   if (!showPrompt) {
     return null
   }
@@ -97,20 +115,29 @@ export function PWAInstallPrompt() {
               </p>
             )}
 
-            {!isIOS && deferredPrompt && (
+            <div className="mt-3 flex gap-2">
+              {!isIOS && deferredPrompt && (
+                <button
+                  onClick={handleInstall}
+                  className="flex-1 py-2 px-3 bg-primary text-primary-foreground text-xs font-medium rounded-md hover:bg-primary/90 transition-colors touch-target"
+                >
+                  Install App
+                </button>
+              )}
               <button
-                onClick={handleInstall}
-                className="mt-3 w-full py-2 px-3 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 transition-colors touch-target"
+                onClick={handlePermanentDismiss}
+                className="flex-1 py-2 px-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                title="Don't show this again"
               >
-                Install App
+                Don&apos;t ask again
               </button>
-            )}
+            </div>
           </div>
 
           <button
             onClick={handleDismiss}
             className="flex-shrink-0 p-1 rounded-md hover:bg-muted transition-colors"
-            title="Dismiss"
+            title="Dismiss for 30 days"
           >
             <XMarkIcon className="w-5 h-5 text-muted-foreground" />
           </button>
