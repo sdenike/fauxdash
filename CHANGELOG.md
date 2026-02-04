@@ -5,6 +5,16 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.19] - 2026-02-04
+
+### Fixed
+- **OIDC Test Origin Detection**: Fixed test authentication using internal Docker address (0.0.0.0:8080)
+  - Improved origin detection to use x-forwarded-host and x-forwarded-proto headers
+  - Prioritizes external URL over internal Docker address
+  - Correctly handles reverse proxy configurations
+  - Falls back to host header and NEXTAUTH_URL when needed
+  - Added logging to track detected origin for debugging
+
 ## [0.9.18] - 2026-02-04
 
 ### Fixed
