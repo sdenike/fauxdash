@@ -5,6 +5,14 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.11] - 2026-02-03
+
+### Fixed
+- **Analytics Map**: Changed default grouping from country to city level
+  - Map now shows individual cities as separate markers
+  - Previously all locations in the same country were averaged into one marker
+  - Indianapolis and Okemos now display as distinct locations
+
 ## [0.9.10] - 2026-02-03
 
 ### Fixed

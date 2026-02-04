@@ -19,7 +19,7 @@ export const GeoQuerySchema = z.object({
   period: z.enum(['hour', 'day', 'week', 'month', 'year', 'custom', 'all']).default('month'),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  level: z.enum(['country', 'city']).default('country'),
+  level: z.enum(['country', 'city']).default('city'),
   limit: z.coerce.number().min(1).max(1000).default(100),
 })
 
