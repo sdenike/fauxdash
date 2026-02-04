@@ -290,6 +290,9 @@ export async function POST(request: NextRequest) {
   if (body.homepageGraphicVAlign !== undefined) settingsToSave.push({ key: 'homepageGraphicVAlign', value: body.homepageGraphicVAlign || 'center' });
   if (body.homepageGraphicPosition !== undefined) settingsToSave.push({ key: 'homepageGraphicPosition', value: body.homepageGraphicPosition || 'above' });
   if (body.homepageGraphicHideWhenLoggedIn !== undefined) settingsToSave.push({ key: 'homepageGraphicHideWhenLoggedIn', value: body.homepageGraphicHideWhenLoggedIn.toString() });
+  // Site favicon settings
+  if (body.siteFavicon !== undefined) settingsToSave.push({ key: 'siteFavicon', value: body.siteFavicon || '' });
+  if (body.siteFaviconType !== undefined) settingsToSave.push({ key: 'siteFaviconType', value: body.siteFaviconType || 'default' });
 
   // Settings that should be stored globally (userId = null) rather than per-user
   const globalSettingKeys = [
@@ -311,6 +314,8 @@ export async function POST(request: NextRequest) {
     'homepageGraphicEnabled', 'homepageGraphicPath', 'homepageGraphicMaxWidth',
     'homepageGraphicHAlign', 'homepageGraphicVAlign', 'homepageGraphicPosition',
     'homepageGraphicHideWhenLoggedIn',
+    // Site favicon settings
+    'siteFavicon', 'siteFaviconType',
   ];
 
   for (const setting of settingsToSave) {

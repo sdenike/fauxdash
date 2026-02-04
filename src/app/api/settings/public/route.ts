@@ -51,6 +51,9 @@ export async function GET() {
       homepageGraphicVAlign: settingsObj.homepageGraphicVAlign || 'center',
       homepageGraphicPosition: settingsObj.homepageGraphicPosition || 'above',
       homepageGraphicHideWhenLoggedIn: settingsObj.homepageGraphicHideWhenLoggedIn === 'true',
+      // Site favicon settings (visible to all users)
+      siteFavicon: settingsObj.siteFavicon || '',
+      siteFaviconType: (settingsObj.siteFaviconType || 'default') as 'upload' | 'library' | 'url' | 'default',
     });
   } catch (error) {
     console.error('Failed to fetch public settings:', error);
@@ -81,6 +84,9 @@ export async function GET() {
       homepageGraphicVAlign: 'center',
       homepageGraphicPosition: 'above',
       homepageGraphicHideWhenLoggedIn: false,
+      // Site favicon defaults
+      siteFavicon: '',
+      siteFaviconType: 'default' as 'upload' | 'library' | 'url' | 'default',
     });
   }
 }

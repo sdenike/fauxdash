@@ -114,6 +114,9 @@ export interface Settings {
   homepageGraphicVAlign: 'top' | 'center' | 'bottom'
   homepageGraphicPosition: 'above' | 'below'
   homepageGraphicHideWhenLoggedIn: boolean
+  // Site Favicon
+  siteFavicon: string
+  siteFaviconType: 'upload' | 'library' | 'url' | 'default'
 }
 
 export interface SettingsTabProps {
@@ -230,4 +233,7 @@ export const defaultSettings: Settings = {
   homepageGraphicVAlign: 'center',
   homepageGraphicPosition: 'above',
   homepageGraphicHideWhenLoggedIn: false,
+  // Site Favicon
+  siteFavicon: '',
+  siteFaviconType: 'default',
 }

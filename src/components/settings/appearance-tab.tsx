@@ -13,6 +13,7 @@ import { BackgroundImageSettings } from './background-image-settings'
 import { HomepageContentSettings } from './homepage-content-settings'
 import { HomepageGraphicSettings } from './homepage-graphic-settings'
 import { SiteTitleSettings } from './site-title-settings'
+import { SiteFaviconSettings } from './site-favicon-settings'
 
 export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) {
   const { setTheme: setNextTheme, resolvedTheme } = useTheme()
@@ -160,6 +161,29 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
 
       {/* Homepage Graphic Settings */}
       <HomepageGraphicSettings settings={settings} onSettingsChange={onSettingsChange} />
+
+      {/* Site Favicon Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Site Favicon</CardTitle>
+          <CardDescription>
+            Customize the favicon that appears in browser tabs
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SiteFaviconSettings
+            favicon={settings.siteFavicon}
+            faviconType={settings.siteFaviconType}
+            onChange={(favicon, faviconType) => {
+              onSettingsChange({
+                ...settings,
+                siteFavicon: favicon,
+                siteFaviconType: faviconType,
+              })
+            }}
+          />
+        </CardContent>
+      </Card>
 
       {/* Site Title Settings */}
       <Card>

@@ -5,6 +5,30 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.26] - 2026-02-04
+
+### Added
+- **Site Favicon Customization**: Complete favicon management system
+  - Upload custom favicon (PNG, ICO, SVG, JPEG up to 1MB)
+  - Select from icon library (HeroIcons, Selfh.st)
+  - Fetch from URL (direct links or domain favicon extraction)
+  - Advanced color transformations:
+    - Convert to theme color
+    - Convert to grayscale
+    - Invert colors
+    - Revert to original
+  - Dynamic favicon updates without page refresh
+  - Works for both authenticated and public users
+  - Integrated into Appearance settings
+
+### Technical Details
+- New API routes: `/api/site-favicon`, `/api/site-favicon/serve`, `/favicon.ico`
+- New components: `DynamicFavicon`, `SiteFaviconSettings`
+- Settings: `siteFavicon`, `siteFaviconType` (global settings)
+- Automatic conversion to PNG and resize to 64x64
+- Aggressive cache-busting with canvas rendering
+- Storage: `/data/site-assets/site-favicon.png` (production)
+
 ## [0.9.25] - 2026-02-04
 
 ### Changed

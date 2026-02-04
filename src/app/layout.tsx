@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { Providers } from './providers'
+import { DynamicFavicon } from '@/components/dynamic-favicon'
 
 export const metadata: Metadata = {
   title: 'Faux|Dash',
@@ -39,7 +40,10 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className="font-sans antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          <DynamicFavicon />
+          {children}
+        </Providers>
       </body>
     </html>
   )
