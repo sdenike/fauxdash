@@ -157,6 +157,9 @@ export async function GET(request: NextRequest) {
     homepageGraphicVAlign: settingsObj.homepageGraphicVAlign || 'center',
     homepageGraphicPosition: settingsObj.homepageGraphicPosition || 'above',
     homepageGraphicHideWhenLoggedIn: settingsObj.homepageGraphicHideWhenLoggedIn === 'true',
+    // Site favicon settings
+    siteFavicon: settingsObj.siteFavicon || '',
+    siteFaviconType: (settingsObj.siteFaviconType || 'default') as 'upload' | 'library' | 'url' | 'default',
   });
 }
 

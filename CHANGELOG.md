@@ -5,6 +5,15 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.29] - 2026-02-04
+
+### Fixed
+- **CRITICAL: Favicon Settings Not Returned by API**
+  - GET /api/settings was missing siteFavicon and siteFaviconType fields
+  - This caused uploaded favicons to disappear after page reload
+  - Settings were being saved to database but not read back
+  - Now properly returns favicon settings in GET response
+
 ## [0.9.28] - 2026-02-04
 
 ### Fixed
