@@ -265,6 +265,31 @@ export const authOptions: NextAuthOptions = {
     return dynamicProviders;
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Log redirect for debugging
+      console.log('NextAuth redirect callback:', { url, baseUrl });
+
+      // If URL is already absolute and different from baseUrl, use it
+      if (url.startsWith('http')) {
+        // Allow redirects to same origin
+        const urlObj = new URL(url);
+        const baseUrlObj = new URL(baseUrl);
+        if (urlObj.origin === baseUrlObj.origin) {
+          console.log('Allowing redirect to same origin:', url);
+          return url;
+        }
+      }
+
+      // If URL starts with /, it's relative, prepend baseUrl
+      if (url.startsWith('/')) {
+        console.log('Redirecting to relative URL:', `${baseUrl}${url}`);
+        return `${baseUrl}${url}`;
+      }
+
+      // Default to baseUrl
+      console.log('Defaulting to baseUrl:', baseUrl);
+      return baseUrl;
+    },
     async jwt({ token, user, account, profile, trigger }) {
       const db = getDb();
 
