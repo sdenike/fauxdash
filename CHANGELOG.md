@@ -5,6 +5,38 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.20] - 2026-02-04
+
+### Fixed
+- **Drag & Drop Reordering**: Fixed items not reordering within categories
+  - Added reorderItems function to handle same-category reordering
+  - Imported arrayMove utility from @dnd-kit/sortable
+  - Added comprehensive drag event logging for debugging
+  - Items now properly reorder when dragged within the same category
+  - Order field updated correctly for all affected items
+  - Works for both bookmarks and services
+
+### Changed
+- **@dnd-kit/sortable**: Updated from v8.0.0 to v10.0.0
+  - Improved drag and drop performance
+  - Better collision detection
+  - Enhanced touch support
+
+### Improved
+- **PWA Install Prompt**: Reduced prompt frequency
+  - Only shows once per browser session (not every page load)
+  - Extended dismissal period from 7 days to 30 days
+  - Added "Don't ask again" button for permanent dismissal
+  - Session storage prevents repeated prompts
+  - Better user experience with clear options
+
+### Automated
+- **GitHub Releases**: Automated release creation from version tags
+  - Workflow automatically creates releases when tags are pushed
+  - Extracts changelog entries for release notes
+  - Includes Docker pull commands
+  - Simplified release titles to version numbers only
+
 ## [0.9.19] - 2026-02-04
 
 ### Fixed

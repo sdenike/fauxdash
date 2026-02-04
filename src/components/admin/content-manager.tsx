@@ -31,6 +31,7 @@ import {
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
+  arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
@@ -306,6 +307,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
   }
 
   const handleDragStart = (event: DragStartEvent) => {
+    console.log('[Drag] Start:', event.active.id)
     setActiveId(event.active.id as string)
   }
 
@@ -313,33 +315,94 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
     const { active, over } = event
     setActiveId(null)
 
-    if (!over) return
+    console.log('[Drag] End:', { active: active.id, over: over?.id })
+
+    if (!over) {
+      console.log('[Drag] No drop target')
+      return
+    }
 
     const activeId = active.id as string
     const overId = over.id as string
+
+    // If dragging onto itself, no action needed
+    if (activeId === overId) {
+      console.log('[Drag] Dropped on self, no action')
+      return
+    }
 
     // Parse IDs
     const [activeType, activeIdNum] = activeId.split('-')
     const [overType, overIdNum] = overId.split('-')
 
-    // If dropped on another item, we want to move it to that item's category
+    console.log('[Drag] Parsed:', { activeType, activeIdNum, overType, overIdNum })
+
+    const sourceItem = allItems.find(item => `${item.type}-${item.id}` === activeId)
+    if (!sourceItem) {
+      console.log('[Drag] Source item not found')
+      return
+    }
+
+    // If dropped on another item, check if it's a reorder or move
     if (overType === 'bookmark' || overType === 'service') {
       const targetItem = allItems.find(item => `${item.type}-${item.id}` === overId)
-      if (!targetItem || targetItem.categoryId === null) return
+      if (!targetItem) {
+        console.log('[Drag] Target item not found')
+        return
+      }
 
-      const sourceItem = allItems.find(item => `${item.type}-${item.id}` === activeId)
-      if (!sourceItem) return
-
-      // Move to the same category as the target item
-      await moveItem(sourceItem, targetItem.categoryId)
+      // Check if this is a reorder within the same category and type
+      if (sourceItem.type === targetItem.type && sourceItem.categoryId === targetItem.categoryId) {
+        console.log('[Drag] Reordering within same category')
+        await reorderItems(sourceItem, targetItem)
+      } else if (targetItem.categoryId !== null) {
+        // Move to different category or convert type
+        console.log('[Drag] Moving to different category')
+        await moveItem(sourceItem, targetItem.categoryId)
+      }
     } else if (overType === 'category' || overType === 'service-category') {
       // Dropped directly on a category
+      console.log('[Drag] Dropped on category')
       const categoryId = parseInt(overIdNum)
-      const sourceItem = allItems.find(item => `${item.type}-${item.id}` === activeId)
-      if (!sourceItem) return
-
       await moveItem(sourceItem, categoryId, overType === 'service-category' ? 'service' : 'bookmark')
     }
+  }
+
+  const reorderItems = async (sourceItem: ContentItem, targetItem: ContentItem) => {
+    // Get all items in the same category
+    const categoryItems = allItems.filter(
+      item => item.type === sourceItem.type && item.categoryId === sourceItem.categoryId
+    ).sort((a, b) => a.order - b.order)
+
+    const oldIndex = categoryItems.findIndex(item => item.id === sourceItem.id)
+    const newIndex = categoryItems.findIndex(item => item.id === targetItem.id)
+
+    console.log('[Drag] Reorder:', { oldIndex, newIndex, totalItems: categoryItems.length })
+
+    if (oldIndex === -1 || newIndex === -1) return
+
+    // Reorder the items
+    const reorderedItems = arrayMove(categoryItems, oldIndex, newIndex)
+
+    // Update order for all items
+    const endpoint = sourceItem.type === 'bookmark' ? '/api/bookmarks' : '/api/services'
+    const updates = reorderedItems.map((item, index) => ({
+      id: item.id,
+      order: index,
+    }))
+
+    console.log('[Drag] Updating order for', updates.length, 'items')
+
+    // Update each item's order
+    for (const update of updates) {
+      await fetch(`${endpoint}/${update.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: update.order }),
+      })
+    }
+
+    onContentChange()
   }
 
   const moveItem = async (item: ContentItem, targetCategoryId: number | null, targetType?: 'bookmark' | 'service') => {
