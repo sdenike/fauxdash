@@ -27,6 +27,9 @@ export async function GET(request: NextRequest) {
         countryName: pageviews.countryName,
         city: pageviews.city,
         region: pageviews.region,
+        latitude: pageviews.latitude,
+        longitude: pageviews.longitude,
+        timezone: pageviews.timezone,
         geoEnriched: pageviews.geoEnriched,
         timestamp: pageviews.timestamp,
       })
