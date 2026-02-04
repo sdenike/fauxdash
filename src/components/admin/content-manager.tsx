@@ -393,16 +393,19 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
 
     console.log('[Drag] Updating order for', updates.length, 'items')
 
-    // Update each item's order
-    for (const update of updates) {
-      await fetch(`${endpoint}/${update.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order: update.order }),
-      })
-    }
-
-    onContentChange()
+    // Update each item's order in the background
+    Promise.all(
+      updates.map(update =>
+        fetch(`${endpoint}/${update.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: update.order }),
+        })
+      )
+    ).then(() => {
+      // Delay refresh slightly to allow drag animation to complete
+      setTimeout(() => onContentChange(), 300)
+    })
   }
 
   const moveItem = async (item: ContentItem, targetCategoryId: number | null, targetType?: 'bookmark' | 'service') => {

@@ -151,6 +151,24 @@ function CompactWeather() {
   )
 }
 
+// Theme counterparts for special themes
+const THEME_COUNTERPARTS: Record<string, string> = {
+  'Nord Light': 'Nord Dark',
+  'Nord Dark': 'Nord Light',
+  'Monokai Light': 'Monokai Dark',
+  'Monokai Dark': 'Monokai Light',
+}
+
+// Special themes without counterparts (toggle should be hidden)
+const STANDALONE_THEMES_WITHOUT_COUNTERPARTS = [
+  'Material Dark',
+  'Minimal Kiwi',
+  'One Dark Pro',
+  'Catppuccin Mocha',
+  'Shades of Purple',
+  'Dracula',
+]
+
 export function Header() {
   const { data: session } = useSession()
   const { resolvedTheme, setTheme } = useTheme()
@@ -166,6 +184,7 @@ export function Header() {
   const [timeFormat, setTimeFormat] = useState<'12' | '24'>('12')
   const [showSeconds, setShowSeconds] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [themeColor, setThemeColor] = useState('Slate')
 
   useEffect(() => {
     setMounted(true)
@@ -187,6 +206,7 @@ export function Header() {
         setTimeEnabled(data.timeEnabled || false)
         setTimeFormat(data.timeFormat || '12')
         setShowSeconds(data.showSeconds || false)
+        if (data.themeColor) setThemeColor(data.themeColor)
       } catch (error) {
         console.error('Failed to fetch settings:', error)
       }
@@ -196,16 +216,45 @@ export function Header() {
     }
   }, [session])
 
+  // Check if theme toggle should be shown
+  const shouldShowThemeToggle = () => {
+    // If it's a standalone theme without counterpart, hide toggle
+    if (STANDALONE_THEMES_WITHOUT_COUNTERPARTS.includes(themeColor)) {
+      return false
+    }
+    // Otherwise show toggle (standard themes or special themes with counterparts)
+    return true
+  }
+
   const toggleTheme = async () => {
-    const newTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
+    let newTheme: string
+    let newThemeColor: string | null = null
+
+    // Check if current theme is a special theme with a counterpart
+    if (THEME_COUNTERPARTS[themeColor]) {
+      // Switch to counterpart
+      newThemeColor = THEME_COUNTERPARTS[themeColor]
+      // Determine if counterpart is light or dark based on name
+      newTheme = newThemeColor.includes('Dark') ? 'dark' : 'light'
+    } else {
+      // Standard theme - toggle between light and dark mode
+      newTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
+    }
+
     setTheme(newTheme)
 
     // Save to database
     try {
+      const body: any = { defaultTheme: newTheme }
+      if (newThemeColor) {
+        body.themeColor = newThemeColor
+        setThemeColor(newThemeColor)
+      }
+
       await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ defaultTheme: newTheme }),
+        body: JSON.stringify(body),
       })
     } catch (error) {
       console.error('Failed to save theme preference:', error)
@@ -247,12 +296,12 @@ export function Header() {
 
             {/* Mobile action buttons - visible only on mobile */}
             <div className="flex items-center space-x-1 md:hidden">
-              {session && (
+              {session && shouldShowThemeToggle() && (
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={toggleTheme}
-                  title={resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                  title={THEME_COUNTERPARTS[themeColor] || (resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode')}
                   className="touch-target"
                 >
                   {resolvedTheme === 'dark' ? (
@@ -335,12 +384,12 @@ export function Header() {
               />
             )}
 
-            {session && (
+            {session && shouldShowThemeToggle() && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                title={resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                title={THEME_COUNTERPARTS[themeColor] ? `Switch to ${THEME_COUNTERPARTS[themeColor]}` : (resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode')}
                 className="touch-target"
               >
                 {resolvedTheme === 'dark' ? (

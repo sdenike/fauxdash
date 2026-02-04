@@ -5,6 +5,23 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.21] - 2026-02-04
+
+### Improved
+- **Drag & Drop Animation**: Smooth transitions when reordering items
+  - Items now stay in place when dropped (no snap-back)
+  - Background database updates don't interrupt animation
+  - 300ms delay before refresh for fluid user experience
+  - Parallel API updates for better performance
+
+### Fixed
+- **Theme Toggle Visibility**: Smart handling of special themes
+  - Toggle hidden for standalone themes without counterparts (Material Dark, Dracula, etc.)
+  - Toggle switches between theme counterparts (Nord Light ↔ Nord Dark, Monokai Light ↔ Monokai Dark)
+  - Standard themes continue to toggle between light/dark modes
+  - Tooltip shows counterpart theme name when applicable
+  - Fixes issue where toggle didn't work with Nord Dark and similar themes
+
 ## [0.9.20] - 2026-02-04
 
 ### Fixed
