@@ -38,7 +38,7 @@ function SettingsContent() {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const response = await fetch('/api/settings')
+      const response = await fetch('/api/settings', { cache: 'no-store' })
       const data = await response.json()
       setSettings(data)
     } catch (error) {

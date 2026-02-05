@@ -7,13 +7,17 @@ const withPWA = require("@ducanh2912/next-pwa").default({
     document: "/offline",
   },
   runtimeCaching: [
-    // Exclude backup and restore API routes from caching
+    // Exclude backup, restore, and settings API routes from caching
     {
       urlPattern: /\/api\/backup/,
       handler: 'NetworkOnly',
     },
     {
       urlPattern: /\/api\/restore/,
+      handler: 'NetworkOnly',
+    },
+    {
+      urlPattern: /\/api\/settings/,
       handler: 'NetworkOnly',
     },
     // Default API route handling

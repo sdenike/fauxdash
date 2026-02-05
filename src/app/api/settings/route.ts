@@ -6,6 +6,9 @@ import { settings } from '@/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { logger, LogLevel } from '@/lib/logger';
 
+// Prevent Next.js from caching this route
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
 
@@ -165,6 +168,10 @@ export async function GET(request: NextRequest) {
     // Site favicon settings
     siteFavicon: settingsObj.siteFavicon || '',
     siteFaviconType: (settingsObj.siteFaviconType || 'default') as 'upload' | 'library' | 'url' | 'default',
+  }, {
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+    },
   });
 }
 
