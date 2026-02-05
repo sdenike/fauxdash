@@ -5,6 +5,28 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.31] - 2026-02-05
+
+### Added
+- **Comprehensive Application Logging**: Complete overhaul of logging system
+  - **Default log level changed from ERROR to INFO** for comprehensive visibility
+  - **GeoIP Logging**: Complete tracking of geo lookups, cache hits/misses, provider operations
+    - Logs MaxMind and IPInfo lookups with success/failure details
+    - Logs cache operations and database errors
+    - Logs private IP detection and enrichment status
+  - **Pageview Logging**: Track all pageview operations with IP detection and path info
+  - **Database Logging**: Error tracking for failed operations and data integrity issues
+  - **Log Level Control UI**: Added dropdown in GeoIP & System settings
+    - Four levels: Debug, Info, Warn, Error
+    - Inline documentation explaining each level
+    - Changes take effect immediately without restart
+  - All logs visible in Admin → Application Logs with color-coded severity levels
+
+### Changed
+- Logger default changed from 'error' to 'info' for better out-of-box experience
+- Settings default changed to 'info' to match logger default
+- All fallback values updated to use 'info' instead of 'error'
+
 ## [0.9.30] - 2026-02-04
 
 ### Fixed
