@@ -5,6 +5,24 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.35] - 2026-02-05
+
+### Fixed
+- **CRITICAL: Docker migration for show_descriptions columns**
+  - **Root cause identified**: Docker containers don't use `migrate.ts` - they use individual migration scripts
+  - v0.9.33 and v0.9.34 only fixed `migrate.ts` which is NOT used in Docker
+  - Docker uses scripts in `scripts/` directory called by `docker-entrypoint.sh`
+  - **Solution**: Created `scripts/migrate-add-show-descriptions.js`
+  - **Columns added**:
+    - categories: `show_descriptions`
+    - bookmarks: `show_description`
+    - service_categories: `show_descriptions`
+    - services: `show_description`
+  - Updated `docker-entrypoint.sh` to call new migration script
+  - Fresh Docker installs now work correctly
+  - Demo content import now works
+  - All bookmark and service operations function properly
+
 ## [0.9.34] - 2026-02-05
 
 ### Fixed
