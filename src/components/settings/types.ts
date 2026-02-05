@@ -214,7 +214,7 @@ export const defaultSettings: Settings = {
   smtpEncryption: 'tls',
   smtpFromEmail: '',
   smtpFromName: 'Faux|Dash',
-  logLevel: 'error',
+  logLevel: 'info',
   // OIDC Authentication
   oidcEnabled: false,
   oidcProviderName: '',

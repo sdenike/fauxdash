@@ -21,7 +21,7 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 class Logger {
   private logDir: string;
   private logFile: string;
-  private minLevel: LogLevel = 'error'; // Default to errors only as per user request
+  private minLevel: LogLevel = 'info'; // Default to info for comprehensive logging
   private maxFileSize: number = 10 * 1024 * 1024; // 10MB
   private static instance: Logger | null = null;
 

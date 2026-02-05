@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
     smtpFromEmail: settingsObj.smtpFromEmail || process.env.SMTP_FROM_EMAIL || '',
     smtpFromName: settingsObj.smtpFromName || process.env.SMTP_FROM_NAME || 'Faux|Dash',
     // Logging settings
-    logLevel: settingsObj.logLevel || process.env.LOG_LEVEL || 'error',
+    logLevel: settingsObj.logLevel || process.env.LOG_LEVEL || 'info',
     // Homepage content settings
     homepageDescriptionEnabled: settingsObj.homepageDescriptionEnabled === 'true',
     homepageDescription: settingsObj.homepageDescription || '',
@@ -278,7 +278,7 @@ export async function POST(request: NextRequest) {
   if (body.smtpFromName !== undefined) settingsToSave.push({ key: 'smtpFromName', value: body.smtpFromName || 'Faux|Dash' });
   // Logging settings
   if (body.logLevel !== undefined) {
-    settingsToSave.push({ key: 'logLevel', value: body.logLevel || 'error' });
+    settingsToSave.push({ key: 'logLevel', value: body.logLevel || 'info' });
     // Update the logger's log level immediately
     logger.setLogLevel(body.logLevel as LogLevel);
   }

@@ -636,5 +636,47 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
         )}
       </CardContent>
     </Card>
+
+    {/* Application Logging */}
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle>Application Logging</CardTitle>
+        <CardDescription>
+          Control what gets logged to the Application Log
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <Label htmlFor="logLevel">Log Level</Label>
+          <Select
+            value={settings.logLevel}
+            onValueChange={(value: 'error' | 'warn' | 'info' | 'debug') => updateSetting('logLevel', value)}
+          >
+            <SelectTrigger id="logLevel">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="error">Error - Only errors</SelectItem>
+              <SelectItem value="warn">Warn - Warnings and errors</SelectItem>
+              <SelectItem value="info">Info - General info, warnings, and errors (recommended)</SelectItem>
+              <SelectItem value="debug">Debug - Everything including debug messages</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-2">
+            <strong>Info</strong> is recommended for comprehensive logging of authentication, GeoIP lookups, and API operations.
+            Change takes effect immediately without restart.
+          </p>
+          <div className="mt-3 p-3 bg-muted rounded-lg">
+            <p className="text-sm font-medium mb-2">What gets logged at each level:</p>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li><strong>Debug:</strong> All activity including detailed diagnostics</li>
+              <li><strong>Info:</strong> Login attempts, GeoIP lookups, API calls, system operations</li>
+              <li><strong>Warn:</strong> Failed operations, security warnings, rate limits</li>
+              <li><strong>Error:</strong> Critical failures only</li>
+            </ul>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

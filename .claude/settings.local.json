@@ -130,7 +130,8 @@
       "Bash(gh issue list:*)",
       "Bash(npm outdated:*)",
       "Bash(git describe:*)",
-      "Bash(gh:*)"
+      "Bash(gh:*)",
+      "Bash(xargs:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
