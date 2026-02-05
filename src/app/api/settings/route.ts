@@ -38,6 +38,12 @@ export async function GET(request: NextRequest) {
     settingsObj[setting.key] = setting.value || '';
   });
 
+  console.log('[SETTINGS API] GET returning SMTP settings:', {
+    smtpProvider: settingsObj.smtpProvider || 'none (default)',
+    smtpHost: settingsObj.smtpHost || '(empty)',
+    smtpUsername: settingsObj.smtpUsername || '(empty)',
+  })
+
   // Sync log level to logger
   const logLevel = settingsObj.logLevel || process.env.LOG_LEVEL || 'error';
   if (['debug', 'info', 'warn', 'error'].includes(logLevel)) {
@@ -178,6 +184,13 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const db = getDb();
   const userId = (session.user as any).id;
+
+  console.log('[SETTINGS API] POST received. SMTP fields in body:', {
+    smtpProvider: body.smtpProvider,
+    smtpHost: body.smtpHost,
+    smtpUsername: body.smtpUsername,
+    smtpEncryption: body.smtpEncryption,
+  })
 
   // Build settings array from provided fields only
   const settingsToSave: { key: string; value: string }[] = [];
@@ -331,10 +344,13 @@ export async function POST(request: NextRequest) {
     'siteFavicon', 'siteFaviconType',
   ];
 
+  console.log('[SETTINGS API] Settings to save:', settingsToSave.filter(s => s.key.startsWith('smtp')))
+
   for (const setting of settingsToSave) {
     const isGlobalSetting = globalSettingKeys.includes(setting.key);
 
     if (isGlobalSetting) {
+      console.log(`[SETTINGS API] Saving global setting: ${setting.key} = ${setting.value}`)
       // Global settings: userId = null
       const existing = await db
         .select()
