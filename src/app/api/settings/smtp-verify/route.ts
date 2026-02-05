@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
         <!DOCTYPE html>
         <html>
         <head>
+          <meta charset="UTF-8">
           <title>Invalid Verification Link</title>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
@@ -47,6 +48,7 @@ export async function GET(request: NextRequest) {
         <!DOCTYPE html>
         <html>
         <head>
+          <meta charset="UTF-8">
           <title>No Verification Pending</title>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
@@ -77,6 +79,7 @@ export async function GET(request: NextRequest) {
         <!DOCTYPE html>
         <html>
         <head>
+          <meta charset="UTF-8">
           <title>Invalid Token</title>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
@@ -108,6 +111,7 @@ export async function GET(request: NextRequest) {
         <!DOCTYPE html>
         <html>
         <head>
+          <meta charset="UTF-8">
           <title>Link Expired</title>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
@@ -145,6 +149,7 @@ export async function GET(request: NextRequest) {
       <!DOCTYPE html>
       <html>
       <head>
+        <meta charset="UTF-8">
         <title>SMTP Verified Successfully</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>

@@ -39,10 +39,22 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
 
   const handleAutoSave = useCallback(async () => {
     try {
+      // Only send SMTP-related settings to avoid overwriting other settings
+      const smtpSettings = {
+        smtpProvider: settings.smtpProvider,
+        smtpHost: settings.smtpHost,
+        smtpPort: settings.smtpPort,
+        smtpUsername: settings.smtpUsername,
+        smtpPassword: settings.smtpPassword,
+        smtpEncryption: settings.smtpEncryption,
+        smtpFromEmail: settings.smtpFromEmail,
+        smtpFromName: settings.smtpFromName,
+      }
+
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(smtpSettings),
       })
 
       if (!response.ok) {

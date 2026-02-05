@@ -35,13 +35,7 @@ function SettingsContent() {
     }
   }, [status, router])
 
-  useEffect(() => {
-    if (session) {
-      fetchSettings()
-    }
-  }, [session])
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const response = await fetch('/api/settings')
       const data = await response.json()
@@ -51,7 +45,13 @@ function SettingsContent() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (session) {
+      fetchSettings()
+    }
+  }, [session, fetchSettings])
 
   const handleSettingsChange = useCallback((newSettings: Settings) => {
     setSettings(newSettings)
@@ -60,11 +60,19 @@ function SettingsContent() {
   const handleSave = useCallback(async () => {
     setSaving(true)
     try {
-      await fetch('/api/settings', {
+      const response = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       })
+
+      if (!response.ok) {
+        throw new Error('Failed to save settings')
+      }
+
+      // Re-fetch settings to ensure UI shows what's in database
+      await fetchSettings()
+
       toast({
         variant: 'success',
         title: 'Settings saved',
@@ -80,7 +88,7 @@ function SettingsContent() {
     } finally {
       setSaving(false)
     }
-  }, [settings, toast])
+  }, [settings, toast, fetchSettings])
 
   if (status === 'loading' || loading) {
     return (
