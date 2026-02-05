@@ -59,6 +59,7 @@ export default function HomePage() {
   const [services, setServices] = useState<any[]>([])
   const [serviceCategories, setServiceCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [checkingSetup, setCheckingSetup] = useState(true)
   const [welcomeMessage, setWelcomeMessage] = useState('Welcome back')
   const [welcomeMessageEnabled, setWelcomeMessageEnabled] = useState(true)
@@ -172,6 +173,8 @@ export default function HomePage() {
       setHomepageGraphicHideWhenLoggedIn(data.homepageGraphicHideWhenLoggedIn || false)
     } catch (error) {
       console.error('Failed to fetch settings:', error)
+    } finally {
+      setSettingsLoaded(true)
     }
   }
 
@@ -253,7 +256,7 @@ export default function HomePage() {
         )}
 
         {/* Search Bar (only if not in header and user is logged in) */}
-        {session && searchEnabled && !searchInHeader && !loading && (
+        {session && searchEnabled && !searchInHeader && settingsLoaded && (
           <div className="mb-8">
             <SearchBar />
           </div>

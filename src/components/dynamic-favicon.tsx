@@ -13,8 +13,20 @@ export function DynamicFavicon() {
 
   const updateFavicon = useCallback(async () => {
     try {
+      // Remove ALL existing favicon links first
+      document.querySelectorAll('link[rel*="icon"]').forEach((el) => el.remove())
+
       // Fetch favicon with aggressive cache-busting
       const cacheBuster = `${Date.now()}-${Math.random()}`
+
+      // Create new link pointing directly to /favicon.ico with cache buster
+      const link = document.createElement('link')
+      link.rel = 'icon'
+      link.type = 'image/png'
+      link.href = `/favicon.ico?_=${cacheBuster}`
+      document.head.appendChild(link)
+
+      // Also fetch from serve endpoint for the canvas approach as fallback
       const response = await fetch(`/api/site-favicon/serve?_=${cacheBuster}`, {
         cache: 'no-store',
         headers: {
