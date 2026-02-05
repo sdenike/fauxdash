@@ -5,6 +5,34 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.32] - 2026-02-05
+
+### Added
+- **Analytics Map Improvements**: Enhanced visitor location visualization
+  - **Color-Coded Traffic Markers**:
+    - 🔵 Blue markers for Low traffic (1-10 visits)
+    - 🟡 Yellow markers for Medium traffic (11-50 visits)
+    - 🔴 Red markers for High traffic (51+ visits)
+    - All three levels now clearly visible on the map
+  - **Complete Location List**:
+    - Shows ALL visitor locations (previously limited to 12)
+    - Scrollable list with improved layout and styling
+    - Color-coded dots matching map markers
+    - Header showing total locations and total visits
+    - Country flags, names, and visit counts with monospace alignment
+    - Hover effects and clickable items
+  - **Enhanced Legend**:
+    - Distinct colors instead of opacity-only differences
+    - Clear labels with visit count ranges
+    - Better contrast with white background and border
+    - Available both on map and below location list
+
+### Changed
+- Map marker sizes increased (10-32px) for better visibility
+- Map marker opacity increased to 0.85 for clearer distinction
+- Location list now uses grid layout with responsive columns
+- Visit counts use monospace font for better alignment
+
 ## [0.9.31] - 2026-02-05
 
 ### Added
