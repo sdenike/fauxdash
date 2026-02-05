@@ -131,7 +131,8 @@
       "Bash(npm outdated:*)",
       "Bash(git describe:*)",
       "Bash(gh:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(docker manifest inspect:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

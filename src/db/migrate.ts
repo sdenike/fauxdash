@@ -227,12 +227,20 @@ async function addMissingColumns(db: any) {
         db.prepare(`ALTER TABLE categories ADD COLUMN show_open_all INTEGER DEFAULT 0 NOT NULL`).run();
         console.log('Added show_open_all to categories');
       }
+      if (!categoriesInfo.some((col: any) => col.name === 'show_descriptions')) {
+        db.prepare(`ALTER TABLE categories ADD COLUMN show_descriptions INTEGER`).run();
+        console.log('Added show_descriptions to categories');
+      }
 
       // Check bookmarks table
       const bookmarksInfo = db.prepare("PRAGMA table_info(bookmarks)").all();
       if (!bookmarksInfo.some((col: any) => col.name === 'is_demo')) {
         db.prepare(`ALTER TABLE bookmarks ADD COLUMN is_demo INTEGER DEFAULT 0 NOT NULL`).run();
         console.log('Added is_demo to bookmarks');
+      }
+      if (!bookmarksInfo.some((col: any) => col.name === 'show_description')) {
+        db.prepare(`ALTER TABLE bookmarks ADD COLUMN show_description INTEGER`).run();
+        console.log('Added show_description to bookmarks');
       }
 
       // Check service_categories table
@@ -249,6 +257,10 @@ async function addMissingColumns(db: any) {
         db.prepare(`ALTER TABLE service_categories ADD COLUMN show_open_all INTEGER DEFAULT 0 NOT NULL`).run();
         console.log('Added show_open_all to service_categories');
       }
+      if (!serviceCategoriesInfo.some((col: any) => col.name === 'show_descriptions')) {
+        db.prepare(`ALTER TABLE service_categories ADD COLUMN show_descriptions INTEGER`).run();
+        console.log('Added show_descriptions to service_categories');
+      }
 
       // Check services table
       const servicesInfo = db.prepare("PRAGMA table_info(services)").all();
@@ -256,34 +268,46 @@ async function addMissingColumns(db: any) {
         db.prepare(`ALTER TABLE services ADD COLUMN is_demo INTEGER DEFAULT 0 NOT NULL`).run();
         console.log('Added is_demo to services');
       }
+      if (!servicesInfo.some((col: any) => col.name === 'show_description')) {
+        db.prepare(`ALTER TABLE services ADD COLUMN show_description INTEGER`).run();
+        console.log('Added show_description to services');
+      }
 
       console.log('All missing columns added');
     } else if (dbProvider === 'postgres') {
       await db.execute(`ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_by VARCHAR(20) DEFAULT 'order'`);
       await db.execute(`ALTER TABLE categories ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE NOT NULL`);
       await db.execute(`ALTER TABLE categories ADD COLUMN IF NOT EXISTS show_open_all BOOLEAN DEFAULT FALSE NOT NULL`);
+      await db.execute(`ALTER TABLE categories ADD COLUMN IF NOT EXISTS show_descriptions INTEGER`);
 
       await db.execute(`ALTER TABLE bookmarks ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE NOT NULL`);
+      await db.execute(`ALTER TABLE bookmarks ADD COLUMN IF NOT EXISTS show_description INTEGER`);
 
       await db.execute(`ALTER TABLE service_categories ADD COLUMN IF NOT EXISTS sort_by VARCHAR(20) DEFAULT 'order'`);
       await db.execute(`ALTER TABLE service_categories ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE NOT NULL`);
       await db.execute(`ALTER TABLE service_categories ADD COLUMN IF NOT EXISTS show_open_all BOOLEAN DEFAULT FALSE NOT NULL`);
+      await db.execute(`ALTER TABLE service_categories ADD COLUMN IF NOT EXISTS show_descriptions INTEGER`);
 
       await db.execute(`ALTER TABLE services ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE NOT NULL`);
+      await db.execute(`ALTER TABLE services ADD COLUMN IF NOT EXISTS show_description INTEGER`);
 
       console.log('All missing columns added');
     } else if (dbProvider === 'mysql') {
       try { await db.execute(`ALTER TABLE categories ADD COLUMN sort_by VARCHAR(20) DEFAULT 'order'`); } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
       try { await db.execute(`ALTER TABLE categories ADD COLUMN is_demo BOOLEAN DEFAULT FALSE NOT NULL`); } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
       try { await db.execute(`ALTER TABLE categories ADD COLUMN show_open_all BOOLEAN DEFAULT FALSE NOT NULL`); } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
+      try { await db.execute(`ALTER TABLE categories ADD COLUMN show_descriptions INT`); } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
 
       try { await db.execute(`ALTER TABLE bookmarks ADD COLUMN is_demo BOOLEAN DEFAULT FALSE NOT NULL`); } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
+      try { await db.execute(`ALTER TABLE bookmarks ADD COLUMN show_description INT`); } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
 
       try { await db.execute(`ALTER TABLE service_categories ADD COLUMN sort_by VARCHAR(20) DEFAULT 'order'`); } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
       try { await db.execute(`ALTER TABLE service_categories ADD COLUMN is_demo BOOLEAN DEFAULT FALSE NOT NULL`); } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
       try { await db.execute(`ALTER TABLE service_categories ADD COLUMN show_open_all BOOLEAN DEFAULT FALSE NOT NULL`); } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
+      try { await db.execute(`ALTER TABLE service_categories ADD COLUMN show_descriptions INT`); } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
 
       try { await db.execute(`ALTER TABLE services ADD COLUMN is_demo BOOLEAN DEFAULT FALSE NOT NULL`); } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
+      try { await db.execute(`ALTER TABLE services ADD COLUMN show_description INT`); } catch (e: any) { if (!e.message.includes('Duplicate column')) throw e; }
 
       console.log('All missing columns added');
     }
