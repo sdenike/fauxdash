@@ -5,6 +5,20 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.30] - 2026-02-04
+
+### Fixed
+- **Search Bar Duplicate Display**: Resolved race condition causing duplicate search bars
+  - Added settingsLoaded flag to prevent rendering before settings are fetched
+  - Search bar now only renders after searchInHeader value is properly loaded
+  - Eliminates issue where search bar appeared in both header AND page content simultaneously
+
+- **Favicon Display Improvements**: Enhanced favicon update mechanism
+  - Added static favicon link in layout for immediate browser display
+  - Implemented more aggressive cache-busting with timestamp + random parameter
+  - DynamicFavicon now removes all existing favicon links before creating new one
+  - Forces browser to recognize favicon changes without hard refresh
+
 ## [0.9.29] - 2026-02-04
 
 ### Fixed
