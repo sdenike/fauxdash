@@ -37,18 +37,18 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
     }
   }, [hasUnsavedChanges])
 
-  const handleAutoSave = useCallback(async () => {
+  const saveSmtpSettings = useCallback(async (currentSettings: typeof settings) => {
     try {
       // Only send SMTP-related settings to avoid overwriting other settings
       const smtpSettings = {
-        smtpProvider: settings.smtpProvider,
-        smtpHost: settings.smtpHost,
-        smtpPort: settings.smtpPort,
-        smtpUsername: settings.smtpUsername,
-        smtpPassword: settings.smtpPassword,
-        smtpEncryption: settings.smtpEncryption,
-        smtpFromEmail: settings.smtpFromEmail,
-        smtpFromName: settings.smtpFromName,
+        smtpProvider: currentSettings.smtpProvider,
+        smtpHost: currentSettings.smtpHost,
+        smtpPort: currentSettings.smtpPort,
+        smtpUsername: currentSettings.smtpUsername,
+        smtpPassword: currentSettings.smtpPassword,
+        smtpEncryption: currentSettings.smtpEncryption,
+        smtpFromEmail: currentSettings.smtpFromEmail,
+        smtpFromName: currentSettings.smtpFromName,
       }
 
       const response = await fetch('/api/settings', {
@@ -74,53 +74,59 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
         description: 'Your changes could not be saved automatically. Please try again.',
       })
     }
-  }, [settings, toast])
+  }, [toast])
 
   const updateSetting = useCallback(<K extends keyof typeof settings>(key: K, value: typeof settings[K]) => {
+    const newSettings = { ...settings, [key]: value }
     setHasUnsavedChanges(true)
-    onSettingsChange({ ...settings, [key]: value })
+    onSettingsChange(newSettings)
 
     // Auto-save after 2 seconds of inactivity
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current)
     }
     autoSaveTimerRef.current = setTimeout(() => {
-      handleAutoSave()
+      // Pass the new settings directly to avoid stale closure
+      saveSmtpSettings(newSettings)
     }, 2000)
-  }, [settings, onSettingsChange, handleAutoSave])
+  }, [settings, onSettingsChange, saveSmtpSettings])
 
   const handleProviderChange = useCallback((value: 'none' | 'custom' | 'google') => {
     setHasUnsavedChanges(true)
 
+    let newSettings
     if (value === 'google') {
-      onSettingsChange({
+      newSettings = {
         ...settings,
         smtpProvider: value,
         smtpHost: 'smtp.gmail.com',
         smtpPort: 587,
         smtpEncryption: 'tls' as const,
-      })
+      }
     } else if (value === 'none') {
-      onSettingsChange({
+      newSettings = {
         ...settings,
         smtpProvider: value,
         smtpHost: '',
         smtpPort: 587,
         smtpUsername: '',
         smtpPassword: '',
-      })
+      }
     } else {
-      onSettingsChange({ ...settings, smtpProvider: value })
+      newSettings = { ...settings, smtpProvider: value }
     }
+
+    onSettingsChange(newSettings)
 
     // Auto-save after 2 seconds of inactivity
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current)
     }
     autoSaveTimerRef.current = setTimeout(() => {
-      handleAutoSave()
+      // Pass the new settings directly to avoid stale closure
+      saveSmtpSettings(newSettings)
     }, 2000)
-  }, [settings, onSettingsChange, handleAutoSave])
+  }, [settings, onSettingsChange, saveSmtpSettings])
 
   const handleTestConnection = useCallback(async () => {
     setTesting(true)
