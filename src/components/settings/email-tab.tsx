@@ -1,25 +1,76 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/components/ui/use-toast'
-import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { Loader2, CheckCircle2, XCircle, AlertTriangle, Mail } from 'lucide-react'
 import { SettingsTabProps } from './types'
 
 export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
   const { toast } = useToast()
   const [testing, setTesting] = useState(false)
+  const [sendingTest, setSendingTest] = useState(false)
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null)
+
+  // Track unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault()
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?'
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasUnsavedChanges])
 
   const updateSetting = useCallback(<K extends keyof typeof settings>(key: K, value: typeof settings[K]) => {
+    setHasUnsavedChanges(true)
     onSettingsChange({ ...settings, [key]: value })
-  }, [settings, onSettingsChange])
+
+    // Auto-save after 2 seconds of inactivity
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer)
+    }
+    const timer = setTimeout(() => {
+      handleAutoSave()
+    }, 2000)
+    setAutoSaveTimer(timer)
+  }, [settings, onSettingsChange, autoSaveTimer])
+
+  const handleAutoSave = async () => {
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save settings')
+      }
+
+      setHasUnsavedChanges(false)
+      // Silent auto-save, no toast
+    } catch (error) {
+      console.error('Auto-save failed:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Auto-save failed',
+        description: 'Your changes could not be saved automatically. Please save manually.',
+      })
+    }
+  }
 
   const handleProviderChange = useCallback((value: 'none' | 'custom' | 'google') => {
+    setHasUnsavedChanges(true)
     if (value === 'google') {
       onSettingsChange({
         ...settings,
@@ -49,6 +100,11 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
       const response = await fetch('/api/settings/smtp-test', {
         method: 'POST',
       })
+
+      if (!response.ok) {
+        throw new Error('Connection test failed')
+      }
+
       const data = await response.json()
       if (data.success) {
         setTestResult({ success: true, message: 'SMTP connection successful!' })
@@ -77,13 +133,52 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
     }
   }, [toast])
 
+  const handleSendTestEmail = useCallback(async () => {
+    setSendingTest(true)
+    try {
+      const response = await fetch('/api/settings/smtp-send-test', {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to send test email')
+      }
+
+      const data = await response.json()
+      toast({
+        variant: 'success',
+        title: 'Test email sent',
+        description: 'Check your inbox for a verification email. Click the link in the email to activate SMTP.',
+      })
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to send test email',
+        description: error.message || 'Could not send test email. Please check your SMTP settings.',
+      })
+    } finally {
+      setSendingTest(false)
+    }
+  }, [toast])
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Email / SMTP Configuration</CardTitle>
-        <CardDescription>
-          Configure email settings for password resets and notifications
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Email / SMTP Configuration</CardTitle>
+            <CardDescription>
+              Configure email settings for password resets and notifications
+            </CardDescription>
+          </div>
+          {hasUnsavedChanges && (
+            <div className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400">
+              <AlertTriangle className="h-4 w-4" />
+              <span>Unsaved changes (auto-saving...)</span>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
@@ -242,36 +337,60 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
               </div>
             </div>
 
-            <div className="pt-4 border-t bg-muted/50 rounded-lg p-4">
-              <h4 className="font-medium mb-2">Test Configuration</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Test your SMTP connection to verify your settings are working correctly.
-                Make sure to save your settings first before testing.
-              </p>
-              <Button
-                variant="outline"
-                onClick={handleTestConnection}
-                disabled={testing || !settings.smtpHost || !settings.smtpUsername || !settings.smtpPassword}
-              >
-                {testing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                    Testing...
-                  </>
-                ) : (
-                  'Test Connection'
-                )}
-              </Button>
-              {testResult && (
-                <div className={`mt-2 p-2 rounded-md flex items-center gap-2 text-sm animate-in fade-in slide-in-from-top-1 duration-200 ${testResult.success ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'}`}>
-                  {testResult.success ? (
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+            <div className="pt-4 border-t bg-muted/50 rounded-lg p-4 space-y-4">
+              <div>
+                <h4 className="font-medium mb-2">Test Connection</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Test your SMTP connection to verify your settings are working correctly.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={handleTestConnection}
+                  disabled={testing || !settings.smtpHost || !settings.smtpUsername || !settings.smtpPassword}
+                >
+                  {testing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                      Testing...
+                    </>
                   ) : (
-                    <XCircle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                    'Test Connection'
                   )}
-                  <span>{testResult.message}</span>
-                </div>
-              )}
+                </Button>
+                {testResult && (
+                  <div className={`mt-2 p-2 rounded-md flex items-center gap-2 text-sm animate-in fade-in slide-in-from-top-1 duration-200 ${testResult.success ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'}`}>
+                    {testResult.success ? (
+                      <CheckCircle2 className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                    ) : (
+                      <XCircle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                    )}
+                    <span>{testResult.message}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-2">Send Test Email & Verify</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Send a test email to your admin email address. You must click the verification link in the email to activate SMTP.
+                </p>
+                <Button
+                  onClick={handleSendTestEmail}
+                  disabled={sendingTest || !settings.smtpHost || !settings.smtpUsername || !settings.smtpPassword}
+                >
+                  {sendingTest ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Send Test Email
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </>
         )}
