@@ -207,8 +207,16 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
         {/* Location markers */}
         {locations.slice(0, 50).map((loc, index) => {
           const pos = latLngToPixel(loc.lat, loc.lng, zoom, center.lat, center.lng, mapWidth, mapHeight)
-          const size = Math.max(8, Math.min(30, 8 + Math.log10(loc.count) * 8))
-          const opacity = 0.3 + (loc.count / maxCount) * 0.7
+
+          // Determine color based on visit count
+          let markerColor = 'rgb(96, 165, 250)' // blue-400 for low (1-10)
+          if (loc.count > 50) {
+            markerColor = 'rgb(239, 68, 68)' // red-500 for high (51+)
+          } else if (loc.count > 10) {
+            markerColor = 'rgb(234, 179, 8)' // yellow-500 for medium (11-50)
+          }
+
+          const size = Math.max(10, Math.min(32, 10 + Math.log10(loc.count + 1) * 10))
 
           // Only render if within viewport
           if (pos.x < -50 || pos.x > mapWidth + 50 || pos.y < -50 || pos.y > mapHeight + 50) {
@@ -226,11 +234,12 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
               }}
             >
               <div
-                className="rounded-full bg-primary transition-transform hover:scale-125 shadow-lg"
+                className="rounded-full transition-transform hover:scale-125 shadow-lg"
                 style={{
                   width: size,
                   height: size,
-                  opacity,
+                  backgroundColor: markerColor,
+                  opacity: 0.85,
                 }}
               />
               {/* Tooltip */}
@@ -284,16 +293,22 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
         Zoom: {zoom}x
       </div>
 
-      {/* Legend */}
-      <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg p-3 text-xs z-20">
-        <div className="font-medium mb-2">Visitors by Location</div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-primary opacity-30" />
-          <span>Low</span>
-          <div className="w-3 h-3 rounded-full bg-primary opacity-70" />
-          <span>Medium</span>
-          <div className="w-4 h-4 rounded-full bg-primary" />
-          <span>High</span>
+      {/* Legend with distinct colors */}
+      <div className="absolute bottom-4 right-4 bg-background/90 backdrop-blur-sm rounded-lg p-3 text-xs shadow-lg border z-20">
+        <div className="font-medium mb-2 text-foreground">Visitor Traffic</div>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-400 flex-shrink-0" />
+            <span className="text-foreground">Low (1-10 visits)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-yellow-500 flex-shrink-0" />
+            <span className="text-foreground">Medium (11-50 visits)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500 flex-shrink-0" />
+            <span className="text-foreground">High (51+ visits)</span>
+          </div>
         </div>
       </div>
 
@@ -345,23 +360,57 @@ export const VisitorMap = memo(function VisitorMap({
       </CardHeader>
       <CardContent>
         <ZoomableMap locations={locations} />
+
         {/* Location list below map */}
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2 max-h-32 overflow-y-auto">
-          {locations.slice(0, 12).map((loc, index) => (
-            <div
-              key={index}
-              className="flex items-center gap-2 text-sm p-2 rounded hover:bg-muted cursor-pointer"
-              onClick={() => onCountryClick?.(loc.code || '')}
-            >
-              <div
-                className="w-2 h-2 rounded-full bg-primary flex-shrink-0"
-                style={{ opacity: 0.3 + (loc.count / Math.max(...locations.map(l => l.count))) * 0.7 }}
-              />
-              <span className="text-sm flex-shrink-0">{getCountryFlag(loc.code || loc.country)}</span>
-              <span className="truncate flex-1">{loc.name || loc.code}</span>
-              <span className="text-muted-foreground flex-shrink-0">{loc.count.toLocaleString()}</span>
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold text-foreground">
+              All Locations ({locations.length})
+            </h4>
+            <div className="text-xs text-muted-foreground">
+              Total: {locations.reduce((sum, l) => sum + l.count, 0).toLocaleString()} visits
             </div>
-          ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-2 border rounded-lg p-3 bg-muted/20">
+            {locations.map((loc, index) => {
+              // Determine color based on visit count
+              let dotColor = 'bg-blue-400'
+              if (loc.count > 50) {
+                dotColor = 'bg-red-500'
+              } else if (loc.count > 10) {
+                dotColor = 'bg-yellow-500'
+              }
+
+              return (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 text-sm p-2 rounded hover:bg-muted transition-colors cursor-pointer border border-transparent hover:border-border"
+                  onClick={() => onCountryClick?.(loc.code || '')}
+                >
+                  <div className={`w-2.5 h-2.5 rounded-full ${dotColor} flex-shrink-0 shadow-sm`} />
+                  <span className="text-base flex-shrink-0">{getCountryFlag(loc.code || loc.country)}</span>
+                  <span className="truncate flex-1 font-medium">{loc.name || loc.code}</span>
+                  <span className="text-muted-foreground flex-shrink-0 font-mono text-xs">{loc.count.toLocaleString()}</span>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="mt-3 text-xs text-muted-foreground flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-blue-400" />
+              <span>Low (1-10)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-yellow-500" />
+              <span>Medium (11-50)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-red-500" />
+              <span>High (51+)</span>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
