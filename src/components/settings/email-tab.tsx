@@ -80,29 +80,26 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
   const handleProviderChange = useCallback((value: 'none' | 'custom' | 'google') => {
     setHasUnsavedChanges(true)
 
-    let newSettings
     if (value === 'google') {
-      newSettings = {
+      onSettingsChange({
         ...settings,
         smtpProvider: value,
         smtpHost: 'smtp.gmail.com',
         smtpPort: 587,
-        smtpEncryption: 'tls',
-      }
+        smtpEncryption: 'tls' as const,
+      })
     } else if (value === 'none') {
-      newSettings = {
+      onSettingsChange({
         ...settings,
         smtpProvider: value,
         smtpHost: '',
         smtpPort: 587,
         smtpUsername: '',
         smtpPassword: '',
-      }
+      })
     } else {
-      newSettings = { ...settings, smtpProvider: value }
+      onSettingsChange({ ...settings, smtpProvider: value })
     }
-
-    onSettingsChange(newSettings)
 
     // Auto-save after 2 seconds of inactivity
     if (autoSaveTimerRef.current) {
