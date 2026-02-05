@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -28,6 +28,7 @@ function SettingsContent() {
   const [settings, setSettings] = useState<Settings>(defaultSettings)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const hasFetchedRef = useRef(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -47,8 +48,11 @@ function SettingsContent() {
     }
   }, [])
 
+  // Only fetch settings ONCE when session is first available
+  // Do NOT re-fetch on session refresh (which happens on window focus)
   useEffect(() => {
-    if (session) {
+    if (session && !hasFetchedRef.current) {
+      hasFetchedRef.current = true
       fetchSettings()
     }
   }, [session, fetchSettings])
@@ -70,9 +74,6 @@ function SettingsContent() {
         throw new Error('Failed to save settings')
       }
 
-      // Re-fetch settings to ensure UI shows what's in database
-      await fetchSettings()
-
       toast({
         variant: 'success',
         title: 'Settings saved',
@@ -88,7 +89,7 @@ function SettingsContent() {
     } finally {
       setSaving(false)
     }
-  }, [settings, toast, fetchSettings])
+  }, [settings, toast])
 
   if (status === 'loading' || loading) {
     return (
