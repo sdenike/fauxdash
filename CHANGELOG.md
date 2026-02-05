@@ -5,6 +5,23 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.34] - 2026-02-05
+
+### Fixed
+- **CRITICAL: Missing show_descriptions and show_description columns**
+  - Fixed "SqliteError: no such column: show_descriptions" persisting even after v0.9.33
+  - Fixed "SqliteError: no such column: show_description" errors
+  - **Root cause**: v0.9.33's `addMissingColumns()` function was incomplete
+  - **Added missing columns**:
+    - categories: `show_descriptions` (controls description display for category items)
+    - bookmarks: `show_description` (controls individual bookmark description display)
+    - service_categories: `show_descriptions` (controls description display for service items)
+    - services: `show_description` (controls individual service description display)
+  - All three database providers updated (SQLite, PostgreSQL, MySQL)
+  - Migration now checks for ALL columns defined in schema
+  - Fresh installs and existing installations will now work correctly
+  - Demo content import now works without errors
+
 ## [0.9.33] - 2026-02-05
 
 ### Fixed
