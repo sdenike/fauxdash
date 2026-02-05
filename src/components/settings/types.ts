@@ -22,6 +22,11 @@ export interface Settings {
   siteTitleGradientFrom: string
   siteTitleGradientTo: string
   siteTitleColor: string
+  // Header Logo
+  headerLogoEnabled: boolean
+  headerLogoPath: string
+  headerLogoPosition: 'left' | 'right'
+  headerLogoHeight: number
   showDescriptions: boolean // Global default for description visibility
   // Background Image
   backgroundImage: string
@@ -145,6 +150,11 @@ export const defaultSettings: Settings = {
   siteTitleGradientFrom: '#0f172a', // slate-900
   siteTitleGradientTo: '#475569', // slate-600
   siteTitleColor: '#0f172a', // slate-900
+  // Header Logo
+  headerLogoEnabled: false,
+  headerLogoPath: '',
+  headerLogoPosition: 'left',
+  headerLogoHeight: 40,
   showDescriptions: false, // Default: descriptions are hidden
   // Background Image
   backgroundImage: '',

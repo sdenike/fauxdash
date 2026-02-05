@@ -372,7 +372,7 @@ export const VisitorMap = memo(function VisitorMap({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-2 border rounded-lg p-3 bg-muted/20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-2 border rounded-lg p-3 bg-muted/20">
             {locations.map((loc, index) => {
               // Determine color based on visit count
               let dotColor = 'bg-blue-400'
@@ -390,7 +390,7 @@ export const VisitorMap = memo(function VisitorMap({
                 >
                   <div className={`w-2.5 h-2.5 rounded-full ${dotColor} flex-shrink-0 shadow-sm`} />
                   <span className="text-base flex-shrink-0">{getCountryFlag(loc.code || loc.country)}</span>
-                  <span className="truncate flex-1 font-medium">{loc.name || loc.code}</span>
+                  <span className="flex-1 font-medium">{loc.name || loc.code}</span>
                   <span className="text-muted-foreground flex-shrink-0 font-mono text-xs">{loc.count.toLocaleString()}</span>
                 </div>
               )

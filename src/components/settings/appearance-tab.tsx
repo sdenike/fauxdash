@@ -14,6 +14,7 @@ import { HomepageContentSettings } from './homepage-content-settings'
 import { HomepageGraphicSettings } from './homepage-graphic-settings'
 import { SiteTitleSettings } from './site-title-settings'
 import { SiteFaviconSettings } from './site-favicon-settings'
+import { HeaderLogoSettings } from './header-logo-settings'
 
 export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) {
   const { setTheme: setNextTheme, resolvedTheme } = useTheme()
@@ -191,6 +192,9 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
           <SiteTitleSettings settings={settings} onSettingsChange={onSettingsChange} />
         </CardContent>
       </Card>
+
+      {/* Header Logo Settings */}
+      <HeaderLogoSettings settings={settings} updateSetting={updateSetting} />
 
       {/* Homepage Content Settings */}
       <HomepageContentSettings settings={settings} onSettingsChange={onSettingsChange} />

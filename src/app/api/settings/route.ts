@@ -59,6 +59,11 @@ export async function GET(request: NextRequest) {
     siteTitleGradientFrom: settingsObj.siteTitleGradientFrom || '#0f172a',
     siteTitleGradientTo: settingsObj.siteTitleGradientTo || '#475569',
     siteTitleColor: settingsObj.siteTitleColor || '#0f172a',
+    // Header Logo
+    headerLogoEnabled: settingsObj.headerLogoEnabled === 'true' || false,
+    headerLogoPath: settingsObj.headerLogoPath || '',
+    headerLogoPosition: settingsObj.headerLogoPosition || 'left',
+    headerLogoHeight: parseInt(settingsObj.headerLogoHeight || '40'),
     showDescriptions: settingsObj.showDescriptions === 'true' || false,
     // Background Image
     backgroundImage: settingsObj.backgroundImage || '',
@@ -191,6 +196,11 @@ export async function POST(request: NextRequest) {
   if (body.siteTitleGradientFrom !== undefined) settingsToSave.push({ key: 'siteTitleGradientFrom', value: body.siteTitleGradientFrom });
   if (body.siteTitleGradientTo !== undefined) settingsToSave.push({ key: 'siteTitleGradientTo', value: body.siteTitleGradientTo });
   if (body.siteTitleColor !== undefined) settingsToSave.push({ key: 'siteTitleColor', value: body.siteTitleColor });
+  // Header Logo
+  if (body.headerLogoEnabled !== undefined) settingsToSave.push({ key: 'headerLogoEnabled', value: body.headerLogoEnabled.toString() });
+  if (body.headerLogoPath !== undefined) settingsToSave.push({ key: 'headerLogoPath', value: body.headerLogoPath || '' });
+  if (body.headerLogoPosition !== undefined) settingsToSave.push({ key: 'headerLogoPosition', value: body.headerLogoPosition || 'left' });
+  if (body.headerLogoHeight !== undefined) settingsToSave.push({ key: 'headerLogoHeight', value: body.headerLogoHeight.toString() });
   if (body.showDescriptions !== undefined) settingsToSave.push({ key: 'showDescriptions', value: body.showDescriptions.toString() });
   // Background Image
   if (body.backgroundImage !== undefined) settingsToSave.push({ key: 'backgroundImage', value: body.backgroundImage || '' });

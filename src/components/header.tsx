@@ -14,6 +14,7 @@ import {
   ChevronRightIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+import Image from 'next/image'
 import { SearchBar } from './search-bar'
 import { DateTimeDisplay } from './date-time-display'
 
@@ -170,6 +171,10 @@ export function Header() {
   const { resolvedTheme, setTheme } = useTheme()
   const [siteTitle, setSiteTitle] = useState('Faux|Dash')
   const [siteTitleEnabled, setSiteTitleEnabled] = useState(true)
+  const [headerLogoEnabled, setHeaderLogoEnabled] = useState(false)
+  const [headerLogoPath, setHeaderLogoPath] = useState('')
+  const [headerLogoPosition, setHeaderLogoPosition] = useState<'left' | 'right'>('left')
+  const [headerLogoHeight, setHeaderLogoHeight] = useState(40)
   const [searchEnabled, setSearchEnabled] = useState(false)
   const [searchInHeader, setSearchInHeader] = useState(false)
   const [dateTimeEnabled, setDateTimeEnabled] = useState(false)
@@ -193,6 +198,10 @@ export function Header() {
         const data = await response.json()
         if (data.siteTitle) setSiteTitle(data.siteTitle)
         setSiteTitleEnabled(data.siteTitleEnabled !== false)
+        setHeaderLogoEnabled(data.headerLogoEnabled || false)
+        setHeaderLogoPath(data.headerLogoPath || '')
+        setHeaderLogoPosition(data.headerLogoPosition || 'left')
+        setHeaderLogoHeight(data.headerLogoHeight || 40)
         setSearchEnabled(data.searchEnabled !== false)
         setSearchInHeader(data.searchInHeader || false)
         setDateTimeEnabled(data.dateTimeEnabled || false)
@@ -264,9 +273,21 @@ export function Header() {
             <div className="flex items-center space-x-4 md:space-x-6">
               {siteTitleEnabled && (
                 <Link href="/" className="group">
-                  <h1 className="text-xl font-bold text-foreground">
-                    {siteTitle}
-                  </h1>
+                  <div className={`flex items-center gap-3 ${headerLogoPosition === 'right' ? 'flex-row-reverse' : ''}`}>
+                    {headerLogoEnabled && headerLogoPath && (
+                      <Image
+                        src={headerLogoPath}
+                        alt="Site logo"
+                        width={100}
+                        height={headerLogoHeight}
+                        style={{ height: headerLogoHeight, width: 'auto' }}
+                        className="object-contain"
+                      />
+                    )}
+                    <h1 className="text-xl font-bold text-foreground">
+                      {siteTitle}
+                    </h1>
+                  </div>
                 </Link>
               )}
               <CompactWeather />
