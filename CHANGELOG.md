@@ -5,6 +5,44 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.37] - 2026-02-05
+
+### Fixed
+- **CRITICAL: SMTP Settings Data Loss**
+  - **Settings lost when switching browser tabs** - Fixed by implementing auto-save
+  - **Settings not persisting after Save** - Improved save error handling
+  - **Form resets when losing focus** - Auto-save prevents data loss
+  - Added 2-second debounce auto-save for all SMTP fields
+  - Added unsaved changes warning before leaving page
+  - Visual indicator shows "Unsaved changes (auto-saving...)" status
+
+### Added
+- **SMTP Email Verification System**
+  - Test button now sends actual verification email to admin
+  - Beautiful HTML email template with branding
+  - Click verification link in email to activate SMTP
+  - 24-hour expiration on verification links
+  - Separate "Test Connection" and "Send Test Email" buttons
+  - Clean verification pages with proper error messages
+  - **New API Endpoints**:
+    - `POST /api/settings/smtp-send-test` - Send verification email
+    - `GET /api/settings/smtp-verify?token=XXX` - Verify and activate SMTP
+  - **New Settings**:
+    - `smtpVerificationToken` - Temporary verification token
+    - `smtpVerificationExpiry` - Token expiration timestamp
+    - `smtpVerified` - SMTP activation status
+
+### Improved
+- **Better Error Handling**
+  - API responses checked before showing success toast
+  - Detailed error messages with actionable guidance
+  - Prevents silent save failures
+- **User Experience**
+  - Auto-save indicator shows pending changes
+  - No more lost work when switching tabs
+  - Clear visual feedback for all operations
+  - Better validation and error messages
+
 ## [0.9.36] - 2026-02-05
 
 ### Added
