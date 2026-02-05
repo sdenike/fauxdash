@@ -31,14 +31,26 @@ export async function GET(request: NextRequest) {
     .from(settings)
     .where(eq(settings.userId, parseInt(userId)));
 
+  // Settings that are global-only (user settings should never override these)
+  const globalOnlyKeys = new Set([
+    'oidcEnabled', 'oidcProviderName', 'oidcClientId', 'oidcClientSecret',
+    'oidcIssuerUrl', 'disablePasswordLogin',
+    'smtpProvider', 'smtpHost', 'smtpPort', 'smtpUsername', 'smtpPassword',
+    'smtpEncryption', 'smtpFromEmail', 'smtpFromName',
+    'geoipEnabled', 'geoipProvider', 'geoipMaxmindPath', 'geoipMaxmindLicenseKey',
+    'geoipMaxmindAccountId', 'geoipIpinfoToken', 'geoipCacheDuration',
+  ]);
+
   // Convert to key-value object, starting with global settings
   const settingsObj: Record<string, string> = {};
   globalSettings.forEach((setting: any) => {
     settingsObj[setting.key] = setting.value || '';
   });
-  // User settings override global settings
+  // User settings override global settings, EXCEPT for global-only keys
   userSettings.forEach((setting: any) => {
-    settingsObj[setting.key] = setting.value || '';
+    if (!globalOnlyKeys.has(setting.key)) {
+      settingsObj[setting.key] = setting.value || '';
+    }
   });
 
   // Sync log level to logger
@@ -337,6 +349,16 @@ export async function POST(request: NextRequest) {
     // Site favicon settings
     'siteFavicon', 'siteFaviconType',
   ];
+
+  // Clean up any stale user-specific copies of global-only settings
+  for (const key of globalSettingKeys) {
+    await db
+      .delete(settings)
+      .where(and(
+        eq(settings.key, key),
+        eq(settings.userId, parseInt(userId))
+      ));
+  }
 
   for (const setting of settingsToSave) {
     const isGlobalSetting = globalSettingKeys.includes(setting.key);
