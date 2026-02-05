@@ -5,6 +5,34 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.36] - 2026-02-05
+
+### Added
+- **Header Logo Feature**: Add custom logo next to site title in header
+  - Upload custom logo image (PNG, JPEG, SVG, GIF supported)
+  - Position options: left or right of site title
+  - Height options: 24px, 32px, 40px (default), 48px, 56px, 64px
+  - Automatic image resize and WebP conversion
+  - Preserves aspect ratio during resize
+  - Maximum file size: 10MB, maximum height: 64px
+  - Live preview in settings showing logo + title together
+  - New API endpoints:
+    - `POST /api/header-logo` - Upload logo
+    - `DELETE /api/header-logo` - Remove logo
+    - `GET /api/header-logo/serve` - Serve logo image
+  - New settings:
+    - `headerLogoEnabled` - Show/hide logo
+    - `headerLogoPath` - Path to logo file
+    - `headerLogoPosition` - 'left' or 'right' of title
+    - `headerLogoHeight` - Height in pixels
+
+### Improved
+- **Analytics Map - Location List Display**:
+  - Changed from 3 columns to 2 columns for better readability
+  - Removed truncation of city names
+  - Full location names now visible (e.g., "Oklahoma City" instead of "Okem...")
+  - Better use of available space on large screens
+
 ## [0.9.35] - 2026-02-05
 
 ### Fixed
