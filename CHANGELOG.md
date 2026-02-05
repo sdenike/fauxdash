@@ -5,6 +5,26 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.33] - 2026-02-05
+
+### Fixed
+- **CRITICAL: Database Migration - Missing Columns on Fresh Installs**
+  - Fixed "SqliteError: no such column: show_descriptions" on fresh installations
+  - Fresh installs were failing when adding bookmarks/services or importing demo content
+  - **Added comprehensive column verification system**:
+    - Checks for ALL missing columns on application startup
+    - Automatically adds any missing columns from schema
+    - Prevents future column-related errors
+  - **Missing columns identified and migrated**:
+    - Categories: `sort_by`, `is_demo`, `show_open_all`
+    - Bookmarks: `is_demo`
+    - Service Categories: `sort_by`, `is_demo`, `show_open_all`
+    - Services: `is_demo`
+  - **Multi-database support**: Works with SQLite, PostgreSQL, and MySQL
+  - **Graceful error handling**: Duplicate column errors handled automatically
+  - New `addMissingColumns()` function runs during migration process
+  - Created migration file: `drizzle/0002_add_missing_columns.sql`
+
 ## [0.9.32] - 2026-02-05
 
 ### Added
