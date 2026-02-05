@@ -163,14 +163,15 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>GeoIP Configuration</CardTitle>
-        <CardDescription>
-          Configure geographic location lookup for visitor analytics
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>GeoIP Configuration</CardTitle>
+          <CardDescription>
+            Configure geographic location lookup for visitor analytics
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <Label htmlFor="geoipEnabled">Enable GeoIP Lookup</Label>
@@ -678,5 +679,6 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
         </div>
       </CardContent>
     </Card>
+    </>
   )
 }
