@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { sendEmail } from '@/lib/email'
 import { getDb } from '@/db'
+import { users, settings } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 import crypto from 'crypto'
 
 export async function POST() {
@@ -13,8 +15,9 @@ export async function POST() {
     }
 
     const db = getDb()
+
     // Get admin user email
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(session.user?.email) as any
+    const [user] = await db.select().from(users).where(eq(users.email, session.user?.email || ''))
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
@@ -23,11 +26,14 @@ export async function POST() {
     const token = crypto.randomBytes(32).toString('hex')
     const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
-    // Store verification token
-    db.prepare(`
-      INSERT OR REPLACE INTO settings (key, value)
-      VALUES ('smtpVerificationToken', ?), ('smtpVerificationExpiry', ?)
-    `).run(token, expiry.toISOString())
+    // Store verification token - delete old ones first, then insert new
+    await db.delete(settings).where(eq(settings.key, 'smtpVerificationToken'))
+    await db.delete(settings).where(eq(settings.key, 'smtpVerificationExpiry'))
+
+    await db.insert(settings).values([
+      { key: 'smtpVerificationToken', value: token, userId: null },
+      { key: 'smtpVerificationExpiry', value: expiry.toISOString(), userId: null }
+    ])
 
     // Generate verification URL
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'

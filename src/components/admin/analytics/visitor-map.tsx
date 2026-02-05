@@ -372,7 +372,7 @@ export const VisitorMap = memo(function VisitorMap({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-2 border rounded-lg p-3 bg-muted/20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 border rounded-lg p-3 bg-muted/20">
             {locations.map((loc, index) => {
               // Determine color based on visit count
               let dotColor = 'bg-blue-400'

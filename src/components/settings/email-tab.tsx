@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,7 +16,7 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
   const [sendingTest, setSendingTest] = useState(false)
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null)
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Track unsaved changes
   useEffect(() => {
@@ -28,24 +28,16 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
     }
 
     window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      // Clear timer on unmount
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current)
+      }
+    }
   }, [hasUnsavedChanges])
 
-  const updateSetting = useCallback(<K extends keyof typeof settings>(key: K, value: typeof settings[K]) => {
-    setHasUnsavedChanges(true)
-    onSettingsChange({ ...settings, [key]: value })
-
-    // Auto-save after 2 seconds of inactivity
-    if (autoSaveTimer) {
-      clearTimeout(autoSaveTimer)
-    }
-    const timer = setTimeout(() => {
-      handleAutoSave()
-    }, 2000)
-    setAutoSaveTimer(timer)
-  }, [settings, onSettingsChange, autoSaveTimer])
-
-  const handleAutoSave = async () => {
+  const handleAutoSave = useCallback(async () => {
     try {
       const response = await fetch('/api/settings', {
         method: 'POST',
@@ -58,40 +50,68 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
       }
 
       setHasUnsavedChanges(false)
-      // Silent auto-save, no toast
+      toast({
+        title: 'Settings saved',
+        description: 'Your SMTP settings have been saved automatically.',
+      })
     } catch (error) {
       console.error('Auto-save failed:', error)
       toast({
         variant: 'destructive',
         title: 'Auto-save failed',
-        description: 'Your changes could not be saved automatically. Please save manually.',
+        description: 'Your changes could not be saved automatically. Please try again.',
       })
     }
-  }
+  }, [settings, toast])
+
+  const updateSetting = useCallback(<K extends keyof typeof settings>(key: K, value: typeof settings[K]) => {
+    setHasUnsavedChanges(true)
+    onSettingsChange({ ...settings, [key]: value })
+
+    // Auto-save after 2 seconds of inactivity
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current)
+    }
+    autoSaveTimerRef.current = setTimeout(() => {
+      handleAutoSave()
+    }, 2000)
+  }, [settings, onSettingsChange, handleAutoSave])
 
   const handleProviderChange = useCallback((value: 'none' | 'custom' | 'google') => {
     setHasUnsavedChanges(true)
+
+    let newSettings
     if (value === 'google') {
-      onSettingsChange({
+      newSettings = {
         ...settings,
         smtpProvider: value,
         smtpHost: 'smtp.gmail.com',
         smtpPort: 587,
         smtpEncryption: 'tls',
-      })
+      }
     } else if (value === 'none') {
-      onSettingsChange({
+      newSettings = {
         ...settings,
         smtpProvider: value,
         smtpHost: '',
         smtpPort: 587,
         smtpUsername: '',
         smtpPassword: '',
-      })
+      }
     } else {
-      onSettingsChange({ ...settings, smtpProvider: value })
+      newSettings = { ...settings, smtpProvider: value }
     }
-  }, [settings, onSettingsChange])
+
+    onSettingsChange(newSettings)
+
+    // Auto-save after 2 seconds of inactivity
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current)
+    }
+    autoSaveTimerRef.current = setTimeout(() => {
+      handleAutoSave()
+    }, 2000)
+  }, [settings, onSettingsChange, handleAutoSave])
 
   const handleTestConnection = useCallback(async () => {
     setTesting(true)

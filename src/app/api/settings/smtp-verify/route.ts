@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/db'
+import { settings } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,8 +39,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get stored token and expiry
-    const storedToken = db.prepare('SELECT value FROM settings WHERE key = ?').get('smtpVerificationToken') as any
-    const storedExpiry = db.prepare('SELECT value FROM settings WHERE key = ?').get('smtpVerificationExpiry') as any
+    const [storedToken] = await db.select().from(settings).where(eq(settings.key, 'smtpVerificationToken'))
+    const [storedExpiry] = await db.select().from(settings).where(eq(settings.key, 'smtpVerificationExpiry'))
 
     if (!storedToken || !storedExpiry) {
       return new NextResponse(`
@@ -130,14 +132,13 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Mark SMTP as verified
-    db.prepare(`
-      INSERT OR REPLACE INTO settings (key, value)
-      VALUES ('smtpVerified', 'true')
-    `).run()
+    // Mark SMTP as verified - delete old value first, then insert
+    await db.delete(settings).where(eq(settings.key, 'smtpVerified'))
+    await db.insert(settings).values({ key: 'smtpVerified', value: 'true', userId: null })
 
     // Clean up verification tokens
-    db.prepare('DELETE FROM settings WHERE key IN (?, ?)').run('smtpVerificationToken', 'smtpVerificationExpiry')
+    await db.delete(settings).where(eq(settings.key, 'smtpVerificationToken'))
+    await db.delete(settings).where(eq(settings.key, 'smtpVerificationExpiry'))
 
     // Return success page
     return new NextResponse(`
