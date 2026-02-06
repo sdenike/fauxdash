@@ -5,6 +5,12 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.49] - 2026-02-06
+
+### Fixed
+- **Forgot password broken** - Missing `password_reset_tokens` database table; added migration script and updated init-db to create it on fresh installs
+- Removed unnecessary defensive try-catch added in v0.9.48 (root cause was the missing table, not the template builder)
+
 ## [0.9.48] - 2026-02-06
 
 ### Fixed
