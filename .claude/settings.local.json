@@ -132,7 +132,9 @@
       "Bash(git describe:*)",
       "Bash(gh:*)",
       "Bash(xargs:*)",
-      "Bash(docker manifest inspect:*)"
+      "Bash(docker manifest inspect:*)",
+      "Bash(node:*)",
+      "Bash(SQLITE_FILE=\":memory:\" node -e:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
