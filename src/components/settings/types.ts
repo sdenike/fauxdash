@@ -99,6 +99,7 @@ export interface Settings {
   smtpEncryption: 'none' | 'tls' | 'ssl'
   smtpFromEmail: string
   smtpFromName: string
+  smtpVerified: boolean
   // Logging
   logLevel: 'error' | 'warn' | 'info' | 'debug'
   // OIDC Authentication
@@ -224,6 +225,7 @@ export const defaultSettings: Settings = {
   smtpEncryption: 'tls',
   smtpFromEmail: '',
   smtpFromName: 'Faux|Dash',
+  smtpVerified: false,
   logLevel: 'info',
   // OIDC Authentication
   oidcEnabled: false,

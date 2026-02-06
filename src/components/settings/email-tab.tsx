@@ -372,6 +372,25 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
               </div>
             </div>
 
+            {/* Verification Status Banner */}
+            {!settings.smtpVerified ? (
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
+                <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-medium text-red-800 dark:text-red-200">SMTP Not Verified</p>
+                  <p className="text-xs text-red-600 dark:text-red-400">Send a test email and click the verification link to activate.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-medium text-green-800 dark:text-green-200">SMTP Verified</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">Your email configuration is active and working.</p>
+                </div>
+              </div>
+            )}
+
             <div className="pt-4 border-t bg-muted/50 rounded-lg p-4 space-y-4">
               <div>
                 <h4 className="font-medium mb-2">Test Connection</h4>

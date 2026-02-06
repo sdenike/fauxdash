@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     'oidcEnabled', 'oidcProviderName', 'oidcClientId', 'oidcClientSecret',
     'oidcIssuerUrl', 'disablePasswordLogin',
     'smtpProvider', 'smtpHost', 'smtpPort', 'smtpUsername', 'smtpPassword',
-    'smtpEncryption', 'smtpFromEmail', 'smtpFromName',
+    'smtpEncryption', 'smtpFromEmail', 'smtpFromName', 'smtpVerified',
     'geoipEnabled', 'geoipProvider', 'geoipMaxmindPath', 'geoipMaxmindLicenseKey',
     'geoipMaxmindAccountId', 'geoipIpinfoToken', 'geoipCacheDuration',
   ]);
@@ -164,6 +164,7 @@ export async function GET(request: NextRequest) {
     smtpEncryption: settingsObj.smtpEncryption || process.env.SMTP_ENCRYPTION || 'tls',
     smtpFromEmail: settingsObj.smtpFromEmail || process.env.SMTP_FROM_EMAIL || '',
     smtpFromName: settingsObj.smtpFromName || process.env.SMTP_FROM_NAME || 'Faux|Dash',
+    smtpVerified: settingsObj.smtpVerified === 'true',
     // Logging settings
     logLevel: settingsObj.logLevel || process.env.LOG_LEVEL || 'info',
     // Homepage content settings

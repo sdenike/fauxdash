@@ -5,6 +5,27 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.46] - 2026-02-05
+
+### Added
+- **SMTP Verification Status Banner** on Email settings tab
+  - Red banner with icon when SMTP is not yet verified
+  - Green banner with icon when SMTP is verified and active
+  - Displays automatically when an email provider is configured
+- **Clean PocketID-Style Email Template** for all outgoing emails
+  - New shared `buildEmailHtml()` template builder
+  - Light gray background with white rounded card layout
+  - Reads site title and logo from Site Branding settings
+  - Logo appears in email header when enabled in settings
+  - Consistent dark button styling across all emails
+
+### Changed
+- **Test/Verification Email** now uses the clean shared template
+  - Subject line includes configured site title instead of hardcoded "Faux|Dash"
+- **Password Reset Email** now uses the clean shared template
+  - Subject line includes configured site title instead of hardcoded "Faux|Dash"
+  - Cleaner, more professional layout matching test emails
+
 ## [0.9.37] - 2026-02-05
 
 ### Fixed
