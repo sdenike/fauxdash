@@ -5,6 +5,13 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.47] - 2026-02-05
+
+### Fixed
+- **CI: GitHub Release creation failing** when changelog contains pipe characters (`|`)
+  - Release notes now written to a temp file and passed via `--notes-file` instead of inline `--notes`
+  - Prevents shell interpretation of `|`, backticks, and other special characters in release notes
+
 ## [0.9.46] - 2026-02-05
 
 ### Added
