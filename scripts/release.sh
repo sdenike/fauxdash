@@ -164,7 +164,7 @@ echo -e "${GREEN}✓ Pushed to remote${NC}"
 echo ""
 echo -e "${BLUE}Step 6/6: Creating GitHub release...${NC}"
 gh release create "v${NEW_VERSION}" \
-    --title "v${NEW_VERSION} - ${DESCRIPTION}" \
+    --title "v${NEW_VERSION}" \
     --notes "See [CHANGELOG.md](https://github.com/sdenike/fauxdash/blob/master/CHANGELOG.md) for details."
 echo -e "${GREEN}✓ GitHub release created${NC}"
 
