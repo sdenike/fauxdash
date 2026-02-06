@@ -25,6 +25,7 @@ export interface Settings {
   // Header Logo
   headerLogoEnabled: boolean
   headerLogoPath: string
+  headerLogoType: 'upload' | 'library' | 'url' | 'none'
   headerLogoPosition: 'left' | 'right'
   headerLogoHeight: number
   showDescriptions: boolean // Global default for description visibility
@@ -154,6 +155,7 @@ export const defaultSettings: Settings = {
   // Header Logo
   headerLogoEnabled: false,
   headerLogoPath: '',
+  headerLogoType: 'none',
   headerLogoPosition: 'left',
   headerLogoHeight: 40,
   showDescriptions: false, // Default: descriptions are hidden

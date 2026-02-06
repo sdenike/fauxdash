@@ -1,98 +1,91 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Settings } from './types'
-import { Upload, Trash2, Eye } from 'lucide-react'
-import Image from 'next/image'
+import { useToast } from '@/components/ui/use-toast'
+import { Settings, SettingsTabProps } from './types'
+import { ImageIconPicker, ImageIconType } from '@/components/image-icon-picker'
 
-interface HeaderLogoSettingsProps {
-  settings: Settings
-  updateSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => void
-}
+export function HeaderLogoSettings({ settings, onSettingsChange }: SettingsTabProps) {
+  const { toast } = useToast()
 
-export function HeaderLogoSettings({ settings, updateSetting }: HeaderLogoSettingsProps) {
-  const [uploading, setUploading] = useState(false)
-  const [preview, setPreview] = useState<string | null>(null)
-  const [showPreview, setShowPreview] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const updateSetting = useCallback(<K extends keyof Settings>(key: K, value: Settings[K]) => {
+    onSettingsChange({ ...settings, [key]: value })
+  }, [settings, onSettingsChange])
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file')
-      return
+  const handleLogoChange = useCallback(async (value: string, type: ImageIconType) => {
+    const enabled = type !== 'none' && value !== ''
+    const newSettings = {
+      ...settings,
+      headerLogoPath: value,
+      headerLogoType: type,
+      headerLogoEnabled: enabled,
     }
+    onSettingsChange(newSettings)
 
-    // Show preview
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string)
-      setShowPreview(true)
-    }
-    reader.readAsDataURL(file)
-
-    // Upload
-    setUploading(true)
+    // Persist immediately
     try {
-      const formData = new FormData()
-      formData.append('logo', file)
-
-      const response = await fetch('/api/header-logo', {
+      const response = await fetch('/api/settings', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          headerLogoPath: value,
+          headerLogoType: type,
+          headerLogoEnabled: enabled,
+        }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to upload logo')
+        toast({
+          variant: 'destructive',
+          title: 'Save failed',
+          description: 'Failed to save logo settings.',
+        })
+        return
       }
 
-      const data = await response.json()
-
-      // Update settings
-      updateSetting('headerLogoPath', data.path)
-      updateSetting('headerLogoEnabled', true)
-
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+      if (type === 'none') {
+        // Also delete the file if removing an upload
+        if (settings.headerLogoType === 'upload') {
+          await fetch('/api/header-logo', { method: 'DELETE' }).catch(() => {})
+        }
+        toast({
+          title: 'Logo removed',
+          description: 'Header logo has been removed.',
+        })
+      } else {
+        toast({
+          variant: 'success',
+          title: 'Logo updated',
+          description: 'Header logo has been saved.',
+        })
       }
     } catch (error) {
-      console.error('Upload error:', error)
-      alert('Failed to upload logo')
-    } finally {
-      setUploading(false)
-      setShowPreview(false)
-    }
-  }
-
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete the header logo?')) return
-
-    try {
-      const response = await fetch('/api/header-logo', {
-        method: 'DELETE',
+      console.error('Settings save error:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Save failed',
+        description: 'Failed to save logo settings.',
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete logo')
-      }
-
-      updateSetting('headerLogoPath', '')
-      updateSetting('headerLogoEnabled', false)
-      setPreview(null)
-    } catch (error) {
-      console.error('Delete error:', error)
-      alert('Failed to delete logo')
     }
+  }, [settings, onSettingsChange, toast])
+
+  const getPreviewSrc = () => {
+    if (!settings.headerLogoPath || settings.headerLogoType === 'none') return null
+    if (settings.headerLogoType === 'upload') {
+      return '/api/header-logo/serve'
+    }
+    if (settings.headerLogoPath.startsWith('favicon:')) {
+      const path = settings.headerLogoPath.replace('favicon:', '')
+      return path.startsWith('/api/favicons/serve/') ? path : `/api/favicons/serve/${path}`
+    }
+    return settings.headerLogoPath
   }
+
+  const previewSrc = getPreviewSrc()
 
   const heightOptions = [
     { value: 24, label: '24px - Small' },
@@ -127,81 +120,18 @@ export function HeaderLogoSettings({ settings, updateSetting }: HeaderLogoSettin
           />
         </div>
 
-        {/* Upload Section */}
-        <div className="space-y-4">
-          <Label>Logo Image</Label>
-          <div className="text-sm text-muted-foreground mb-2">
-            Recommended: PNG or SVG with transparent background. Maximum height: 64px.
-            Image will be automatically resized while preserving aspect ratio.
-          </div>
-
-          {/* Current Logo Preview */}
-          {settings.headerLogoPath && (
-            <div className="border rounded-lg p-4 bg-muted/50">
-              <div className="flex items-center gap-4">
-                <div className="relative bg-background rounded p-2 border">
-                  <Image
-                    src={settings.headerLogoPath}
-                    alt="Header logo"
-                    width={100}
-                    height={settings.headerLogoHeight}
-                    style={{ height: settings.headerLogoHeight, width: 'auto' }}
-                    className="object-contain"
-                  />
-                </div>
-                <div className="flex-1 text-sm text-muted-foreground">
-                  Current logo (Height: {settings.headerLogoHeight}px)
-                </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDelete}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Remove
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Upload Preview */}
-          {showPreview && preview && (
-            <div className="border rounded-lg p-4 bg-muted/50">
-              <div className="flex items-center gap-4">
-                <div className="relative bg-background rounded p-2 border">
-                  <img
-                    src={preview}
-                    alt="Preview"
-                    style={{ maxHeight: 64, width: 'auto' }}
-                    className="object-contain"
-                  />
-                </div>
-                <div className="flex-1 text-sm text-muted-foreground">
-                  Uploading...
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Upload Button */}
-          <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              variant="outline"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              {settings.headerLogoPath ? 'Replace Logo' : 'Upload Logo'}
-            </Button>
-          </div>
-        </div>
+        {/* Image/Icon Picker */}
+        <ImageIconPicker
+          value={settings.headerLogoPath}
+          valueType={settings.headerLogoType}
+          onChange={handleLogoChange}
+          uploadEndpoint="/api/header-logo"
+          uploadFieldName="logo"
+          serveEndpoint="/api/header-logo/serve"
+          label="Logo Image"
+          description="Upload an image, pick from icon libraries, or enter a URL"
+          previewHeight={settings.headerLogoHeight}
+        />
 
         {/* Position */}
         <div className="space-y-2">
@@ -247,16 +177,15 @@ export function HeaderLogoSettings({ settings, updateSetting }: HeaderLogoSettin
         </div>
 
         {/* Preview in Context */}
-        {settings.headerLogoPath && (
+        {previewSrc && (
           <div className="space-y-2 pt-4 border-t">
             <Label>Preview</Label>
             <div className="border rounded-lg p-4 bg-background">
               <div className={`flex items-center gap-3 ${settings.headerLogoPosition === 'right' ? 'flex-row-reverse justify-end' : ''}`}>
-                <Image
-                  src={settings.headerLogoPath}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={previewSrc}
                   alt="Logo preview"
-                  width={100}
-                  height={settings.headerLogoHeight}
                   style={{ height: settings.headerLogoHeight, width: 'auto' }}
                   className="object-contain"
                 />

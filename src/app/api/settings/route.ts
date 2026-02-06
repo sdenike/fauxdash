@@ -75,6 +75,7 @@ export async function GET(request: NextRequest) {
     // Header Logo
     headerLogoEnabled: settingsObj.headerLogoEnabled === 'true' || false,
     headerLogoPath: settingsObj.headerLogoPath || '',
+    headerLogoType: (settingsObj.headerLogoType || (settingsObj.headerLogoPath ? 'upload' : 'none')) as 'upload' | 'library' | 'url' | 'none',
     headerLogoPosition: settingsObj.headerLogoPosition || 'left',
     headerLogoHeight: parseInt(settingsObj.headerLogoHeight || '40'),
     showDescriptions: settingsObj.showDescriptions === 'true' || false,
@@ -217,6 +218,7 @@ export async function POST(request: NextRequest) {
   // Header Logo
   if (body.headerLogoEnabled !== undefined) settingsToSave.push({ key: 'headerLogoEnabled', value: body.headerLogoEnabled.toString() });
   if (body.headerLogoPath !== undefined) settingsToSave.push({ key: 'headerLogoPath', value: body.headerLogoPath || '' });
+  if (body.headerLogoType !== undefined) settingsToSave.push({ key: 'headerLogoType', value: body.headerLogoType || 'none' });
   if (body.headerLogoPosition !== undefined) settingsToSave.push({ key: 'headerLogoPosition', value: body.headerLogoPosition || 'left' });
   if (body.headerLogoHeight !== undefined) settingsToSave.push({ key: 'headerLogoHeight', value: body.headerLogoHeight.toString() });
   if (body.showDescriptions !== undefined) settingsToSave.push({ key: 'showDescriptions', value: body.showDescriptions.toString() });

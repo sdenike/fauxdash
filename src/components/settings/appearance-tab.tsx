@@ -194,7 +194,7 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
       </Card>
 
       {/* Header Logo Settings */}
-      <HeaderLogoSettings settings={settings} updateSetting={updateSetting} />
+      <HeaderLogoSettings settings={settings} onSettingsChange={onSettingsChange} />
 
       {/* Homepage Content Settings */}
       <HomepageContentSettings settings={settings} onSettingsChange={onSettingsChange} />

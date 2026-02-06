@@ -14,7 +14,6 @@ import {
   ChevronRightIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
-import Image from 'next/image'
 import { SearchBar } from './search-bar'
 import { DateTimeDisplay } from './date-time-display'
 
@@ -173,6 +172,7 @@ export function Header() {
   const [siteTitleEnabled, setSiteTitleEnabled] = useState(true)
   const [headerLogoEnabled, setHeaderLogoEnabled] = useState(false)
   const [headerLogoPath, setHeaderLogoPath] = useState('')
+  const [headerLogoType, setHeaderLogoType] = useState<'upload' | 'library' | 'url' | 'none'>('none')
   const [headerLogoPosition, setHeaderLogoPosition] = useState<'left' | 'right'>('left')
   const [headerLogoHeight, setHeaderLogoHeight] = useState(40)
   const [searchEnabled, setSearchEnabled] = useState(false)
@@ -200,6 +200,7 @@ export function Header() {
         setSiteTitleEnabled(data.siteTitleEnabled !== false)
         setHeaderLogoEnabled(data.headerLogoEnabled || false)
         setHeaderLogoPath(data.headerLogoPath || '')
+        setHeaderLogoType(data.headerLogoType || 'none')
         setHeaderLogoPosition(data.headerLogoPosition || 'left')
         setHeaderLogoHeight(data.headerLogoHeight || 40)
         setSearchEnabled(data.searchEnabled !== false)
@@ -274,16 +275,24 @@ export function Header() {
               {siteTitleEnabled && (
                 <Link href="/" className="group">
                   <div className={`flex items-center gap-3 ${headerLogoPosition === 'right' ? 'flex-row-reverse' : ''}`}>
-                    {headerLogoEnabled && headerLogoPath && (
-                      <Image
-                        src={headerLogoPath}
-                        alt="Site logo"
-                        width={100}
-                        height={headerLogoHeight}
-                        style={{ height: headerLogoHeight, width: 'auto' }}
-                        className="object-contain"
-                      />
-                    )}
+                    {headerLogoEnabled && headerLogoPath && (() => {
+                      let logoSrc = headerLogoPath
+                      if (headerLogoType === 'upload') {
+                        logoSrc = `/api/header-logo/serve?t=${Date.now()}`
+                      } else if ((headerLogoType === 'library' || headerLogoType === 'url') && headerLogoPath.startsWith('favicon:')) {
+                        const faviconPath = headerLogoPath.replace('favicon:', '')
+                        logoSrc = faviconPath.startsWith('/api/favicons/serve/') ? faviconPath : `/api/favicons/serve/${faviconPath}`
+                      }
+                      return (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={logoSrc}
+                          alt="Site logo"
+                          style={{ height: headerLogoHeight, width: 'auto' }}
+                          className="object-contain"
+                        />
+                      )
+                    })()}
                     <h1 className="text-xl font-bold text-foreground">
                       {siteTitle}
                     </h1>
