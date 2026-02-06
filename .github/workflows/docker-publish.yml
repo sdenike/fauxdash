@@ -133,14 +133,22 @@ jobs:
           echo "$RELEASE_NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub Release
+      - name: Create or update GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_NOTES: ${{ steps.changelog.outputs.notes }}
         run: |
           echo "$RELEASE_NOTES" > /tmp/release-notes.md
-          gh release create ${{ github.ref_name }} \
-            --title "${{ github.ref_name }}" \
-            --notes-file /tmp/release-notes.md \
-            --latest
+          if gh release view ${{ github.ref_name }} &>/dev/null; then
+            echo "Release ${{ github.ref_name }} already exists, updating..."
+            gh release edit ${{ github.ref_name }} \
+              --title "${{ github.ref_name }}" \
+              --notes-file /tmp/release-notes.md \
+              --latest
+          else
+            gh release create ${{ github.ref_name }} \
+              --title "${{ github.ref_name }}" \
+              --notes-file /tmp/release-notes.md \
+              --latest
+          fi
