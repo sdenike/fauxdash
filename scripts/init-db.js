@@ -139,9 +139,37 @@ db.exec(`
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
   );
 
+  CREATE TABLE IF NOT EXISTS geo_cache (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip_hash TEXT NOT NULL UNIQUE,
+    country TEXT,
+    country_name TEXT,
+    city TEXT,
+    region TEXT,
+    latitude INTEGER,
+    longitude INTEGER,
+    timezone TEXT,
+    provider TEXT,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    expires_at INTEGER
+  );
+
+  CREATE TABLE IF NOT EXISTS analytics_daily (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,
+    type TEXT NOT NULL,
+    item_id INTEGER,
+    country TEXT,
+    count INTEGER NOT NULL DEFAULT 0,
+    unique_visitors INTEGER DEFAULT 0
+  );
+
   CREATE INDEX IF NOT EXISTS idx_pageviews_timestamp ON pageviews(timestamp);
   CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
   CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
+  CREATE INDEX IF NOT EXISTS idx_geo_cache_ip_hash ON geo_cache(ip_hash);
+  CREATE INDEX IF NOT EXISTS idx_analytics_daily_date ON analytics_daily(date);
+  CREATE INDEX IF NOT EXISTS idx_analytics_daily_type ON analytics_daily(type);
 `);
 
 // Check if admin user exists and create if needed

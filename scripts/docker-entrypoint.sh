@@ -100,6 +100,7 @@ $RUN_CMD node /app/scripts/migrate-add-geo-cache.js
 $RUN_CMD node /app/scripts/migrate-add-demo-flag.js
 $RUN_CMD node /app/scripts/migrate-add-show-descriptions.js
 $RUN_CMD node /app/scripts/migrate-add-password-reset-tokens.js
+$RUN_CMD node /app/scripts/migrate-add-analytics-daily.js
 echo "Migrations completed"
 
 # -----------------------------------------------------------------------------

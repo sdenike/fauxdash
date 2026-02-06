@@ -5,6 +5,14 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.50] - 2026-02-06
+
+### Fixed
+- **Full database audit** - Ensured all 13 schema tables exist in both init-db (fresh installs) and migrations (existing installs)
+  - Added missing `geo_cache` table to init-db.js (had migration but not in init-db)
+  - Added missing `analytics_daily` table to both init-db.js AND new migration script (had neither)
+  - Added indexes for `geo_cache`, `analytics_daily`, and `password_reset_tokens`
+
 ## [0.9.49] - 2026-02-06
 
 ### Fixed
