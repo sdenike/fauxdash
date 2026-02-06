@@ -232,34 +232,16 @@ This document provides a manual smoke test checklist to verify that FauxDash Hom
 - [ ] Admin panel is usable on mobile
 - [ ] Drag-and-drop works on touch devices
 
-## 14. Multi-Database Testing (Optional)
+## 14. Database
 
-### SQLite (Default)
-- [ ] Application works with SQLite (default)
+- [ ] Application works with SQLite
 - [ ] Data file exists at `/data/fauxdash.db` in container
-
-### PostgreSQL
-- [ ] Uncomment postgres service in docker-compose.yml
-- [ ] Set `DB_PROVIDER=postgres` in `.env`
-- [ ] Set `DB_URL` to postgres connection string
-- [ ] Restart application
-- [ ] Run migrations
-- [ ] Application works with PostgreSQL
-
-### MySQL
-- [ ] Uncomment mysql service in docker-compose.yml
-- [ ] Set `DB_PROVIDER=mysql` in `.env`
-- [ ] Set `DB_URL` to mysql connection string
-- [ ] Restart application
-- [ ] Run migrations
-- [ ] Application works with MySQL
 
 ## 15. Logs and Debugging
 
 - [ ] Check application logs: `docker compose logs app`
 - [ ] No critical errors or warnings
 - [ ] Redis logs (if enabled): `docker compose logs redis`
-- [ ] Database logs (if using postgres/mysql)
 
 ## Pass Criteria
 

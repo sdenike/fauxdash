@@ -42,19 +42,9 @@ services:
       - PGID=${PGID:-1000}
 
       # -----------------------------------------------------------------------
-      # Database Configuration
+      # Database Configuration — SQLite (built-in)
       # -----------------------------------------------------------------------
-      # Options: sqlite (default), postgres, mysql
-      - DB_PROVIDER=${DB_PROVIDER:-sqlite}
-
-      # SQLite (default) - stores data in /data/fauxdash.db
       - SQLITE_FILE=${SQLITE_FILE:-/data/fauxdash.db}
-
-      # PostgreSQL - uncomment and set in .env if using postgres
-      # - DB_URL=${DB_URL:-postgresql://fauxdash:changeme@postgres:5432/fauxdash}
-
-      # MySQL - uncomment and set in .env if using mysql
-      # - DB_URL=${DB_URL:-mysql://fauxdash:changeme@mysql:3306/fauxdash}
 
       # -----------------------------------------------------------------------
       # Redis Cache (recommended for performance)
@@ -131,49 +121,6 @@ services:
     # ports:
     #   - "6379:6379"
 
-  # ---------------------------------------------------------------------------
-  # Optional: PostgreSQL Database
-  # ---------------------------------------------------------------------------
-  # Uncomment this section if you prefer PostgreSQL over SQLite.
-  # Also set in .env:
-  #   DB_PROVIDER=postgres
-  #   DB_URL=postgresql://fauxdash:changeme@postgres:5432/fauxdash
-  #
-  # postgres:
-  #   image: postgres:16-alpine
-  #   environment:
-  #     POSTGRES_DB: fauxdash
-  #     POSTGRES_USER: fauxdash
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-  #   volumes:
-  #     - postgres-data:/var/lib/postgresql/data
-  #   restart: unless-stopped
-  #   # Optional: Expose port for external tools
-  #   # ports:
-  #   #   - "5432:5432"
-
-  # ---------------------------------------------------------------------------
-  # Optional: MySQL Database
-  # ---------------------------------------------------------------------------
-  # Uncomment this section if you prefer MySQL over SQLite.
-  # Also set in .env:
-  #   DB_PROVIDER=mysql
-  #   DB_URL=mysql://fauxdash:changeme@mysql:3306/fauxdash
-  #
-  # mysql:
-  #   image: mysql:8
-  #   environment:
-  #     MYSQL_DATABASE: fauxdash
-  #     MYSQL_USER: fauxdash
-  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme}
-  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
-  #   volumes:
-  #     - mysql-data:/var/lib/mysql
-  #   restart: unless-stopped
-  #   # Optional: Expose port for external tools
-  #   # ports:
-  #   #   - "3306:3306"
-
 # =============================================================================
 # Named Volumes
 # =============================================================================
@@ -196,12 +143,6 @@ volumes:
   redis-data:
     # Redis AOF persistence
     # Safe to delete - cache will rebuild
-
-  # postgres-data:
-  #   # PostgreSQL data files
-  #
-  # mysql-data:
-  #   # MySQL data files
 
 # =============================================================================
 # Networks (optional - Docker creates default network automatically)

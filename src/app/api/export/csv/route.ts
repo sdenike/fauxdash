@@ -54,6 +54,10 @@ export async function GET(request: NextRequest) {
     const allServiceCategories = await db.select().from(serviceCategories).orderBy(asc(serviceCategories.order));
     const allServices = await db.select().from(services).orderBy(asc(services.order));
 
+    // Build lookup maps for O(1) category resolution
+    const categoryMap = new Map(allCategories.map((c: any) => [c.id, c.name]));
+    const serviceCategoryMap = new Map(allServiceCategories.map((c: any) => [c.id, c.name]));
+
     // Build CSV
     const csvRows: string[] = [
       '# Favicons are not exported. Use Icon column for HeroIcons or selfhst: icons only.',
@@ -62,10 +66,9 @@ export async function GET(request: NextRequest) {
 
     // Add bookmarks
     for (const bookmark of allBookmarks) {
-      const cat = allCategories.find((c: { id: number }) => c.id === bookmark.categoryId);
       csvRows.push([
         'Bookmarks',
-        escapeCSV((cat as any)?.name || 'Uncategorized'),
+        escapeCSV(categoryMap.get(bookmark.categoryId) || 'Uncategorized'),
         escapeCSV(bookmark.name),
         escapeCSV(bookmark.description),
         escapeCSV(bookmark.url),
@@ -75,10 +78,9 @@ export async function GET(request: NextRequest) {
 
     // Add services
     for (const service of allServices) {
-      const cat = allServiceCategories.find((c: { id: number }) => c.id === service.categoryId);
       csvRows.push([
         'Services',
-        escapeCSV((cat as any)?.name || 'Uncategorized'),
+        escapeCSV(serviceCategoryMap.get(service.categoryId) || 'Uncategorized'),
         escapeCSV(service.name),
         escapeCSV(service.description),
         escapeCSV(service.url),

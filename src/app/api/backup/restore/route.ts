@@ -51,9 +51,7 @@ async function importBookmarkCategories(
         await db.update(categories)
           .set({
             icon: cat.icon,
-            color: cat.color,
             order: cat.order,
-            isCollapsed: cat.isCollapsed,
             showOpenAll: cat.showOpenAll,
           })
           .where(eq(categories.id, existingId));
@@ -62,9 +60,7 @@ async function importBookmarkCategories(
         const [newCat] = await db.insert(categories).values({
           name: cat.name,
           icon: cat.icon,
-          color: cat.color,
           order: cat.order,
-          isCollapsed: cat.isCollapsed,
           showOpenAll: cat.showOpenAll,
         }).returning();
         categoryMap.set(cat.name.toLowerCase(), newCat.id);
@@ -101,9 +97,7 @@ async function importServiceCategories(
         await db.update(serviceCategories)
           .set({
             icon: cat.icon,
-            color: cat.color,
             order: cat.order,
-            isCollapsed: cat.isCollapsed,
             showOpenAll: cat.showOpenAll,
           })
           .where(eq(serviceCategories.id, existingId));
@@ -111,9 +105,7 @@ async function importServiceCategories(
         const [newCat] = await db.insert(serviceCategories).values({
           name: cat.name,
           icon: cat.icon,
-          color: cat.color,
           order: cat.order,
-          isCollapsed: cat.isCollapsed,
           showOpenAll: cat.showOpenAll,
         }).returning();
         categoryMap.set(cat.name.toLowerCase(), newCat.id);

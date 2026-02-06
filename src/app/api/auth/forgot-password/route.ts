@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/db'
-import { users, passwordResetTokens, settings } from '@/db/schema'
-import { eq, isNull } from 'drizzle-orm'
+import { users, passwordResetTokens } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 import { randomBytes } from 'crypto'
 import { sendEmail, isSmtpConfigured } from '@/lib/email'
 import { buildEmailHtml } from '@/lib/email-template'
+import { getGlobalSettings } from '@/lib/settings-cache'
 import { checkRateLimit, getClientIp, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
@@ -78,9 +79,7 @@ export async function POST(request: NextRequest) {
     const resetUrl = `${baseUrl}/reset-password?token=${token}`
 
     // Read site title for subject line
-    const globalSettings = await db.select().from(settings).where(isNull(settings.userId))
-    const settingsObj: Record<string, string> = {}
-    globalSettings.forEach((s: any) => { settingsObj[s.key] = s.value || '' })
+    const settingsObj = await getGlobalSettings()
     const siteTitle = settingsObj.siteTitle || 'Faux|Dash'
 
     // Build email using shared template

@@ -12,9 +12,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = session.user?.id || 'default';
+    const userId = session.user?.id;
     const db = getDb();
-    const userSettings = await db.select().from(settings).where(eq(settings.userId, userId));
+    const userSettings = userId
+      ? await db.select().from(settings).where(eq(settings.userId, parseInt(userId)))
+      : [];
     const settingsObj: Record<string, string> = {};
     userSettings.forEach((setting: any) => {
       settingsObj[setting.key] = setting.value || '';

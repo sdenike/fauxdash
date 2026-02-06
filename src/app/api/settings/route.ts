@@ -3,8 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions, clearOidcSettingsCache, reloadOidcProvider } from '@/lib/auth';
 import { getDb } from '@/db';
 import { settings } from '@/db/schema';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, or, inArray } from 'drizzle-orm';
 import { logger, LogLevel } from '@/lib/logger';
+import { invalidateGlobalSettingsCache } from '@/lib/settings-cache';
 
 // Prevent Next.js from caching this route
 export const dynamic = 'force-dynamic';
@@ -19,17 +20,14 @@ export async function GET(request: NextRequest) {
   const db = getDb();
   const userId = (session.user as any).id;
 
-  // Fetch global settings (userId is null)
-  const globalSettings = await db
+  // Single query: fetch both global (userId IS NULL) and user-specific settings
+  const allSettings = await db
     .select()
     .from(settings)
-    .where(isNull(settings.userId));
+    .where(or(isNull(settings.userId), eq(settings.userId, parseInt(userId))));
 
-  // Fetch all settings for this user
-  const userSettings = await db
-    .select()
-    .from(settings)
-    .where(eq(settings.userId, parseInt(userId)));
+  const globalSettings = allSettings.filter((s: any) => s.userId === null);
+  const userSettings = allSettings.filter((s: any) => s.userId !== null);
 
   // Settings that are global-only (user settings should never override these)
   const globalOnlyKeys = new Set([
@@ -351,83 +349,62 @@ export async function POST(request: NextRequest) {
     'siteFavicon', 'siteFaviconType',
   ];
 
-  // Clean up any stale user-specific copies of global-only settings
-  for (const key of globalSettingKeys) {
-    await db
-      .delete(settings)
-      .where(and(
-        eq(settings.key, key),
-        eq(settings.userId, parseInt(userId))
-      ));
-  }
+  // Split into global vs user settings
+  const globalToSave = settingsToSave.filter(s => globalSettingKeys.includes(s.key));
+  const userToSave = settingsToSave.filter(s => !globalSettingKeys.includes(s.key));
 
-  for (const setting of settingsToSave) {
-    const isGlobalSetting = globalSettingKeys.includes(setting.key);
-
-    if (isGlobalSetting) {
-      // Global settings: userId = null
-      const existing = await db
-        .select()
-        .from(settings)
+  // Batch upsert in a transaction: DELETE existing keys then INSERT new values
+  await db.transaction(async (tx: any) => {
+    // Clean up stale user-specific copies of global-only settings
+    const globalKeyList = globalSettingKeys;
+    if (globalKeyList.length > 0) {
+      await tx
+        .delete(settings)
         .where(and(
-          eq(settings.key, setting.key),
-          isNull(settings.userId)
-        ))
-        .limit(1);
-
-      if (existing.length > 0) {
-        // Update global setting
-        await db
-          .update(settings)
-          .set({ value: setting.value, updatedAt: new Date() })
-          .where(and(
-            eq(settings.key, setting.key),
-            isNull(settings.userId)
-          ));
-      } else {
-        // Insert global setting
-        await db
-          .insert(settings)
-          .values({
-            userId: null,
-            key: setting.key,
-            value: setting.value,
-          });
-      }
-    } else {
-      // User-specific settings
-      const existing = await db
-        .select()
-        .from(settings)
-        .where(and(
-          eq(settings.userId, parseInt(userId)),
-          eq(settings.key, setting.key)
-        ))
-        .limit(1);
-
-      if (existing.length > 0) {
-        // Update
-        await db
-          .update(settings)
-          .set({ value: setting.value, updatedAt: new Date() })
-          .where(and(
-            eq(settings.userId, parseInt(userId)),
-            eq(settings.key, setting.key)
-          ));
-      } else {
-        // Insert
-        await db
-          .insert(settings)
-          .values({
-            userId: parseInt(userId),
-            key: setting.key,
-            value: setting.value,
-          });
-      }
+          inArray(settings.key, globalKeyList),
+          eq(settings.userId, parseInt(userId))
+        ));
     }
-  }
 
-  // Clear OIDC settings cache so changes take effect immediately
+    // Batch upsert global settings
+    if (globalToSave.length > 0) {
+      const globalKeys = globalToSave.map(s => s.key);
+      await tx
+        .delete(settings)
+        .where(and(
+          inArray(settings.key, globalKeys),
+          isNull(settings.userId)
+        ));
+      await tx
+        .insert(settings)
+        .values(globalToSave.map(s => ({
+          userId: null,
+          key: s.key,
+          value: s.value,
+        })));
+    }
+
+    // Batch upsert user settings
+    if (userToSave.length > 0) {
+      const userKeys = userToSave.map(s => s.key);
+      await tx
+        .delete(settings)
+        .where(and(
+          inArray(settings.key, userKeys),
+          eq(settings.userId, parseInt(userId))
+        ));
+      await tx
+        .insert(settings)
+        .values(userToSave.map(s => ({
+          userId: parseInt(userId),
+          key: s.key,
+          value: s.value,
+        })));
+    }
+  });
+
+  // Clear caches so changes take effect immediately
+  invalidateGlobalSettingsCache();
   clearOidcSettingsCache();
 
   // Check if any OIDC settings were changed

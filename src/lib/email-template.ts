@@ -1,6 +1,4 @@
-import { getDb } from '@/db'
-import { settings } from '@/db/schema'
-import { isNull } from 'drizzle-orm'
+import { getGlobalSettings } from '@/lib/settings-cache'
 
 interface EmailTemplateOptions {
   title: string
@@ -11,16 +9,7 @@ interface EmailTemplateOptions {
 }
 
 async function getSiteSettings(): Promise<{ siteTitle: string; headerLogoPath: string; headerLogoEnabled: boolean }> {
-  const db = getDb()
-  const globalSettings = await db
-    .select()
-    .from(settings)
-    .where(isNull(settings.userId))
-
-  const settingsObj: Record<string, string> = {}
-  globalSettings.forEach((setting: any) => {
-    settingsObj[setting.key] = setting.value || ''
-  })
+  const settingsObj = await getGlobalSettings()
 
   return {
     siteTitle: settingsObj.siteTitle || 'Faux|Dash',

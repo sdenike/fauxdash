@@ -86,21 +86,7 @@ fi
 
 # Always run migrations (they are idempotent)
 echo "Running migrations..."
-$RUN_CMD node /app/scripts/migrate-add-description.js
-$RUN_CMD node /app/scripts/migrate-add-columns.js
-$RUN_CMD node /app/scripts/migrate-add-pageviews.js
-$RUN_CMD node /app/scripts/migrate-add-services.js
-$RUN_CMD node /app/scripts/migrate-add-service-categories.js
-$RUN_CMD node /app/scripts/migrate-add-accordion.js
-$RUN_CMD node /app/scripts/migrate-add-sorting-analytics.js
-$RUN_CMD node /app/scripts/migrate-add-uncategorized.js
-$RUN_CMD node /app/scripts/migrate-rename-maincolumns.js
-$RUN_CMD node /app/scripts/migrate-add-open-all.js
-$RUN_CMD node /app/scripts/migrate-add-geo-cache.js
-$RUN_CMD node /app/scripts/migrate-add-demo-flag.js
-$RUN_CMD node /app/scripts/migrate-add-show-descriptions.js
-$RUN_CMD node /app/scripts/migrate-add-password-reset-tokens.js
-$RUN_CMD node /app/scripts/migrate-add-analytics-daily.js
+$RUN_CMD node /app/scripts/migrate-all.js
 echo "Migrations completed"
 
 # -----------------------------------------------------------------------------

@@ -1,7 +1,8 @@
 import nodemailer from 'nodemailer'
 import { getDb } from '@/db'
-import { settings, users } from '@/db/schema'
-import { eq, isNull } from 'drizzle-orm'
+import { users } from '@/db/schema'
+import { eq } from 'drizzle-orm'
+import { getGlobalSettings } from '@/lib/settings-cache'
 
 interface SmtpConfig {
   provider: 'none' | 'custom' | 'google'
@@ -34,18 +35,7 @@ async function getAdminUserId(): Promise<number | null> {
 }
 
 async function getSmtpConfig(userId?: number): Promise<SmtpConfig | null> {
-  const db = getDb()
-
-  // SMTP settings are stored globally (userId = null)
-  const globalSettings = await db
-    .select()
-    .from(settings)
-    .where(isNull(settings.userId))
-
-  const settingsObj: Record<string, string> = {}
-  globalSettings.forEach((setting: any) => {
-    settingsObj[setting.key] = setting.value || ''
-  })
+  const settingsObj = await getGlobalSettings()
 
   const provider = settingsObj.smtpProvider || process.env.SMTP_PROVIDER || 'none'
 

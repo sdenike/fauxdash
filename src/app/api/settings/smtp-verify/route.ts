@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if token has expired
-    const expiry = new Date(storedExpiry.value)
+    const expiry = new Date(storedExpiry.value!)
     if (expiry < new Date()) {
       return new NextResponse(`
         <!DOCTYPE html>

@@ -34,10 +34,12 @@ export async function GET(request: NextRequest) {
   try {
     // Get session and fetch user settings
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id || 'default';
+    const userId = session?.user?.id;
 
     const db = getDb();
-    const userSettings = await db.select().from(settings).where(eq(settings.userId, userId));
+    const userSettings = userId
+      ? await db.select().from(settings).where(eq(settings.userId, parseInt(userId)))
+      : [];
     const settingsObj: Record<string, string> = {};
     userSettings.forEach((setting: any) => {
       settingsObj[setting.key] = setting.value || '';

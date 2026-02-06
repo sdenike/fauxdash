@@ -5,6 +5,39 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-02-06
+
+### Changed
+- **SQLite-Only**: Removed PostgreSQL and MySQL support; the app is now SQLite-only with zero configuration
+  - Removed ~2,000 lines of multi-database branching code from schema, index, and migration files
+  - Removed 4 packages: `mysql2`, `pg`, `postgres`, `@types/pg`
+  - Deleted dead `src/db/add-accordion-columns.ts` file
+  - Simplified `drizzle.config.ts` to SQLite-only config
+  - Removed `DB_PROVIDER` and `DB_URL` environment variables (no longer needed)
+  - Updated Docker configs, env examples, README, PROJECT_STRUCTURE, and SMOKE_TEST docs
+- **Consolidated Migrations**: Replaced 15 individual migration scripts with single `scripts/migrate-all.js`
+  - Single Node.js process instead of 15 separate spawns at container startup
+  - All migrations remain idempotent (safe to run repeatedly)
+  - Old individual scripts kept for one release cycle
+- **Settings API Optimization**: Reduced database queries significantly
+  - GET: Combined 2 queries into 1 (global + user settings in single query)
+  - POST: Replaced N individual SELECT+UPDATE loops with batch DELETE+INSERT in a transaction
+
+### Added
+- **Global Settings Cache**: In-memory cache with 30-second TTL for global settings
+  - Email template, SMTP config, forgot-password, and SMTP test endpoints now use cached settings
+  - Cache automatically invalidated when settings are saved
+- **CSV Export Performance**: Category lookups use Map-based O(1) access instead of O(N) array scans
+
+### Fixed
+- Pre-existing type errors in `backup/restore` (stale `color`/`isCollapsed` properties)
+- Pre-existing type error in `smtp-verify` (null assertion on expiry value)
+- Pre-existing type errors in `weather/route.ts` and `weather/test/route.ts` (string vs number userId)
+
+### Breaking
+- PostgreSQL and MySQL are no longer supported. Users on those databases must migrate to SQLite before upgrading.
+- `DB_PROVIDER` and `DB_URL` environment variables are removed. SQLite is the only database.
+
 ## [0.9.50] - 2026-02-06
 
 ### Fixed
@@ -1060,10 +1093,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tempest Weather API
   - OpenWeatherMap
 - Multi-location weather display with auto-rotation
-- Multi-database support:
-  - SQLite (default)
-  - PostgreSQL
-  - MySQL
+- SQLite database (built-in, zero configuration)
 - Redis caching for improved performance (optional)
 - Bookmark click tracking and analytics
 - Visibility controls for categories and bookmarks
@@ -1124,7 +1154,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **0.8.0** - Weather location manager with drag-and-drop UI (Current)
+- **0.10.0** - SQLite-only, consolidated migrations, settings optimization (Current)
+- **0.8.0** - Weather location manager with drag-and-drop UI
 - **0.7.0** - Mobile-responsive UI, PWA support, offline mode
 - **0.6.0** - Demo content system, N+1 query performance fix
 - **0.5.x** - Release automation, update notifications, memory leak fixes

@@ -5,7 +5,8 @@ import { sendEmail } from '@/lib/email'
 import { buildEmailHtml } from '@/lib/email-template'
 import { getDb } from '@/db'
 import { users, settings } from '@/db/schema'
-import { eq, isNull } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
+import { getGlobalSettings } from '@/lib/settings-cache'
 import crypto from 'crypto'
 
 export async function POST() {
@@ -24,9 +25,7 @@ export async function POST() {
     }
 
     // Read global settings to check verification status and site title
-    const globalSettings = await db.select().from(settings).where(isNull(settings.userId))
-    const settingsObj: Record<string, string> = {}
-    globalSettings.forEach((s: any) => { settingsObj[s.key] = s.value || '' })
+    const settingsObj = await getGlobalSettings()
     const siteTitle = settingsObj.siteTitle || 'Faux|Dash'
     const isVerified = settingsObj.smtpVerified === 'true'
 

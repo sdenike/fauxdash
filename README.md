@@ -48,7 +48,7 @@ A modern, self-hosted homepage dashboard for managing bookmarks and services. Bu
 - **Settings Export**: Export and restore all application settings
 
 ### Technical Features
-- **Multi-Database Support**: SQLite (default), PostgreSQL, or MySQL
+- **SQLite Database**: Built-in SQLite with zero configuration
 - **Redis Caching**: Optional Redis for improved performance
 - **GeoIP Lookup**: Optional visitor location analytics with MaxMind or ipinfo.io
 - **Favicon Auto-Fetch**: Automatically fetch and store favicons from URLs
@@ -182,7 +182,6 @@ services:
 | `PGID` | `1000` | Group ID for file permissions |
 | `NEXTAUTH_SECRET` | (required) | Secret for session encryption. Generate with `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | `http://localhost:8080` | Your deployment URL |
-| `DB_PROVIDER` | `sqlite` | Database type: `sqlite`, `postgres`, or `mysql` |
 | `REDIS_ENABLED` | `true` | Enable Redis caching |
 | `REDIS_URL` | `redis://redis:6379` | Redis connection URL |
 
@@ -333,32 +332,11 @@ Configure default values when creating new categories, bookmarks, and services:
 
 ## Database Configuration
 
-### SQLite (Default)
+Faux|Dash uses SQLite with zero configuration. Data is stored at `/data/fauxdash.db` by default.
 
 ```env
-DB_PROVIDER=sqlite
 SQLITE_FILE=/data/fauxdash.db
 ```
-
-Best for single-user deployments and simple setups.
-
-### PostgreSQL
-
-```env
-DB_PROVIDER=postgres
-DB_URL=postgresql://user:password@postgres:5432/fauxdash
-```
-
-Uncomment the postgres service in `docker-compose.yml`.
-
-### MySQL
-
-```env
-DB_PROVIDER=mysql
-DB_URL=mysql://user:password@mysql:3306/fauxdash
-```
-
-Uncomment the mysql service in `docker-compose.yml`.
 
 ---
 
@@ -566,7 +544,7 @@ docker compose logs app
 
 ### Database connection errors
 
-Verify your `DB_PROVIDER` and connection string in `.env`.
+Verify your `SQLITE_FILE` path in `.env` and ensure the data directory is writable.
 
 ### Weather widget not showing
 

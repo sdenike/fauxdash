@@ -102,12 +102,12 @@ fauxdash/
 
 ### Root Configuration Files
 
-- **docker-compose.yml**: Defines all services (app, redis, optional postgres/mysql)
+- **docker-compose.yml**: Defines all services (app, redis)
 - **Dockerfile**: Multi-stage build for production container
 - **next.config.js**: Next.js framework configuration (standalone output)
 - **tailwind.config.js**: Tailwind CSS theme and plugin configuration
 - **tsconfig.json**: TypeScript compiler settings
-- **drizzle.config.ts**: Drizzle ORM multi-database configuration
+- **drizzle.config.ts**: Drizzle ORM SQLite configuration
 
 ### Documentation
 
@@ -146,8 +146,8 @@ React components organized by feature.
 #### `/src/db`
 Database abstraction layer.
 
-- **schema.ts**: Table definitions for all databases
-- **index.ts**: Connection factory (SQLite/Postgres/MySQL)
+- **schema.ts**: SQLite table definitions
+- **index.ts**: SQLite connection factory
 - **migrate.ts**: Migration runner and default user creation
 
 #### `/src/lib`
@@ -233,7 +233,7 @@ npm run db:migrate   # Apply migrations to database
 See `.env.example` for all available environment variables.
 
 Key variables:
-- `DB_PROVIDER`: Database type (sqlite, postgres, mysql)
+- `SQLITE_FILE`: Path to SQLite database file
 - `REDIS_ENABLED`: Enable/disable Redis caching
 - `NEXTAUTH_SECRET`: Authentication secret
 - `WEATHER_PROVIDER`: Weather API provider
@@ -271,8 +271,7 @@ Future: Jest + React Testing Library for unit tests.
 
 ## Scaling Considerations
 
-- **Horizontal scaling**: Requires external database (Postgres/MySQL)
-- **Database**: Connection pooling handles concurrent requests
+- **Database**: SQLite with WAL mode for concurrent reads
 - **Redis**: Single instance sufficient for self-hosted use
 - **Static assets**: Served by Next.js (can use CDN later)
 
