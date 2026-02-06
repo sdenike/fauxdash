@@ -78,22 +78,40 @@ export async function POST(request: NextRequest) {
     const resetUrl = `${baseUrl}/reset-password?token=${token}`
 
     // Read site title for subject line
-    const globalSettings = await db.select().from(settings).where(isNull(settings.userId))
-    const settingsObj: Record<string, string> = {}
-    globalSettings.forEach((s: any) => { settingsObj[s.key] = s.value || '' })
-    const siteTitle = settingsObj.siteTitle || 'Faux|Dash'
+    let siteTitle = 'Faux|Dash'
+    try {
+      const globalSettings = await db.select().from(settings).where(isNull(settings.userId))
+      const settingsObj: Record<string, string> = {}
+      globalSettings.forEach((s: any) => { settingsObj[s.key] = s.value || '' })
+      siteTitle = settingsObj.siteTitle || 'Faux|Dash'
+    } catch (e) {
+      // Use default site title if settings query fails
+    }
 
     // Build email using shared template
-    const html = await buildEmailHtml({
-      title: 'Password Reset',
-      body: `
+    let html: string
+    try {
+      html = await buildEmailHtml({
+        title: 'Password Reset',
+        body: `
+          <p>You requested a password reset for your account.</p>
+          <p>Click the button below to reset your password. This link will expire in 1 hour.</p>
+          <p style="margin-top: 24px; font-size: 12px; color: #71717a;">If you didn't request this, you can safely ignore this email.</p>
+        `,
+        buttonText: 'Reset Password',
+        buttonUrl: resetUrl,
+      })
+    } catch (e) {
+      // Fallback to simple HTML if template builder fails
+      html = `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1e293b;">Password Reset</h2>
         <p>You requested a password reset for your account.</p>
-        <p>Click the button below to reset your password. This link will expire in 1 hour.</p>
-        <p style="margin-top: 24px; font-size: 12px; color: #71717a;">If you didn't request this, you can safely ignore this email.</p>
-      `,
-      buttonText: 'Reset Password',
-      buttonUrl: resetUrl,
-    })
+        <p>Click the button below to reset your password:</p>
+        <p style="margin: 24px 0;"><a href="${resetUrl}" style="background-color: #18181b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Reset Password</a></p>
+        <p style="color: #64748b; font-size: 14px;">This link will expire in 1 hour.</p>
+        <p style="color: #64748b; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
+      </div>`
+    }
 
     // Send email
     const result = await sendEmail(undefined, {

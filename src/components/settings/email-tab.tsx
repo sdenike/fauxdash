@@ -184,7 +184,7 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
       toast({
         variant: 'success',
         title: 'Test email sent',
-        description: 'Check your inbox for a verification email. Click the link in the email to activate SMTP.',
+        description: data.message || 'Check your inbox.',
       })
     } catch (error: any) {
       toast({
