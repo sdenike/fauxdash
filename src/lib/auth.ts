@@ -202,10 +202,19 @@ function addOidcProvider(providers: any[], config: ReturnType<typeof getOidcSett
       idToken: true,
       checks: ['pkce', 'state'],
       profile(profile: any) {
+        const email = (profile.email || profile.preferred_username || '').toLowerCase().trim();
+        if (!profile.sub || !email) {
+          console.error('OIDC PROFILE ERROR: Missing required claims', {
+            hasSub: !!profile.sub,
+            hasEmail: !!profile.email,
+            hasPreferredUsername: !!profile.preferred_username,
+            claims: Object.keys(profile),
+          });
+        }
         return {
           id: profile.sub,
-          email: profile.email,
-          name: profile.name || profile.preferred_username || profile.email,
+          email: email,
+          name: profile.name || profile.preferred_username || email,
           isAdmin: false,
         };
       },
@@ -271,6 +280,35 @@ export const authOptions: NextAuthOptions = {
     return dynamicProviders;
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      // Always allow credentials login (handled by authorize())
+      if (account?.provider === 'credentials') {
+        return true;
+      }
+
+      // Validate OIDC login has required data
+      if (account?.provider === 'oidc') {
+        if (!profile?.sub) {
+          console.error('OIDC SIGNIN REJECTED: Missing "sub" claim', {
+            claims: profile ? Object.keys(profile) : 'no profile',
+          });
+          return '/login?error=OAuthCallback&reason=missing_sub';
+        }
+
+        const email = (profile.email || (profile as any).preferred_username || '').toString().toLowerCase().trim();
+        if (!email) {
+          console.error('OIDC SIGNIN REJECTED: Missing email/preferred_username', {
+            claims: Object.keys(profile),
+          });
+          return '/login?error=OAuthCallback&reason=missing_email';
+        }
+
+        console.log('OIDC SIGNIN ALLOWED:', { sub: profile.sub, email });
+        return true;
+      }
+
+      return true;
+    },
     async redirect({ url, baseUrl }) {
       // Log redirect for debugging
       console.log('NextAuth redirect callback:', { url, baseUrl });
@@ -312,30 +350,33 @@ export const authOptions: NextAuthOptions = {
 
       // Handle OIDC login
       if (account && account.provider === 'oidc' && profile) {
+        const oidcEmail = (profile.email || (profile as any).preferred_username || '').toString().toLowerCase().trim();
+        const oidcName = (profile.name || (profile as any).preferred_username || oidcEmail) as string;
+
         console.log('Processing OIDC login for profile:', {
           sub: profile.sub,
-          email: profile.email,
-          name: profile.name,
+          email: oidcEmail,
+          name: oidcName,
         });
 
-        const oidcSub = profile.sub;
+        const oidcSub = profile.sub as string;
 
         try {
           // Check if user exists by OIDC subject
           let dbUser = await db
             .select()
             .from(users)
-            .where(eq(users.oidcSubject, oidcSub as string))
+            .where(eq(users.oidcSubject, oidcSub))
             .limit(1);
 
           if (!dbUser || dbUser.length === 0) {
-            console.log('No user found with OIDC subject, checking by email:', profile.email);
+            console.log('No user found with OIDC subject, checking by email:', oidcEmail);
 
-            // Check if user exists by email
+            // Check if user exists by email (normalized)
             dbUser = await db
               .select()
               .from(users)
-              .where(eq(users.email, profile.email as string))
+              .where(eq(users.email, oidcEmail))
               .limit(1);
 
             if (dbUser && dbUser.length > 0) {
@@ -352,16 +393,16 @@ export const authOptions: NextAuthOptions = {
             } else {
               // Create new user
               console.log('Creating new user from OIDC profile:', {
-                email: profile.email,
+                email: oidcEmail,
                 oidcSub: oidcSub,
               });
 
               const newUser = await db
                 .insert(users)
                 .values({
-                  email: profile.email as string,
-                  username: (profile.name || (profile as any).preferred_username || profile.email) as string,
-                  oidcSubject: oidcSub as string,
+                  email: oidcEmail,
+                  username: oidcName,
+                  oidcSubject: oidcSub,
                   isAdmin: false,
                 })
                 .returning();
