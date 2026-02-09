@@ -179,7 +179,7 @@ function buildProviders(config: ReturnType<typeof getOidcSettingsSync>): any[] {
 
 // Add OIDC provider if enabled and configured
 function addOidcProvider(providers: any[], config: ReturnType<typeof getOidcSettingsSync>) {
-  if (config.enabled && config.clientId && config.issuerUrl) {
+  if (config.enabled && config.clientId && config.clientSecret && config.issuerUrl) {
     const normalizedIssuerUrl = config.issuerUrl.endsWith('/')
       ? config.issuerUrl
       : config.issuerUrl + '/';
@@ -276,7 +276,34 @@ export async function reloadOidcProvider() {
 
 export const authOptions: NextAuthOptions = {
   get providers() {
-    // Return dynamic providers to support hot-reload
+    // Ensure OIDC provider has valid credentials (handles startup race with DB)
+    const oidcProvider = dynamicProviders.find((p: any) => p.id === 'oidc');
+    if (oidcProvider && (!oidcProvider.clientId || !oidcProvider.clientSecret)) {
+      try {
+        const freshConfig = getOidcSettingsSync();
+        if (freshConfig.clientId && freshConfig.clientSecret) {
+          oidcProvider.clientId = freshConfig.clientId;
+          oidcProvider.clientSecret = freshConfig.clientSecret;
+          console.log('OIDC provider credentials refreshed from DB');
+        }
+      } catch (e) {
+        console.error('Failed to refresh OIDC credentials:', e);
+      }
+    }
+
+    // If OIDC provider should exist but doesn't, try adding it
+    if (!oidcProvider) {
+      try {
+        const freshConfig = getOidcSettingsSync();
+        if (freshConfig.enabled && freshConfig.clientId && freshConfig.clientSecret && freshConfig.issuerUrl) {
+          addOidcProvider(dynamicProviders, freshConfig);
+          console.log('OIDC provider added dynamically from DB');
+        }
+      } catch (e) {
+        // DB not ready yet, will retry on next access
+      }
+    }
+
     return dynamicProviders;
   },
   callbacks: {
