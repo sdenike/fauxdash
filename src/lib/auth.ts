@@ -6,6 +6,10 @@ import { eq, isNull } from 'drizzle-orm';
 import * as argon2 from 'argon2';
 import { logAuth, logSecurity } from '@/lib/logger';
 
+function ts() {
+  return new Date().toISOString();
+}
+
 // Synchronously read OIDC settings from database at startup
 function getOidcSettingsSync(): {
   enabled: boolean;
@@ -25,16 +29,33 @@ function getOidcSettingsSync(): {
       }
     }
 
-    return {
+    const result = {
       enabled: settingsObj.oidcEnabled === 'true',
       clientId: settingsObj.oidcClientId || process.env.OIDC_CLIENT_ID || '',
       clientSecret: settingsObj.oidcClientSecret || process.env.OIDC_CLIENT_SECRET || '',
       issuerUrl: settingsObj.oidcIssuerUrl || process.env.OIDC_ISSUER_URL || '',
       disablePasswordLogin: settingsObj.disablePasswordLogin === 'true',
     };
+
+    console.log(`[${ts()}] [OIDC] getOidcSettingsSync result:`, {
+      enabled: result.enabled,
+      hasClientId: !!result.clientId,
+      clientIdLength: result.clientId.length,
+      hasClientSecret: !!result.clientSecret,
+      clientSecretLength: result.clientSecret.length,
+      hasIssuerUrl: !!result.issuerUrl,
+      issuerUrl: result.issuerUrl || '(empty)',
+      dbHasOidcEnabled: 'oidcEnabled' in settingsObj,
+      dbHasClientId: 'oidcClientId' in settingsObj,
+      dbHasClientSecret: 'oidcClientSecret' in settingsObj,
+      dbHasIssuerUrl: 'oidcIssuerUrl' in settingsObj,
+      totalGlobalSettings: allSettings.length,
+    });
+
+    return result;
   } catch (e) {
     // Fallback to env vars if DB not available (e.g., during build)
-    console.log('Could not read OIDC settings from DB, using env vars:', e);
+    console.log(`[${ts()}] [OIDC] Could not read settings from DB, using env vars:`, e);
     return {
       enabled: false,
       clientId: process.env.OIDC_CLIENT_ID || '',
@@ -179,16 +200,19 @@ function buildProviders(config: ReturnType<typeof getOidcSettingsSync>): any[] {
 
 // Add OIDC provider if enabled and configured
 function addOidcProvider(providers: any[], config: ReturnType<typeof getOidcSettingsSync>) {
-  if (config.enabled && config.clientId && config.clientSecret && config.issuerUrl) {
+  if (config.enabled && config.clientId && config.issuerUrl) {
     const normalizedIssuerUrl = config.issuerUrl.endsWith('/')
       ? config.issuerUrl
       : config.issuerUrl + '/';
 
-    console.log('OIDC provider configuration:', {
-      enabled: config.enabled,
+    if (!config.clientSecret) {
+      console.warn(`[${ts()}] [OIDC] WARNING: Adding OIDC provider WITHOUT clientSecret — token exchange will fail`);
+    }
+
+    console.log(`[${ts()}] [OIDC] Adding provider:`, {
       issuerUrl: normalizedIssuerUrl,
       clientId: config.clientId ? `${config.clientId.substring(0, 8)}...` : 'MISSING',
-      clientSecret: config.clientSecret ? '***SET***' : 'MISSING',
+      clientSecret: config.clientSecret ? `***SET*** (${config.clientSecret.length} chars)` : 'EMPTY',
     });
 
     providers.push({
@@ -204,7 +228,7 @@ function addOidcProvider(providers: any[], config: ReturnType<typeof getOidcSett
       profile(profile: any) {
         const email = (profile.email || profile.preferred_username || '').toLowerCase().trim();
         if (!profile.sub || !email) {
-          console.error('OIDC PROFILE ERROR: Missing required claims', {
+          console.error(`[${ts()}] [OIDC] PROFILE ERROR: Missing required claims`, {
             hasSub: !!profile.sub,
             hasEmail: !!profile.email,
             hasPreferredUsername: !!profile.preferred_username,
@@ -219,11 +243,12 @@ function addOidcProvider(providers: any[], config: ReturnType<typeof getOidcSett
         };
       },
     });
-    console.log('OIDC provider configured successfully');
+    console.log(`[${ts()}] [OIDC] Provider configured successfully`);
   } else {
-    console.log('OIDC provider NOT configured:', {
+    console.log(`[${ts()}] [OIDC] Provider NOT configured:`, {
       enabled: config.enabled,
       hasClientId: !!config.clientId,
+      hasClientSecret: !!config.clientSecret,
       hasIssuerUrl: !!config.issuerUrl,
     });
   }
@@ -238,14 +263,14 @@ let dynamicProviders: any[] = [...initialProviders];
 
 // Function to reload OIDC provider configuration without restart
 export async function reloadOidcProvider() {
-  console.log('===============================================');
-  console.log('OIDC RELOAD: Starting provider reload...');
-  console.log('===============================================');
+  console.log(`[${ts()}] [OIDC] ===============================================`);
+  console.log(`[${ts()}] [OIDC] RELOAD: Starting provider reload...`);
+  console.log(`[${ts()}] [OIDC] ===============================================`);
 
   try {
     const currentConfig = await getOidcSettings();
 
-    console.log('OIDC RELOAD: Current configuration:', {
+    console.log(`[${ts()}] [OIDC] RELOAD: Current configuration:`, {
       enabled: currentConfig.enabled,
       hasClientId: !!currentConfig.clientId,
       clientIdPrefix: currentConfig.clientId ? currentConfig.clientId.substring(0, 8) + '...' : 'MISSING',
@@ -261,33 +286,32 @@ export async function reloadOidcProvider() {
     // Update dynamic providers
     dynamicProviders = newProviders;
 
-    console.log('OIDC RELOAD: Provider reloaded successfully');
-    console.log('OIDC RELOAD: Active providers:', dynamicProviders.map(p => p.id || p.name));
-    console.log('===============================================');
+    console.log(`[${ts()}] [OIDC] RELOAD: Provider reloaded successfully`);
+    console.log(`[${ts()}] [OIDC] RELOAD: Active providers:`, dynamicProviders.map(p => p.id || p.name));
+    console.log(`[${ts()}] [OIDC] ===============================================`);
 
     return { success: true, message: 'OIDC configuration reloaded' };
   } catch (error) {
-    console.error('OIDC RELOAD ERROR: Failed to reload provider:', error);
-    console.error('OIDC RELOAD ERROR: Stack trace:', (error as Error).stack);
-    console.log('===============================================');
+    console.error(`[${ts()}] [OIDC] RELOAD ERROR: Failed to reload provider:`, error);
+    console.error(`[${ts()}] [OIDC] RELOAD ERROR: Stack trace:`, (error as Error).stack);
+    console.log(`[${ts()}] [OIDC] ===============================================`);
     return { success: false, error: 'Failed to reload OIDC configuration' };
   }
 }
 
 export const authOptions: NextAuthOptions = {
   get providers() {
-    // Ensure OIDC provider has valid credentials (handles startup race with DB)
     const oidcProvider = dynamicProviders.find((p: any) => p.id === 'oidc');
+
+    // If OIDC provider exists but is missing credentials, refresh from DB
     if (oidcProvider && (!oidcProvider.clientId || !oidcProvider.clientSecret)) {
       try {
         const freshConfig = getOidcSettingsSync();
-        if (freshConfig.clientId && freshConfig.clientSecret) {
-          oidcProvider.clientId = freshConfig.clientId;
-          oidcProvider.clientSecret = freshConfig.clientSecret;
-          console.log('OIDC provider credentials refreshed from DB');
-        }
+        if (freshConfig.clientId) oidcProvider.clientId = freshConfig.clientId;
+        if (freshConfig.clientSecret) oidcProvider.clientSecret = freshConfig.clientSecret;
+        console.log(`[${ts()}] [OIDC] Credentials refreshed from DB — clientId: ${!!freshConfig.clientId}, clientSecret: ${!!freshConfig.clientSecret}`);
       } catch (e) {
-        console.error('Failed to refresh OIDC credentials:', e);
+        // DB not ready yet
       }
     }
 
@@ -295,9 +319,9 @@ export const authOptions: NextAuthOptions = {
     if (!oidcProvider) {
       try {
         const freshConfig = getOidcSettingsSync();
-        if (freshConfig.enabled && freshConfig.clientId && freshConfig.clientSecret && freshConfig.issuerUrl) {
+        if (freshConfig.enabled && freshConfig.clientId && freshConfig.issuerUrl) {
           addOidcProvider(dynamicProviders, freshConfig);
-          console.log('OIDC provider added dynamically from DB');
+          console.log(`[${ts()}] [OIDC] Provider added dynamically from DB`);
         }
       } catch (e) {
         // DB not ready yet, will retry on next access
@@ -316,7 +340,7 @@ export const authOptions: NextAuthOptions = {
       // Validate OIDC login has required data
       if (account?.provider === 'oidc') {
         if (!profile?.sub) {
-          console.error('OIDC SIGNIN REJECTED: Missing "sub" claim', {
+          console.error(`[${ts()}] [OIDC] SIGNIN REJECTED: Missing "sub" claim`, {
             claims: profile ? Object.keys(profile) : 'no profile',
           });
           return '/login?error=OAuthCallback&reason=missing_sub';
@@ -324,13 +348,13 @@ export const authOptions: NextAuthOptions = {
 
         const email = (profile.email || (profile as any).preferred_username || '').toString().toLowerCase().trim();
         if (!email) {
-          console.error('OIDC SIGNIN REJECTED: Missing email/preferred_username', {
+          console.error(`[${ts()}] [OIDC] SIGNIN REJECTED: Missing email/preferred_username`, {
             claims: Object.keys(profile),
           });
           return '/login?error=OAuthCallback&reason=missing_email';
         }
 
-        console.log('OIDC SIGNIN ALLOWED:', { sub: profile.sub, email });
+        console.log(`[${ts()}] [OIDC] SIGNIN ALLOWED:`, { sub: profile.sub, email });
         return true;
       }
 
@@ -338,7 +362,7 @@ export const authOptions: NextAuthOptions = {
     },
     async redirect({ url, baseUrl }) {
       // Log redirect for debugging
-      console.log('NextAuth redirect callback:', { url, baseUrl });
+      console.log(`[${ts()}] [AUTH] Redirect callback:`, { url, baseUrl });
 
       // If URL is already absolute and different from baseUrl, use it
       if (url.startsWith('http')) {
@@ -346,19 +370,19 @@ export const authOptions: NextAuthOptions = {
         const urlObj = new URL(url);
         const baseUrlObj = new URL(baseUrl);
         if (urlObj.origin === baseUrlObj.origin) {
-          console.log('Allowing redirect to same origin:', url);
+          console.log(`[${ts()}] [AUTH] Allowing redirect to same origin:`, url);
           return url;
         }
       }
 
       // If URL starts with /, it's relative, prepend baseUrl
       if (url.startsWith('/')) {
-        console.log('Redirecting to relative URL:', `${baseUrl}${url}`);
+        console.log(`[${ts()}] [AUTH] Redirecting to relative URL:`, `${baseUrl}${url}`);
         return `${baseUrl}${url}`;
       }
 
       // Default to baseUrl
-      console.log('Defaulting to baseUrl:', baseUrl);
+      console.log(`[${ts()}] [AUTH] Defaulting to baseUrl:`, baseUrl);
       return baseUrl;
     },
     async jwt({ token, user, account, profile, trigger }) {
@@ -366,7 +390,7 @@ export const authOptions: NextAuthOptions = {
 
       // Debug logging for OIDC
       if (account && account.provider === 'oidc') {
-        console.log('OIDC JWT callback:', {
+        console.log(`[${ts()}] [OIDC] JWT callback:`, {
           provider: account.provider,
           hasProfile: !!profile,
           accountType: account.type,
@@ -380,7 +404,7 @@ export const authOptions: NextAuthOptions = {
         const oidcEmail = (profile.email || (profile as any).preferred_username || '').toString().toLowerCase().trim();
         const oidcName = (profile.name || (profile as any).preferred_username || oidcEmail) as string;
 
-        console.log('Processing OIDC login for profile:', {
+        console.log(`[${ts()}] [OIDC] Processing login for profile:`, {
           sub: profile.sub,
           email: oidcEmail,
           name: oidcName,
@@ -397,7 +421,7 @@ export const authOptions: NextAuthOptions = {
             .limit(1);
 
           if (!dbUser || dbUser.length === 0) {
-            console.log('No user found with OIDC subject, checking by email:', oidcEmail);
+            console.log(`[${ts()}] [OIDC] No user found with OIDC subject, checking by email:`, oidcEmail);
 
             // Check if user exists by email (normalized)
             dbUser = await db
@@ -408,7 +432,7 @@ export const authOptions: NextAuthOptions = {
 
             if (dbUser && dbUser.length > 0) {
               // Link OIDC subject to existing user
-              console.log('Linking OIDC subject to existing user:', {
+              console.log(`[${ts()}] [OIDC] Linking subject to existing user:`, {
                 userId: dbUser[0].id,
                 email: dbUser[0].email,
               });
@@ -419,7 +443,7 @@ export const authOptions: NextAuthOptions = {
                 .where(eq(users.id, dbUser[0].id));
             } else {
               // Create new user
-              console.log('Creating new user from OIDC profile:', {
+              console.log(`[${ts()}] [OIDC] Creating new user from profile:`, {
                 email: oidcEmail,
                 oidcSub: oidcSub,
               });
@@ -435,10 +459,10 @@ export const authOptions: NextAuthOptions = {
                 .returning();
 
               dbUser = newUser;
-              console.log('New user created successfully:', { userId: dbUser[0]?.id });
+              console.log(`[${ts()}] [OIDC] New user created:`, { userId: dbUser[0]?.id });
             }
           } else {
-            console.log('Found existing user with OIDC subject:', {
+            console.log(`[${ts()}] [OIDC] Found existing user with subject:`, {
               userId: dbUser[0].id,
               email: dbUser[0].email,
             });
@@ -456,22 +480,22 @@ export const authOptions: NextAuthOptions = {
             const maxAgeSeconds = 2 * 24 * 60 * 60; // 2 days
             token.exp = Math.floor(Date.now() / 1000) + maxAgeSeconds;
 
-            console.log('OIDC token created successfully:', {
+            console.log(`[${ts()}] [OIDC] Token created:`, {
               userId: token.id,
               email: token.email,
               expiresIn: `${maxAgeSeconds / 3600} hours`,
             });
           } else {
-            console.error('OIDC ERROR: Failed to create or find user after processing');
+            console.error(`[${ts()}] [OIDC] ERROR: Failed to create or find user after processing`);
           }
         } catch (error) {
-          console.error('OIDC ERROR: Exception during user processing:', error);
+          console.error(`[${ts()}] [OIDC] ERROR: Exception during user processing:`, error);
         }
       }
 
       // Log if OIDC callback received but missing profile
       if (account && account.provider === 'oidc' && !profile) {
-        console.error('OIDC ERROR: Callback received but no profile data', {
+        console.error(`[${ts()}] [OIDC] ERROR: Callback received but no profile data`, {
           accountType: account.type,
           hasAccessToken: !!account.access_token,
           hasIdToken: !!account.id_token,
@@ -535,7 +559,7 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async signIn({ user, account, profile, isNewUser }) {
-      console.log('Sign in event:', {
+      console.log(`[${ts()}] [AUTH] Sign in event:`, {
         provider: account?.provider,
         userEmail: user?.email,
         isNewUser,
@@ -544,14 +568,14 @@ export const authOptions: NextAuthOptions = {
   },
   logger: {
     error(code, metadata) {
-      console.error('NEXTAUTH ERROR:', code, JSON.stringify(metadata, null, 2));
+      console.error(`[${ts()}] [NEXTAUTH] ERROR:`, code, JSON.stringify(metadata, null, 2));
     },
     warn(code) {
-      console.warn('NEXTAUTH WARN:', code);
+      console.warn(`[${ts()}] [NEXTAUTH] WARN:`, code);
     },
     debug(code, metadata) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('NEXTAUTH DEBUG:', code, metadata);
+        console.log(`[${ts()}] [NEXTAUTH] DEBUG:`, code, metadata);
       }
     },
   },
