@@ -20,10 +20,15 @@ const withPWA = require("@ducanh2912/next-pwa").default({
       urlPattern: /\/api\/settings/,
       handler: 'NetworkOnly',
     },
+    // Never cache auth routes (OAuth state/cookies must always hit the server)
+    {
+      urlPattern: /\/api\/auth\//,
+      handler: 'NetworkOnly',
+    },
     // Default API route handling
     {
       urlPattern: ({ sameOrigin, url: { pathname } }) =>
-        sameOrigin && pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/callback'),
+        sameOrigin && pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/'),
       handler: 'NetworkFirst',
       options: {
         cacheName: 'apis',

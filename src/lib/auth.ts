@@ -200,7 +200,7 @@ function addOidcProvider(providers: any[], config: ReturnType<typeof getOidcSett
       clientId: config.clientId,
       clientSecret: config.clientSecret,
       idToken: true,
-      checks: ['pkce', 'state'],
+      checks: ['state'],
       profile(profile: any) {
         const email = (profile.email || profile.preferred_username || '').toLowerCase().trim();
         if (!profile.sub || !email) {
@@ -513,6 +513,19 @@ export const authOptions: NextAuthOptions = {
         userEmail: user?.email,
         isNewUser,
       });
+    },
+  },
+  logger: {
+    error(code, metadata) {
+      console.error('NEXTAUTH ERROR:', code, JSON.stringify(metadata, null, 2));
+    },
+    warn(code) {
+      console.warn('NEXTAUTH WARN:', code);
+    },
+    debug(code, metadata) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('NEXTAUTH DEBUG:', code, metadata);
+      }
     },
   },
   debug: process.env.NODE_ENV === 'development',

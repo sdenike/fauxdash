@@ -35,6 +35,28 @@ function LoginContent() {
   useEffect(() => {
     const controller = new AbortController()
 
+    // Check for OAuth error in URL params
+    const params = new URLSearchParams(window.location.search)
+    const oauthError = params.get('error')
+    if (oauthError) {
+      const reason = params.get('reason')
+      if (oauthError === 'OAuthCallback') {
+        setError(
+          reason === 'missing_sub'
+            ? 'Authentication failed: Your identity provider did not return a user identifier. Please contact your administrator.'
+            : reason === 'missing_email'
+            ? 'Authentication failed: Your identity provider did not return an email address. Please contact your administrator.'
+            : 'Authentication failed: There was a problem completing sign-in with your identity provider. Please try again.'
+        )
+      } else if (oauthError === 'OAuthSignin') {
+        setError('Could not start the sign-in process. Please try again.')
+      } else if (oauthError === 'Callback') {
+        setError('Authentication callback failed. Please try again.')
+      } else {
+        setError(`Authentication error: ${oauthError}. Please try again.`)
+      }
+    }
+
     // Check if setup is needed first
     fetch('/api/setup/status', { signal: controller.signal })
       .then(res => res.json())
@@ -185,7 +207,14 @@ function LoginContent() {
         {/* OIDC-only mode */}
         {oidcEnabled && disablePasswordLogin ? (
           <CardContent className="space-y-4">
-            {error && <AlertMessage variant="error" message={error} />}
+            {error && (
+              <div className="space-y-3">
+                <AlertMessage variant="error" message={error} />
+                <p className="text-sm text-muted-foreground">
+                  Click below to try again.
+                </p>
+              </div>
+            )}
             <Button
               type="button"
               className="w-full"
