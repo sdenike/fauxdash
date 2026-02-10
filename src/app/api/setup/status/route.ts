@@ -3,6 +3,8 @@ import { getDb } from '@/db';
 import { users } from '@/db/schema';
 import { count } from 'drizzle-orm';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const db = getDb();
@@ -14,6 +16,10 @@ export async function GET() {
     return NextResponse.json({
       needsSetup: userCount === 0,
       userCount,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
     });
   } catch (error: any) {
     console.error('Setup status check error:', error);

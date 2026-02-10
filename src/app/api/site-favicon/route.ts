@@ -7,6 +7,7 @@ import { join } from 'path';
 import sharp from 'sharp';
 import { logSystem } from '@/lib/logger';
 import { fetchAndSaveFavicon } from '@/lib/favicon-utils';
+import { saveOriginal } from '@/lib/media-library';
 
 // Use /data for persistence in Docker, fallback to public for dev
 const SITE_FAVICON_DIR = process.env.NODE_ENV === 'production'
@@ -83,6 +84,14 @@ export async function POST(request: NextRequest) {
       const sourcePath = join(process.cwd(), 'public', 'favicons', result.filename || '');
       if (existsSync(sourcePath)) {
         const imageBuffer = readFileSync(sourcePath);
+
+        // Save original to media library (non-fatal)
+        try {
+          await saveOriginal(imageBuffer, result.filename || 'favicon.png', 'image/png');
+        } catch (err) {
+          logSystem('warn', 'Failed to save original to media library', { error: err });
+        }
+
         // Convert to PNG and resize to standard favicon size
         const processedBuffer = await sharp(imageBuffer)
           .resize(64, 64, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
@@ -104,6 +113,7 @@ export async function POST(request: NextRequest) {
     // Handle file upload
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
+    const fromMediaLibrary = formData.get('fromMediaLibrary') === '1';
 
     if (!file) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
@@ -129,6 +139,15 @@ export async function POST(request: NextRequest) {
     // Read file content
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+
+    // Save original to media library (non-fatal), skip if re-processing from media library
+    if (!fromMediaLibrary) {
+      try {
+        await saveOriginal(buffer, file.name, file.type);
+      } catch (err) {
+        logSystem('warn', 'Failed to save original to media library', { error: err });
+      }
+    }
 
     // Convert to PNG and resize to standard favicon size
     const processedBuffer = await sharp(buffer)

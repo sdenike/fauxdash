@@ -1,16 +1,18 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/use-toast'
 import { IconSelector } from '@/components/icon-selector'
+import { MediaLibraryPicker } from '@/components/media-library-picker'
 import {
   PhotoIcon,
   ArrowUpTrayIcon,
   LinkIcon,
   Squares2X2Icon,
+  FolderIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline'
 
@@ -29,6 +31,7 @@ interface ImageIconPickerProps {
 
   // Serve config
   serveEndpoint?: string
+  urlFetchEndpoint?: string
 
   // Display
   previewHeight?: number
@@ -39,6 +42,10 @@ interface ImageIconPickerProps {
   showUpload?: boolean
   showLibrary?: boolean
   showUrl?: boolean
+  showMediaLibrary?: boolean
+
+  // Media library
+  onMediaSelect?: (filename: string) => void
 }
 
 export function ImageIconPicker({
@@ -50,12 +57,15 @@ export function ImageIconPicker({
   acceptedFileTypes = '.png,.jpg,.jpeg,.webp,.gif',
   maxFileSize = 10 * 1024 * 1024,
   serveEndpoint,
+  urlFetchEndpoint,
   previewHeight = 64,
   label,
   description,
   showUpload = true,
   showLibrary = true,
   showUrl = true,
+  showMediaLibrary = true,
+  onMediaSelect,
 }: ImageIconPickerProps) {
   const { toast } = useToast()
   const [uploading, setUploading] = useState(false)
@@ -79,6 +89,11 @@ export function ImageIconPicker({
 
   const getPreviewUrl = useCallback(() => {
     if (!value || valueType === 'none') return null
+    // Handle media library references
+    if (value.startsWith('media:')) {
+      const filename = value.replace('media:', '')
+      return `/api/media-library/${encodeURIComponent(filename)}?thumb=1`
+    }
     if (valueType === 'upload') {
       return serveEndpoint || value
     }
@@ -163,7 +178,7 @@ export function ImageIconPicker({
 
     setFetchingUrl(true)
     try {
-      const response = await fetch('/api/site-favicon', {
+      const response = await fetch(urlFetchEndpoint || uploadEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: urlInput }),
@@ -193,15 +208,41 @@ export function ImageIconPicker({
     }
   }, [urlInput, onChange, toast])
 
+  const handleMediaSelect = useCallback((filename: string) => {
+    if (onMediaSelect) {
+      onMediaSelect(filename)
+    } else {
+      setImageExists(true)
+      onChange(`media:${filename}`, 'upload')
+    }
+  }, [onMediaSelect, onChange])
+
   const handleRemove = useCallback(() => {
     setImageExists(false)
     onChange('', 'none')
   }, [onChange])
 
   const previewUrl = getPreviewUrl()
-  const typeLabel = valueType === 'upload' ? 'Custom upload' :
+  const typeLabel = value?.startsWith('media:') ? 'From uploads' :
+                    valueType === 'upload' ? 'Custom upload' :
                     valueType === 'library' ? 'From library' :
                     valueType === 'url' ? 'From URL' : 'None'
+
+  // Count visible columns for responsive grid
+  const visibleColumns = useMemo(() => {
+    let count = 0
+    if (showUpload) count++
+    if (showLibrary) count++
+    if (showUrl) count++
+    if (showMediaLibrary) count++
+    return count
+  }, [showUpload, showLibrary, showUrl, showMediaLibrary])
+
+  const gridClass = visibleColumns <= 2
+    ? `grid grid-cols-1 md:grid-cols-2 gap-4`
+    : visibleColumns === 3
+    ? `grid grid-cols-1 md:grid-cols-3 gap-4`
+    : `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4`
 
   return (
     <div className="space-y-4">
@@ -252,7 +293,7 @@ export function ImageIconPicker({
       </div>
 
       {/* Action grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className={gridClass}>
         {showUpload && (
           <div className="p-4 rounded-md border bg-card">
             <div className="flex items-center gap-2 mb-3">
@@ -330,6 +371,19 @@ export function ImageIconPicker({
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               Direct link to an image
+            </p>
+          </div>
+        )}
+
+        {showMediaLibrary && (
+          <div className="p-4 rounded-md border bg-card">
+            <div className="flex items-center gap-2 mb-3">
+              <FolderIcon className="h-5 w-5 text-muted-foreground" />
+              <span className="font-medium text-sm">Your Uploads</span>
+            </div>
+            <MediaLibraryPicker onSelect={handleMediaSelect} />
+            <p className="text-xs text-muted-foreground mt-2">
+              Reuse a previously uploaded image
             </p>
           </div>
         )}

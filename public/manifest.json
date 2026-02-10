@@ -9,42 +9,42 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/icons/icon-72x72.png",
+      "src": "/api/pwa-icons/serve/72",
       "sizes": "72x72",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-96x96.png",
+      "src": "/api/pwa-icons/serve/96",
       "sizes": "96x96",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-128x128.png",
+      "src": "/api/pwa-icons/serve/128",
       "sizes": "128x128",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-144x144.png",
+      "src": "/api/pwa-icons/serve/144",
       "sizes": "144x144",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-152x152.png",
+      "src": "/api/pwa-icons/serve/152",
       "sizes": "152x152",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "/api/pwa-icons/serve/192",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-384x384.png",
+      "src": "/api/pwa-icons/serve/384",
       "sizes": "384x384",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "/api/pwa-icons/serve/512",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

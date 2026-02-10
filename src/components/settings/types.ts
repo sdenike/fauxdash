@@ -124,6 +124,9 @@ export interface Settings {
   // Site Favicon
   siteFavicon: string
   siteFaviconType: 'upload' | 'library' | 'url' | 'default'
+  // PWA App Icon
+  pwaIconPath: string
+  pwaIconType: 'upload' | 'library' | 'url' | 'none'
 }
 
 export interface SettingsTabProps {
@@ -250,4 +253,7 @@ export const defaultSettings: Settings = {
   // Site Favicon
   siteFavicon: '',
   siteFaviconType: 'default',
+  // PWA App Icon
+  pwaIconPath: '',
+  pwaIconType: 'none',
 }

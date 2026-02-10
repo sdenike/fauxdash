@@ -11,11 +11,13 @@ import {
   ArrowUpTrayIcon,
   LinkIcon,
   Squares2X2Icon,
+  FolderIcon,
   TrashIcon,
   SparklesIcon,
   ArrowUturnLeftIcon,
 } from '@heroicons/react/24/outline'
 import { triggerFaviconRefresh } from '@/components/dynamic-favicon'
+import { MediaLibraryPicker } from '@/components/media-library-picker'
 
 interface SiteFaviconSettingsProps {
   favicon: string
@@ -506,9 +508,63 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
     }
   }, [originalFavicon, onChange, toast])
 
+  const handleMediaSelect = useCallback(async (filename: string) => {
+    toast({ title: 'Processing...', description: 'Setting favicon from upload.' })
+
+    try {
+      // Fetch the original from media library
+      const res = await fetch(`/api/media-library/${encodeURIComponent(filename)}`)
+      if (!res.ok) throw new Error('Failed to fetch original')
+
+      const blob = await res.blob()
+      const formData = new FormData()
+      formData.append('file', blob, filename)
+      formData.append('fromMediaLibrary', '1')
+
+      // Re-upload to site-favicon endpoint to process it
+      const uploadRes = await fetch('/api/site-favicon', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await uploadRes.json()
+      if (!data.success) throw new Error(data.error || 'Failed to process favicon')
+
+      // Save settings with media: prefix
+      const mediaRef = `media:${filename}`
+      const settingsRes = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ siteFavicon: mediaRef, siteFaviconType: 'upload' }),
+      })
+
+      if (!settingsRes.ok) throw new Error('Failed to save settings')
+
+      onChange(mediaRef, 'upload')
+      triggerFaviconRefresh()
+      toast({
+        variant: 'success',
+        title: 'Favicon updated',
+        description: 'Site favicon set from your upload. Reloading page...',
+      })
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed',
+        description: error.message || 'Failed to process upload.',
+      })
+    }
+  }, [onChange, toast])
+
   // Compute the preview URL
   const getPreviewUrl = () => {
     if (!favicon) return null
+    if (favicon.startsWith('media:')) {
+      const filename = favicon.replace('media:', '')
+      return `/api/media-library/${encodeURIComponent(filename)}?thumb=1`
+    }
     if (favicon.startsWith('favicon:')) {
       const path = favicon.replace('favicon:', '')
       return path.startsWith('/api/favicons/serve/') ? path : `/api/favicons/serve/${path}`
@@ -537,7 +593,7 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
           )}
           <div className="flex-1">
             <p className="text-sm font-medium">
-              {faviconType === 'default' ? 'Default' : faviconType === 'upload' ? 'Custom upload' : faviconType === 'url' ? 'From URL' : 'From library'}
+              {favicon?.startsWith('media:') ? 'From uploads' : faviconType === 'default' ? 'Default' : faviconType === 'upload' ? 'Custom upload' : faviconType === 'url' ? 'From URL' : 'From library'}
             </p>
             {favicon && (
               <p className="text-xs text-muted-foreground truncate max-w-[200px]">{favicon}</p>
@@ -604,7 +660,7 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Upload option */}
         <div className="p-4 rounded-md border bg-card">
           <div className="flex items-center gap-2 mb-3">
@@ -681,6 +737,18 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             Direct link to favicon image
+          </p>
+        </div>
+
+        {/* Your Uploads option */}
+        <div className="p-4 rounded-md border bg-card">
+          <div className="flex items-center gap-2 mb-3">
+            <FolderIcon className="h-5 w-5 text-muted-foreground" />
+            <span className="font-medium text-sm">Your Uploads</span>
+          </div>
+          <MediaLibraryPicker onSelect={handleMediaSelect} />
+          <p className="text-xs text-muted-foreground mt-2">
+            Reuse a previously uploaded image
           </p>
         </div>
       </div>

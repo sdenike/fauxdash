@@ -5,6 +5,30 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-02-10
+
+### Added
+- **Media Library** — uploaded images are now saved as originals and can be reused across header logo, site favicon, and PWA icon settings via a new "Your Uploads" picker
+- **PWA App Icon settings** — customize the icon used when installing as a Progressive Web App (Appearance > PWA App Icon)
+- **PWA icon serving API** (`/api/pwa-icons`) — dynamically serves custom PWA icons at all required sizes with `NetworkFirst` caching
+- **Media Library API** (`/api/media-library`) — serves and lists original uploads with optional thumbnail generation
+- **Password strength meter** on the setup wizard with real-time visual feedback
+- **Password confirmation matching** indicator on the setup wizard
+
+### Fixed
+- **Admin dashboard tabs overlapping on mobile/PWA** — replaced fixed `grid-cols-8` with responsive flex-wrap layout that flows into rows on small screens (`flex-wrap` < 640px, `grid-cols-4` at sm, `grid-cols-8` at lg)
+- **User settings tabs** also made responsive with the same flex-wrap pattern
+- **Setup wizard** rewritten with inline styles to avoid theme/CSS dependency issues during first-run when no theme is loaded
+- **Setup status API** now uses `force-dynamic` and `no-cache` headers to prevent stale PWA cache from causing redirect loops after setup
+- **Dark theme contrast** — `primary-foreground` and `destructive-foreground` changed to pure white for better readability on colored backgrounds
+
+### Changed
+- PWA manifest icons now served via `/api/pwa-icons/serve/{size}` instead of static `/icons/` files, enabling custom PWA icons
+- Apple touch icon now served from `/api/pwa-icons/serve/192` for custom icon support
+- `init-db.js` no longer creates a default admin user — the browser-based setup wizard at `/setup` handles first-time account creation
+- Image icon picker grid adapts column count based on number of visible options
+- Site favicon settings grid expanded from 3 to 4 columns to accommodate the new "Your Uploads" option
+
 ## [0.10.0] - 2026-02-06
 
 ### Changed
@@ -1154,7 +1178,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **0.10.0** - SQLite-only, consolidated migrations, settings optimization (Current)
+- **0.11.0** - Media library, PWA app icon settings, responsive mobile tabs (Current)
+- **0.10.0** - SQLite-only, consolidated migrations, settings optimization
 - **0.8.0** - Weather location manager with drag-and-drop UI
 - **0.7.0** - Mobile-responsive UI, PWA support, offline mode
 - **0.6.0** - Demo content system, N+1 query performance fix

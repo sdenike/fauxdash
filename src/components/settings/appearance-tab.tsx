@@ -15,6 +15,7 @@ import { HomepageGraphicSettings } from './homepage-graphic-settings'
 import { SiteTitleSettings } from './site-title-settings'
 import { SiteFaviconSettings } from './site-favicon-settings'
 import { HeaderLogoSettings } from './header-logo-settings'
+import { PwaIconSettings } from './pwa-icon-settings'
 
 export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) {
   const { setTheme: setNextTheme, resolvedTheme } = useTheme()
@@ -180,6 +181,29 @@ export function AppearanceTab({ settings, onSettingsChange }: SettingsTabProps) 
                 ...settings,
                 siteFavicon: favicon,
                 siteFaviconType: faviconType,
+              })
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      {/* PWA App Icon Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>PWA App Icon</CardTitle>
+          <CardDescription>
+            Customize the icon used when installing as a Progressive Web App
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PwaIconSettings
+            pwaIconPath={settings.pwaIconPath}
+            pwaIconType={settings.pwaIconType}
+            onChange={(path, type) => {
+              onSettingsChange({
+                ...settings,
+                pwaIconPath: path,
+                pwaIconType: type,
               })
             }}
           />

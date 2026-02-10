@@ -180,6 +180,9 @@ export async function GET(request: NextRequest) {
     // Site favicon settings
     siteFavicon: settingsObj.siteFavicon || '',
     siteFaviconType: (settingsObj.siteFaviconType || 'default') as 'upload' | 'library' | 'url' | 'default',
+    // PWA app icon settings
+    pwaIconPath: settingsObj.pwaIconPath || '',
+    pwaIconType: (settingsObj.pwaIconType || 'none') as 'upload' | 'library' | 'url' | 'none',
   }, {
     headers: {
       'Cache-Control': 'no-store, no-cache, must-revalidate',
@@ -326,6 +329,9 @@ export async function POST(request: NextRequest) {
   // Site favicon settings
   if (body.siteFavicon !== undefined) settingsToSave.push({ key: 'siteFavicon', value: body.siteFavicon || '' });
   if (body.siteFaviconType !== undefined) settingsToSave.push({ key: 'siteFaviconType', value: body.siteFaviconType || 'default' });
+  // PWA app icon settings
+  if (body.pwaIconPath !== undefined) settingsToSave.push({ key: 'pwaIconPath', value: body.pwaIconPath || '' });
+  if (body.pwaIconType !== undefined) settingsToSave.push({ key: 'pwaIconType', value: body.pwaIconType || 'none' });
 
   // Settings that should be stored globally (userId = null) rather than per-user
   const globalSettingKeys = [
@@ -349,6 +355,8 @@ export async function POST(request: NextRequest) {
     'homepageGraphicHideWhenLoggedIn',
     // Site favicon settings
     'siteFavicon', 'siteFaviconType',
+    // PWA app icon settings
+    'pwaIconPath', 'pwaIconType',
   ];
 
   // Split into global vs user settings

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import fs from 'fs'
 import path from 'path'
 import sharp from 'sharp'
+import { saveOriginal } from '@/lib/media-library'
 
 const isDev = process.env.NODE_ENV === 'development'
 const assetDir = isDev
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData()
     const file = formData.get('logo') as File
+    const fromMediaLibrary = formData.get('fromMediaLibrary') === '1'
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -61,6 +63,15 @@ export async function POST(request: Request) {
     // Read file buffer
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
+
+    // Save original to media library (non-fatal), skip if re-processing from media library
+    if (!fromMediaLibrary) {
+      try {
+        await saveOriginal(buffer, file.name, file.type)
+      } catch (err) {
+        console.warn('Failed to save original to media library:', err)
+      }
+    }
 
     // Process with Sharp - resize if needed, convert to WebP
     const image = sharp(buffer)

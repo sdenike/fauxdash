@@ -20,9 +20,27 @@ const withPWA = require("@ducanh2912/next-pwa").default({
       urlPattern: /\/api\/settings/,
       handler: 'NetworkOnly',
     },
+    // PWA icons should always check server for custom icons
+    {
+      urlPattern: /\/api\/pwa-icons\//,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'pwa-icons',
+        networkTimeoutSeconds: 5,
+        expiration: {
+          maxEntries: 16,
+          maxAgeSeconds: 3600,
+        },
+      },
+    },
     // Never cache auth routes (OAuth state/cookies must always hit the server)
     {
       urlPattern: /\/api\/auth\//,
+      handler: 'NetworkOnly',
+    },
+    // Never cache setup status (stale cache causes redirect loops after setup)
+    {
+      urlPattern: /\/api\/setup\//,
       handler: 'NetworkOnly',
     },
     // Default API route handling

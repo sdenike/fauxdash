@@ -172,38 +172,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_analytics_daily_type ON analytics_daily(type);
 `);
 
-// Check if admin user exists and create if needed
-// Note: Default settings are not created here - they are handled by the settings API
-// which returns hardcoded defaults when no user-specific settings exist
-async function createAdminUser() {
-  const existingUsers = db.prepare('SELECT COUNT(*) as count FROM users').get();
-
-  if (existingUsers.count === 0) {
-    const argon2 = require('argon2');
-    const passwordHash = await argon2.hash('admin');
-
-    db.prepare(`
-      INSERT INTO users (email, username, password_hash, is_admin)
-      VALUES (?, ?, ?, ?)
-    `).run('admin@fauxdash.local', 'admin', passwordHash, 1);
-
-    console.log('');
-    console.log('='.repeat(60));
-    console.log('Default admin user created!');
-    console.log('Email: admin@fauxdash.local');
-    console.log('Password: admin');
-    console.log('PLEASE CHANGE THIS PASSWORD IMMEDIATELY!');
-    console.log('='.repeat(60));
-    console.log('');
-  } else {
-    console.log('Database already initialized with users');
-  }
-
-  db.close();
-}
-
-createAdminUser().catch(err => {
-  console.error('Failed to create admin user:', err);
-  db.close();
-  process.exit(1);
-});
+// No default admin user is created here — the browser-based setup wizard
+// at /setup handles first-time account creation.
+console.log('Database schema initialized');
+db.close();

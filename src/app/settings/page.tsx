@@ -172,10 +172,10 @@ export default function SettingsPage() {
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="weather">Weather</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsList className="flex flex-wrap h-auto gap-1 sm:grid sm:grid-cols-3">
+            <TabsTrigger value="general" className="flex-1 sm:flex-none">General</TabsTrigger>
+            <TabsTrigger value="weather" className="flex-1 sm:flex-none">Weather</TabsTrigger>
+            <TabsTrigger value="appearance" className="flex-1 sm:flex-none">Appearance</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-4 mt-4">
