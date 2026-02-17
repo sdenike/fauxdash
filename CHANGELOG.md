@@ -5,6 +5,19 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.2] - 2026-02-17
+
+### Fixed
+- **Redis settings now persist correctly** — Redis cache configuration (enabled, host, port, password, database) now saves and loads properly after page reload
+
+### Added
+- **MaxMind database update button** — One-click database updates from both Admin > Tools and Admin > Settings > GeoIP
+  - Shows "Update Database" when database is outdated (older than last Tuesday)
+  - Displays helpful message when MaxMind credentials not configured
+- **Hide Demo Content option** — Toggle to hide the demo content section in Admin > Tools
+  - Prevents accidental re-import of demo data
+  - Setting persists across sessions
+
 ## [0.12.1] - 2026-02-17
 
 ### Changed
