@@ -5,6 +5,17 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.1] - 2026-02-17
+
+### Changed
+- **Repository cleanup** — Moved documentation files to `docs/` folder for cleaner root directory
+  - QUICK_START.md, DEPLOY.md, PROJECT_STRUCTURE.md moved to docs/
+  - DECISIONS.md, BACKLOG.md, SMOKE_TEST.md moved to docs/
+  - README.md now includes Documentation section with links to docs/
+
+### Removed
+- `.env.local.example` — Superseded by simplified `.env.example`
+
 ## [0.12.0] - 2026-02-17
 
 ### Added
