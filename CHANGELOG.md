@@ -5,6 +5,33 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-02-17
+
+### Added
+- **Redis Cache Settings Tab** — Configure external Redis server via Admin > Settings > Cache
+  - Enable/disable Redis caching from the UI
+  - Configure host, port, password, and database
+  - Test connection button to verify settings
+- **Auto-generated NEXTAUTH_SECRET** — Secret is automatically generated on first run if not provided
+  - Stored persistently in `/data/.nextauth_secret`
+  - No manual configuration required for basic setup
+
+### Changed
+- **Redis is now optional and external** — Redis is no longer included in docker-compose
+  - Users who need Redis caching can run their own Redis instance
+  - Configuration moved from environment variables to Admin > Settings > Cache
+  - Documentation updated with Redis setup instructions
+- **Simplified docker-compose.yml** — Minimal configuration required
+  - Removed Redis service and volumes
+  - Removed REDIS_ENABLED and REDIS_URL environment variables
+  - Only NEXTAUTH_URL is optionally configurable
+- **Zero-config deployment** — Just `docker compose up -d` and go!
+
+### Removed
+- Redis service from docker-compose.sample.yml
+- REDIS_ENABLED and REDIS_URL environment variables
+- redis-data volume
+
 ## [0.11.1] - 2026-02-17
 
 ### Changed
@@ -1203,7 +1230,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **0.11.1** - Documentation overhaul, config simplification, cleanup (Current)
+- **0.12.0** - Zero-config deployment, Redis as optional external service (Current)
+- **0.11.1** - Documentation overhaul, config simplification, cleanup
 - **0.11.0** - Media library, PWA app icon settings, responsive mobile tabs
 - **0.10.0** - SQLite-only, consolidated migrations, settings optimization
 - **0.8.0** - Weather location manager with drag-and-drop UI

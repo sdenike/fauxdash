@@ -1,69 +1,48 @@
 # Faux|Dash - Quick Start Guide
 
-Get up and running in 5 minutes.
+Get up and running in under a minute!
 
 ## Prerequisites
 
 - **Docker** and **Docker Compose** installed
-- **1GB disk space** for Docker images
 
-## Step 1: Get the Files
+## Step 1: Get the Compose File
 
 ```bash
-# Using pre-built image (recommended)
 curl -O https://raw.githubusercontent.com/sdenike/fauxdash/master/docker-compose.sample.yml
 mv docker-compose.sample.yml docker-compose.yml
-curl -O https://raw.githubusercontent.com/sdenike/fauxdash/master/.env.example
-mv .env.example .env
+```
 
-# Or clone the repository
+Or clone the repository:
+
+```bash
 git clone https://github.com/sdenike/fauxdash.git
 cd fauxdash
-cp .env.example .env
 ```
 
-## Step 2: Configure Environment
-
-Generate and add a secret to your `.env`:
-
-```bash
-echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> .env
-```
-
-**Optional**: Add a weather API key (free at https://www.weatherapi.com/):
-
-```bash
-echo "WEATHERAPI_KEY=your_api_key_here" >> .env
-```
-
-## Step 3: Start the Application
+## Step 2: Start
 
 ```bash
 docker compose up -d
 ```
 
-Wait about 30 seconds for containers to start.
+That's it! No configuration files to edit.
 
-## Step 4: Complete Setup
+## Step 3: Setup
 
-1. Open http://localhost:8080 in your browser
+1. Open http://localhost:8080
 2. Complete the setup wizard to create your admin account
 3. Optionally load demo content to explore features
 
-## Step 5: Add Your Content
-
-1. Click the **gear icon** in the header to access Admin
-2. Go to the **Content** tab
-3. Create a category (e.g., "Development")
-4. Add bookmarks to your category
-5. Return to homepage to see your dashboard
-
 ## Next Steps
 
-- Configure weather in Admin > Settings > Weather
-- Customize appearance in Admin > Settings > Appearance
-- Set up OIDC/SSO in Admin > Settings > Auth
-- Install as PWA on mobile devices
+All configuration is done through **Admin > Settings**:
+
+- Configure weather providers
+- Customize appearance
+- Set up OIDC/SSO authentication
+- Configure SMTP for password reset
+- Enable Redis caching (requires external Redis)
 
 ## Common Issues
 
@@ -74,11 +53,6 @@ Edit `docker-compose.yml`:
 ports:
   - "3000:8080"  # Change 3000 to any available port
 ```
-
-### Weather widget not showing
-
-1. Add `WEATHERAPI_KEY` to `.env`
-2. Restart: `docker compose restart app`
 
 ### Container errors
 
@@ -94,28 +68,18 @@ docker compose pull
 docker compose up -d
 ```
 
-## Backup Your Data
+## Backup
 
-Use the built-in backup feature:
-1. Go to Admin > Tools
-2. Click "Create Backup"
-3. Download the ZIP file
+Use the built-in backup in **Admin > Tools**, or backup the Docker volume:
 
-Or backup volumes manually:
 ```bash
-docker run --rm -v fauxdash-data:/data -v $(pwd):/backup alpine tar czf /backup/fauxdash-backup.tar.gz /data
+docker run --rm -v fauxdash-data:/data -v $(pwd):/backup alpine tar czf /backup/backup.tar.gz /data
 ```
 
-## Stop Faux|Dash
+## Stop
 
 ```bash
 docker compose down
-```
-
-## Uninstall
-
-```bash
-docker compose down -v  # -v removes data volumes
 ```
 
 ## Full Documentation

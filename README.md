@@ -17,27 +17,24 @@ A modern, self-hosted homepage dashboard for managing bookmarks and services. Bu
 - 📊 **Analytics** — Click tracking + GeoIP visitor mapping
 - 💾 **Backup** — Full backup/restore with CSV import/export
 - 🖱️ **Drag & Drop** — Reorder everything easily
+- ⚡ **Redis Cache** — Optional external Redis for improved performance
 
 ---
 
 ## 🚀 Quick Start
 
 ```bash
-# Pull the image
-docker pull ghcr.io/sdenike/fauxdash:latest
-
 # Get the compose file
 curl -O https://raw.githubusercontent.com/sdenike/fauxdash/master/docker-compose.sample.yml
 mv docker-compose.sample.yml docker-compose.yml
 
-# Generate secret and start
-echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> .env
+# Start (that's it!)
 docker compose up -d
 
 # Access at http://localhost:8080
 ```
 
-Complete the setup wizard to create your admin account.
+Complete the setup wizard to create your admin account. No manual configuration required!
 
 ---
 
@@ -50,7 +47,7 @@ Complete the setup wizard to create your admin account.
 
 ## ⚙️ Configuration
 
-Most settings are configured in **Admin > Settings**:
+All settings are configured in **Admin > Settings**:
 
 | Tab | Features |
 |-----|----------|
@@ -60,16 +57,18 @@ Most settings are configured in **Admin > Settings**:
 | **Email** | SMTP for password reset |
 | **Auth** | OIDC/SSO configuration |
 | **GeoIP** | Visitor location analytics |
+| **Cache** | External Redis configuration |
 
-### Environment Variables
+### Zero Config Required
 
-Only these are required in your `.env`:
+Faux|Dash auto-generates security secrets on first run. Just start the container and go!
+
+### Optional Environment Variables
 
 ```env
-NEXTAUTH_SECRET=<your-secret>  # Required: openssl rand -base64 32
-NEXTAUTH_URL=http://localhost:8080
-PUID=1000  # Optional: Match your host user
-PGID=1000
+NEXTAUTH_URL=http://localhost:8080  # Your deployment URL
+PUID=1000                            # Container user ID
+PGID=1000                            # Container group ID
 ```
 
 ---
@@ -85,13 +84,25 @@ Migrations run automatically.
 
 ---
 
+## ⚡ Redis Cache (Optional)
+
+Redis is not included with Faux|Dash. To use Redis caching:
+
+1. Run your own Redis server:
+   ```bash
+   docker run -d --name redis -p 6379:6379 redis:7-alpine
+   ```
+
+2. Configure in **Admin > Settings > Cache**
+
+---
+
 ## 🛠️ Tech Stack
 
 - **Next.js 16** with React 19
 - **SQLite** with Drizzle ORM
 - **Tailwind CSS** with shadcn/ui
 - **NextAuth.js** for authentication
-- **Redis** for caching
 
 ---
 

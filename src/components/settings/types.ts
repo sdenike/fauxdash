@@ -103,6 +103,12 @@ export interface Settings {
   smtpVerified: boolean
   // Logging
   logLevel: 'error' | 'warn' | 'info' | 'debug'
+  // Redis Cache
+  redisEnabled: boolean
+  redisHost: string
+  redisPort: number
+  redisPassword: string
+  redisDatabase: number
   // OIDC Authentication
   oidcEnabled: boolean
   oidcProviderName: string
@@ -232,6 +238,12 @@ export const defaultSettings: Settings = {
   smtpFromName: 'Faux|Dash',
   smtpVerified: false,
   logLevel: 'info',
+  // Redis Cache
+  redisEnabled: false,
+  redisHost: 'localhost',
+  redisPort: 6379,
+  redisPassword: '',
+  redisDatabase: 0,
   // OIDC Authentication
   oidcEnabled: false,
   oidcProviderName: '',

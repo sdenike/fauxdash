@@ -4,11 +4,11 @@
 #
 # QUICK START:
 #   1. Copy: cp docker-compose.sample.yml docker-compose.yml
-#   2. Generate secret: echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> .env
-#   3. Start: docker compose up -d
-#   4. Access: http://localhost:8080
+#   2. Start: docker compose up -d
+#   3. Access: http://localhost:8080
 #
 # Complete the setup wizard on first run to create your admin account.
+# NEXTAUTH_SECRET is auto-generated on first run if not provided.
 #
 # =============================================================================
 
@@ -30,24 +30,17 @@ services:
       # Database (SQLite, zero config)
       - SQLITE_FILE=/data/fauxdash.db
 
-      # Cache (recommended for performance)
-      - REDIS_ENABLED=${REDIS_ENABLED:-true}
-      - REDIS_URL=redis://redis:6379
-
-      # Authentication (REQUIRED - generate with: openssl rand -base64 32)
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      # Authentication URL (change if using reverse proxy)
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:8080}
 
-      # Optional: Debug IP detection (for proxy troubleshooting)
-      # - DEBUG_IP=true
+      # Optional: Provide your own secret (auto-generated if not set)
+      # Generate with: openssl rand -base64 32
+      # - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
 
     volumes:
       - fauxdash-data:/data
       - fauxdash-favicons:/app/public/favicons
       - fauxdash-logs:/data/logs
-
-    depends_on:
-      - redis
 
     restart: unless-stopped
 
@@ -58,15 +51,7 @@ services:
       retries: 3
       start_period: 40s
 
-  redis:
-    image: redis:7-alpine
-    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
-
 volumes:
   fauxdash-data:
   fauxdash-favicons:
   fauxdash-logs:
-  redis-data:

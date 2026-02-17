@@ -17,6 +17,7 @@ import {
   EmailTab,
   AppearanceTab,
   AuthenticationTab,
+  RedisTab,
   Settings,
   defaultSettings,
 } from '@/components/settings'
@@ -119,7 +120,7 @@ function SettingsContent() {
 
       <div className="max-w-4xl">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="flex flex-wrap h-auto gap-1 sm:grid sm:grid-cols-4 lg:grid-cols-8">
+          <TabsList className="flex flex-wrap h-auto gap-1 sm:grid sm:grid-cols-3 lg:grid-cols-9">
             <TabsTrigger value="general" className="flex-1 sm:flex-none">General</TabsTrigger>
             <TabsTrigger value="greeting" className="flex-1 sm:flex-none">Greeting</TabsTrigger>
             <TabsTrigger value="datetime" className="flex-1 sm:flex-none">Date & Time</TabsTrigger>
@@ -128,6 +129,7 @@ function SettingsContent() {
             <TabsTrigger value="email" className="flex-1 sm:flex-none">Email</TabsTrigger>
             <TabsTrigger value="appearance" className="flex-1 sm:flex-none">Appearance</TabsTrigger>
             <TabsTrigger value="authentication" className="flex-1 sm:flex-none">Auth</TabsTrigger>
+            <TabsTrigger value="redis" className="flex-1 sm:flex-none">Cache</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-4 mt-4">
@@ -160,6 +162,10 @@ function SettingsContent() {
 
           <TabsContent value="authentication" className="space-y-4 mt-4">
             <AuthenticationTab settings={settings} onSettingsChange={handleSettingsChange} />
+          </TabsContent>
+
+          <TabsContent value="redis" className="space-y-4 mt-4">
+            <RedisTab settings={settings} onSettingsChange={handleSettingsChange} />
           </TabsContent>
         </Tabs>
 

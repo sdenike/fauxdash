@@ -12,6 +12,24 @@ set -e
 PUID=${PUID:-1000}
 PGID=${PGID:-1000}
 
+# =============================================================================
+# Auto-generate NEXTAUTH_SECRET if not provided
+# =============================================================================
+SECRET_FILE="/data/.nextauth_secret"
+
+if [ -z "$NEXTAUTH_SECRET" ]; then
+  # Check if we have a previously generated secret
+  if [ -f "$SECRET_FILE" ]; then
+    export NEXTAUTH_SECRET=$(cat "$SECRET_FILE")
+    echo "Using existing auto-generated NEXTAUTH_SECRET"
+  else
+    # Generate a new secret
+    export NEXTAUTH_SECRET=$(openssl rand -base64 32 2>/dev/null || head -c 32 /dev/urandom | base64)
+    echo "Generated new NEXTAUTH_SECRET (stored in $SECRET_FILE)"
+    # We'll save it after ensuring /data directory is writable
+  fi
+fi
+
 # Display version and build info
 echo ""
 echo "============================================"
@@ -65,10 +83,24 @@ if [ "$(id -u)" = "0" ]; then
   chown -R fauxdash:fauxdash /app/.next 2>/dev/null || true
   chown -R fauxdash:fauxdash /app/public/favicons 2>/dev/null || true
 
+  # Save auto-generated secret if it doesn't exist
+  if [ ! -f "$SECRET_FILE" ] && [ -n "$NEXTAUTH_SECRET" ]; then
+    echo "$NEXTAUTH_SECRET" > "$SECRET_FILE"
+    chown fauxdash:fauxdash "$SECRET_FILE"
+    chmod 600 "$SECRET_FILE"
+  fi
+
   # Run as fauxdash user using su-exec
   RUN_CMD="su-exec fauxdash"
 else
   echo "Running as non-root user (UID: $(id -u)), skipping permission setup..."
+
+  # Save auto-generated secret if it doesn't exist (non-root)
+  if [ ! -f "$SECRET_FILE" ] && [ -n "$NEXTAUTH_SECRET" ]; then
+    echo "$NEXTAUTH_SECRET" > "$SECRET_FILE" 2>/dev/null || true
+    chmod 600 "$SECRET_FILE" 2>/dev/null || true
+  fi
+
   # Run directly without su-exec
   RUN_CMD=""
 fi
