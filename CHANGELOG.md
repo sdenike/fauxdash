@@ -5,6 +5,31 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] - 2026-02-17
+
+### Changed
+- **Documentation overhaul** — All documentation files updated to reflect current state
+  - README.md simplified with emojis and current tech stack (Next.js 16, React 19)
+  - DECISIONS.md rewritten for SQLite-only, OIDC support, PWA features
+  - PROJECT_STRUCTURE.md updated with accurate directory tree and 13 database tables
+  - BACKLOG.md updated to show implemented vs planned features
+  - DEPLOY.md simplified with reverse proxy guidance
+  - SMOKE_TEST.md updated for setup wizard, OIDC, PWA, and current features
+  - QUICK_START.md streamlined for new setup wizard flow
+
+- **Simplified configuration** — Most settings now configured in Admin > Settings
+  - docker-compose.sample.yml reduced to essential settings only
+  - .env.example simplified (weather, SMTP, OIDC, GeoIP now in-app)
+  - Removed environment variables for in-app configurable features
+
+### Removed
+- **IMPROVEMENTS.md** — Obsolete v0.2.0 notes (information preserved in CHANGELOG)
+- **15 individual migration scripts** — `migrate-add-*.js` files removed (consolidated into `migrate-all.js` in v0.10.0)
+- **docs/research/** — Internal development research documents
+
+### Fixed
+- **.gitignore** — Added `.agents/`, `/docs/research/`, `/public/site-assets/`
+
 ## [0.11.0] - 2026-02-10
 
 ### Added
@@ -1178,7 +1203,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **0.11.0** - Media library, PWA app icon settings, responsive mobile tabs (Current)
+- **0.11.1** - Documentation overhaul, config simplification, cleanup (Current)
+- **0.11.0** - Media library, PWA app icon settings, responsive mobile tabs
 - **0.10.0** - SQLite-only, consolidated migrations, settings optimization
 - **0.8.0** - Weather location manager with drag-and-drop UI
 - **0.7.0** - Mobile-responsive UI, PWA support, offline mode

@@ -47,9 +47,10 @@ build-info.json
 /drizzle/
 
 # -------------------------------------------
-# Development Plans (local only)
+# Development Plans & Research (local only)
 # -------------------------------------------
 /docs/plans/
+/docs/research/
 
 # -------------------------------------------
 # Favicon Storage (downloaded/processed icons)
@@ -124,4 +125,10 @@ public/workbox-*.js.map
 # Claude Files
 # -------------------------------------------
 .claude
+.agents/
+
+# -------------------------------------------
+# Site Assets (uploaded images, custom icons)
+# -------------------------------------------
+/public/site-assets/
 

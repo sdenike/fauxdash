@@ -1,6 +1,6 @@
-# FauxDash Homepage - Smoke Test Checklist
+# Faux|Dash - Smoke Test Checklist
 
-This document provides a manual smoke test checklist to verify that FauxDash Homepage is working correctly after installation or updates.
+Manual smoke test checklist to verify Faux|Dash is working correctly after installation or updates.
 
 ## Pre-Test Setup
 
@@ -9,271 +9,248 @@ This document provides a manual smoke test checklist to verify that FauxDash Hom
 - [ ] Application is accessible at http://localhost:8080
 - [ ] `.env` file is configured with valid `NEXTAUTH_SECRET`
 
-## 1. Initial Access
+---
+
+## 1. Initial Setup (First Run Only)
 
 - [ ] Navigate to http://localhost:8080
-- [ ] Homepage loads without errors
-- [ ] Empty state message is displayed (no categories yet)
-- [ ] Header displays "FauxDash" title
-- [ ] Theme toggle button is visible
-- [ ] Login button is visible
+- [ ] Redirected to `/setup` wizard
+- [ ] Create admin account with email and password
+- [ ] Password strength meter displays
+- [ ] Setup completes successfully
+- [ ] Redirected to homepage
 
-## 2. Authentication
+---
+
+## 2. Homepage
+
+- [ ] Homepage loads without errors
+- [ ] Header displays "Faux|Dash" title (or custom title)
+- [ ] Theme toggle button is visible
+- [ ] Search bar is visible (if enabled)
+- [ ] Weather widget displays (if configured)
+- [ ] Login button is visible (if logged out)
+
+---
+
+## 3. Authentication
 
 ### Login
-- [ ] Click login button (user icon in header)
+- [ ] Click login button
 - [ ] Login page displays
-- [ ] Enter default credentials:
-  - Email: `admin@fauxdash.local`
-  - Password: `admin`
+- [ ] Enter credentials
 - [ ] Click "Sign In"
-- [ ] Successfully redirected to homepage
-- [ ] Header now shows admin icon (gear) and logout icon
+- [ ] Redirected to homepage
+- [ ] Header shows admin icon (gear) and user menu
 
 ### Logout
-- [ ] Click logout button (arrow icon in header)
+- [ ] Click logout button
 - [ ] Successfully logged out
 - [ ] Login button appears again
 
-## 3. Theme Switching
+### Remember Me
+- [ ] Check "Remember Me" checkbox
+- [ ] Select duration (1 week, 1 month, etc.)
+- [ ] Login persists after browser restart
 
-- [ ] Click theme toggle button
-- [ ] Theme switches between light and dark mode
-- [ ] Theme preference persists after page reload
-- [ ] All UI elements are visible in both themes
+---
 
-## 4. Admin Panel Access
+## 4. Admin Panel
 
 - [ ] Log in as admin
-- [ ] Click admin panel button (gear icon in header)
-- [ ] Admin page loads successfully
-- [ ] "Categories" section is visible
-- [ ] "Bookmarks" section is visible
-- [ ] Back button (arrow) is visible
+- [ ] Click admin panel button (gear icon)
+- [ ] Admin dashboard loads
+- [ ] Version number visible in header
+- [ ] Update notification appears (if new version available)
 
-## 5. Category Management
+### Tabs
+- [ ] Content tab loads
+- [ ] Settings tab loads
+- [ ] Users tab loads
+- [ ] Logs tab loads
+- [ ] Analytics tab loads
+- [ ] Tools tab loads
 
-### Create Category
-- [ ] Click "Add Category" button
-- [ ] Modal dialog opens
-- [ ] Fill in form:
-  - Name: "Development"
-  - Icon: "💻"
-  - Visible: checked
-  - Requires Auth: unchecked
-- [ ] Click "Create"
-- [ ] Modal closes
-- [ ] Category appears in the list
+---
 
-### Edit Category
-- [ ] Click pencil icon on the created category
-- [ ] Modal opens with existing data
-- [ ] Change name to "Dev Tools"
-- [ ] Click "Update"
-- [ ] Category name updates in the list
+## 5. Content Management
 
-### Reorder Categories
-- [ ] Create a second category
-- [ ] Drag and drop to reorder categories
-- [ ] Order persists after page reload
+### Categories
+- [ ] Create bookmark category with icon
+- [ ] Create service category with icon
+- [ ] Edit category name and icon
+- [ ] Drag-and-drop reorder categories
+- [ ] Delete category (items move to Uncategorized)
 
-### Delete Category
-- [ ] Click trash icon on a category
-- [ ] Confirm deletion dialog appears
-- [ ] Click OK
-- [ ] Category is removed from the list
+### Bookmarks
+- [ ] Add bookmark to category
+- [ ] Auto-fetch favicon from URL
+- [ ] Select icon from library
+- [ ] Add description
+- [ ] Drag-and-drop reorder
+- [ ] Edit bookmark
+- [ ] Delete bookmark
 
-## 6. Bookmark Management
+### Services
+- [ ] Add service to category
+- [ ] Same operations as bookmarks
+- [ ] Services appear in separate section on homepage
 
-### Create Bookmark
-- [ ] Create a category first (if not exists)
-- [ ] Click "Add Bookmark" button
-- [ ] Fill in form:
-  - Name: "GitHub"
-  - URL: "https://github.com"
-  - Icon: "🐙"
-  - Category: (select existing category)
-  - Visible: checked
-  - Requires Auth: unchecked
-- [ ] Click "Create"
-- [ ] Bookmark appears under the selected category
+---
 
-### Edit Bookmark
-- [ ] Click pencil icon on the created bookmark
-- [ ] Modal opens with existing data
-- [ ] Change name to "GitHub Homepage"
-- [ ] Click "Update"
-- [ ] Bookmark name updates in the list
+## 6. Settings
 
-### Reorder Bookmarks
-- [ ] Create multiple bookmarks in the same category
-- [ ] Drag and drop to reorder bookmarks
-- [ ] Order persists after page reload
+### General
+- [ ] Toggle search bar
+- [ ] Change search engine
+- [ ] Configure welcome message
 
-### Delete Bookmark
-- [ ] Click trash icon on a bookmark
-- [ ] Confirm deletion dialog appears
-- [ ] Click OK
-- [ ] Bookmark is removed from the list
+### Weather
+- [ ] Enable/disable weather widget
+- [ ] Select weather provider
+- [ ] Add weather locations
+- [ ] Drag-and-drop reorder locations
 
-## 7. Public Homepage
+### Appearance
+- [ ] Change theme (light/dark/system)
+- [ ] Change theme color
+- [ ] Configure site title
+- [ ] Upload header logo
+- [ ] Configure site favicon
+- [ ] Adjust column counts
 
-### View Categories and Bookmarks
-- [ ] Return to homepage (click back button or navigate to `/`)
-- [ ] Categories are displayed
-- [ ] Bookmarks are visible under categories
-- [ ] Icons (emoji) are displayed correctly
+### Email/SMTP
+- [ ] Configure SMTP settings
+- [ ] Send test email
+- [ ] Verify SMTP connection
 
-### Click Bookmark
-- [ ] Click on a bookmark
-- [ ] New tab/window opens with the bookmark URL
-- [ ] Click is tracked (verify in admin panel - click count increments)
+### Authentication
+- [ ] Configure OIDC settings
+- [ ] Test OIDC connection
+- [ ] Enable/disable OIDC-only mode
 
-### Visibility Controls
-- [ ] In admin, create a bookmark with "Visible" unchecked
-- [ ] Return to homepage
-- [ ] Hidden bookmark does not appear
-- [ ] Re-enable visibility
-- [ ] Bookmark now appears
+### GeoIP
+- [ ] Configure GeoIP provider
+- [ ] Test GeoIP lookup
+- [ ] Adjust log level
 
-### Authentication Controls
-- [ ] In admin, create a bookmark with "Requires Auth" checked
-- [ ] Log out
-- [ ] Return to homepage
-- [ ] Protected bookmark does not appear
-- [ ] Log in
-- [ ] Protected bookmark now appears
+---
 
-## 8. Search Functionality
+## 7. User Management
 
-- [ ] Search bar is visible on homepage
-- [ ] Type a query (e.g., "test")
-- [ ] Press Enter or click search
-- [ ] New tab opens with search results from configured search engine
-- [ ] Search bar clears after search
+- [ ] View user list
+- [ ] Create new user
+- [ ] Edit user details
+- [ ] Delete user (not yourself)
+- [ ] Change user role (admin/user)
 
-## 9. Weather Widget
+---
 
-**Note**: Requires valid API key in `.env`
+## 8. Backup & Import
 
-### With Valid API Key
-- [ ] Weather widget appears on homepage
-- [ ] Current weather is displayed
-- [ ] Location name is shown
-- [ ] Temperature, condition, humidity, and wind speed are visible
-- [ ] Weather icon is displayed
+### Backup
+- [ ] Create backup (ZIP download)
+- [ ] Backup contains bookmarks.csv, services.csv, settings.json
 
-### Multiple Locations
-- [ ] Configure multiple locations in `.env`: `WEATHER_LOCATIONS=90210,10001`
-- [ ] Restart application
-- [ ] Weather widget shows navigation arrows
-- [ ] Click arrows to switch between locations
-- [ ] Auto-rotation works (if configured)
+### Import
+- [ ] Import bookmarks from CSV
+- [ ] Import services from CSV
+- [ ] Restore from backup ZIP
 
-### Without API Key
-- [ ] Remove weather API key from `.env`
-- [ ] Restart application
-- [ ] Weather widget does not appear
-- [ ] No errors in console
+### Demo Content
+- [ ] Load demo content
+- [ ] Clear demo content
 
-## 10. Database Persistence
+---
 
-### Data Persistence
-- [ ] Create categories and bookmarks
-- [ ] Restart application: `docker compose restart app`
-- [ ] Data persists after restart
-- [ ] Categories and bookmarks are still visible
+## 9. Analytics
 
-### Migration on Startup
-- [ ] Check logs: `docker compose logs app`
-- [ ] Look for "Migrations completed successfully" message
-- [ ] No migration errors
+- [ ] View pageview statistics
+- [ ] View click statistics
+- [ ] Analytics map displays (with GeoIP)
+- [ ] Location markers show visitor locations
 
-## 11. Redis Caching
+---
 
-**With Redis Enabled**
-- [ ] Redis container is running
-- [ ] Homepage loads quickly on subsequent visits
-- [ ] Admin changes immediately reflect on homepage
-- [ ] No stale data issues
+## 10. Tools
 
-**With Redis Disabled**
-- [ ] Set `REDIS_ENABLED=false` in `.env`
-- [ ] Restart application
-- [ ] Application still works correctly
-- [ ] Homepage loads (slightly slower)
+- [ ] Repair favicons
+- [ ] Prune orphaned files
+- [ ] Optimize database
+- [ ] Check MaxMind status
 
-## 12. Error Handling
+---
 
-### Invalid Login
-- [ ] Try logging in with wrong password
-- [ ] Error message is displayed
-- [ ] Login form remains accessible
+## 11. PWA Support
 
-### Network Error Simulation
-- [ ] Open browser DevTools
-- [ ] Go to Network tab
-- [ ] Throttle to "Offline"
-- [ ] Try to create a category
-- [ ] Appropriate error message or behavior
-- [ ] Re-enable network
-- [ ] Functionality returns to normal
+- [ ] Install prompt appears on mobile
+- [ ] App can be added to home screen
+- [ ] App icon displays correctly
+- [ ] Standalone mode works (no browser chrome)
+- [ ] Offline page displays when offline
 
-## 13. Responsive Design
+---
+
+## 12. Logs
+
+- [ ] View application logs
+- [ ] Log levels are color-coded
+- [ ] Logs auto-refresh
+
+---
+
+## 13. Search & Navigation
+
+- [ ] Search bar searches external engine
+- [ ] Bookmarks open in new tab
+- [ ] Services open in new tab
+- [ ] Click tracking increments count
+
+---
+
+## 14. Responsive Design
 
 ### Desktop
-- [ ] All features work on desktop browser
-- [ ] Layout is clean and organized
+- [ ] All features work on desktop
+- [ ] Admin sidebar visible
 
 ### Mobile
-- [ ] Open homepage on mobile device or use DevTools device emulation
 - [ ] Header is responsive
-- [ ] Bookmarks grid adapts to screen size
-- [ ] Admin panel is usable on mobile
-- [ ] Drag-and-drop works on touch devices
+- [ ] Admin sidebar collapses (hamburger menu)
+- [ ] Grid adapts to screen size
+- [ ] Touch targets are adequate
 
-## 14. Database
+---
 
-- [ ] Application works with SQLite
-- [ ] Data file exists at `/data/fauxdash.db` in container
+## 15. Data Persistence
 
-## 15. Logs and Debugging
+- [ ] Create content
+- [ ] Restart containers: `docker compose restart`
+- [ ] Data persists after restart
 
-- [ ] Check application logs: `docker compose logs app`
-- [ ] No critical errors or warnings
-- [ ] Redis logs (if enabled): `docker compose logs redis`
+---
 
 ## Pass Criteria
 
-**The smoke test passes if:**
-- All core features (categories, bookmarks, auth) work correctly
+**Passes if:**
+- Core features (content, auth, settings) work
 - No critical errors in logs
 - Data persists across restarts
-- UI is responsive and accessible
-- Both authenticated and unauthenticated access work as expected
+- UI is responsive
 
-**The smoke test fails if:**
+**Fails if:**
 - Cannot log in
-- Cannot create or edit categories/bookmarks
+- Cannot create/edit content
 - Data is lost after restart
-- Critical errors in console or logs
-- UI is broken or inaccessible
+- Critical errors in logs
 
-## Notes
-
-- This is a manual smoke test, not automated tests
-- Run this checklist after:
-  - Initial installation
-  - Major upgrades
-  - Configuration changes
-  - Database migrations
-- Expected duration: 15-20 minutes for full checklist
+---
 
 ## Report Issues
 
-If any test fails:
+If a test fails:
 1. Note which test failed
-2. Check application logs
-3. Check browser console for errors
-4. Document steps to reproduce
-5. Report issue with details
+2. Check logs: `docker compose logs app`
+3. Check browser console
+4. Document reproduction steps
+5. Report issue on GitHub

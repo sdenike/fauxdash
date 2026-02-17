@@ -1,50 +1,40 @@
-# FauxDash Homepage - Quick Start Guide
+# Faux|Dash - Quick Start Guide
 
 Get up and running in 5 minutes.
 
 ## Prerequisites
 
 - **Docker** and **Docker Compose** installed
-- **8GB RAM** minimum (4GB for app, rest for system)
 - **1GB disk space** for Docker images
 
-## Step 1: Get the Code
+## Step 1: Get the Files
 
 ```bash
+# Using pre-built image (recommended)
+curl -O https://raw.githubusercontent.com/sdenike/fauxdash/master/docker-compose.sample.yml
+mv docker-compose.sample.yml docker-compose.yml
+curl -O https://raw.githubusercontent.com/sdenike/fauxdash/master/.env.example
+mv .env.example .env
+
+# Or clone the repository
+git clone https://github.com/sdenike/fauxdash.git
 cd fauxdash
+cp .env.example .env
 ```
 
 ## Step 2: Configure Environment
 
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and set **two required variables**:
-
-### 1. Generate NextAuth Secret
+Generate and add a secret to your `.env`:
 
 ```bash
-openssl rand -base64 32
+echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> .env
 ```
 
-Copy the output and add to `.env`:
+**Optional**: Add a weather API key (free at https://www.weatherapi.com/):
 
-```env
-NEXTAUTH_SECRET=your_generated_secret_here
+```bash
+echo "WEATHERAPI_KEY=your_api_key_here" >> .env
 ```
-
-### 2. Add Weather API Key (Optional but Recommended)
-
-Get a free API key from https://www.weatherapi.com/
-
-Add to `.env`:
-
-```env
-WEATHERAPI_KEY=your_api_key_here
-```
-
-That's it! Everything else has sensible defaults.
 
 ## Step 3: Start the Application
 
@@ -52,90 +42,71 @@ That's it! Everything else has sensible defaults.
 docker compose up -d
 ```
 
-Wait 30 seconds for containers to start and migrations to run.
+Wait about 30 seconds for containers to start.
 
-## Step 4: Access FauxDash
+## Step 4: Complete Setup
 
-Open http://localhost:8080 in your browser.
+1. Open http://localhost:8080 in your browser
+2. Complete the setup wizard to create your admin account
+3. Optionally load demo content to explore features
 
-## Step 5: Log In
+## Step 5: Add Your Content
 
-**Default credentials:**
-- Email: `admin@fauxdash.local`
-- Password: `admin`
-
-**⚠️ CHANGE THESE IMMEDIATELY!**
-
-## Step 6: Add Content
-
-1. Click the **gear icon** (⚙️) in the header
-2. Click **"Add Category"**
-   - Name: "Development"
-   - Icon: 💻
-   - Click **Create**
-3. Click **"Add Bookmark"**
-   - Name: "GitHub"
-   - URL: https://github.com
-   - Icon: 🐙
-   - Category: Development
-   - Click **Create**
-4. Click the **back arrow** to return to homepage
-5. See your first bookmark!
+1. Click the **gear icon** in the header to access Admin
+2. Go to the **Content** tab
+3. Create a category (e.g., "Development")
+4. Add bookmarks to your category
+5. Return to homepage to see your dashboard
 
 ## Next Steps
 
-- Add more categories and bookmarks
-- Try the search bar (searches DuckDuckGo by default)
-- Toggle dark mode with the theme button
-- Check the weather widget (if you added API key)
-- Drag and drop to reorder items in admin panel
+- Configure weather in Admin > Settings > Weather
+- Customize appearance in Admin > Settings > Appearance
+- Set up OIDC/SSO in Admin > Settings > Auth
+- Install as PWA on mobile devices
 
 ## Common Issues
 
 ### Port 8080 already in use
+
 Edit `docker-compose.yml`:
 ```yaml
 ports:
-  - "3000:8080"  # Change 8080 to 3000 or any available port
+  - "3000:8080"  # Change 3000 to any available port
 ```
 
 ### Weather widget not showing
-- Make sure you added `WEATHERAPI_KEY` to `.env`
-- Restart: `docker compose restart app`
 
-### Can't log in
-- Check logs: `docker compose logs app`
-- Verify `NEXTAUTH_SECRET` is set in `.env`
+1. Add `WEATHERAPI_KEY` to `.env`
+2. Restart: `docker compose restart app`
 
-### Database errors
-- Delete volume and restart:
-  ```bash
-  docker compose down -v
-  docker compose up -d
-  ```
+### Container errors
+
+Check logs:
+```bash
+docker compose logs app
+```
 
 ## Upgrade
 
 ```bash
-git pull
-docker compose build
+docker compose pull
 docker compose up -d
 ```
 
 ## Backup Your Data
 
+Use the built-in backup feature:
+1. Go to Admin > Tools
+2. Click "Create Backup"
+3. Download the ZIP file
+
+Or backup volumes manually:
 ```bash
-docker compose down
-cp -r /var/lib/docker/volumes/fauxdash_fauxdash-data /path/to/backup/
-docker compose up -d
+docker run --rm -v fauxdash-data:/data -v $(pwd):/backup alpine tar czf /backup/fauxdash-backup.tar.gz /data
 ```
 
-Or use Docker:
-```bash
-docker run --rm -v fauxdash_fauxdash-data:/data -v $(pwd):/backup alpine tar czf /backup/fauxdash-backup.tar.gz /data
-```
-
-## Stop FauxDash
+## Stop Faux|Dash
 
 ```bash
 docker compose down
@@ -150,13 +121,3 @@ docker compose down -v  # -v removes data volumes
 ## Full Documentation
 
 See [README.md](README.md) for complete documentation.
-
-## Getting Help
-
-- Check [SMOKE_TEST.md](SMOKE_TEST.md) for troubleshooting
-- Review [DECISIONS.md](DECISIONS.md) for architecture details
-- Open an issue on GitHub
-
----
-
-**Enjoy FauxDash! 🚀**

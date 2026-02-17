@@ -1,103 +1,56 @@
 # =============================================================================
-# Faux|Dash Docker Compose Configuration
+# Faux|Dash Docker Compose
 # =============================================================================
 #
 # QUICK START:
-#   1. Copy this file: cp docker-compose.sample.yml docker-compose.yml
-#   2. Copy env file:  cp .env.example .env
-#   3. Generate secret: openssl rand -base64 32
-#   4. Add secret to .env as NEXTAUTH_SECRET
-#   5. Start: docker compose up -d
-#   6. Access: http://localhost:8080
+#   1. Copy: cp docker-compose.sample.yml docker-compose.yml
+#   2. Generate secret: echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> .env
+#   3. Start: docker compose up -d
+#   4. Access: http://localhost:8080
 #
-# Default login: admin@fauxdash.local / admin
-# CHANGE THIS IMMEDIATELY after first login!
+# Complete the setup wizard on first run to create your admin account.
 #
 # =============================================================================
 
 services:
-  # ---------------------------------------------------------------------------
-  # Main Application
-  # ---------------------------------------------------------------------------
   app:
-    # Use pre-built image from GitHub Container Registry:
     image: ghcr.io/sdenike/fauxdash:latest
-    # Or build locally:
-    # build: .
+    # build: .  # Uncomment to build locally
 
     ports:
-      - "8080:8080"    # Change left side to use a different port (e.g., "3000:8080")
+      - "8080:8080"
 
     environment:
       - NODE_ENV=production
 
-      # -----------------------------------------------------------------------
-      # User/Group ID (for volume permissions)
-      # -----------------------------------------------------------------------
-      # Set these to match your host user's UID/GID (run `id` to check)
-      # Default: 1000:1000
-      # NOTE: Do NOT use Docker's "user:" directive with this image.
-      #       Use PUID/PGID environment variables instead.
+      # User/Group ID for volume permissions (run `id` to find yours)
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
 
-      # -----------------------------------------------------------------------
-      # Database Configuration — SQLite (built-in)
-      # -----------------------------------------------------------------------
-      - SQLITE_FILE=${SQLITE_FILE:-/data/fauxdash.db}
+      # Database (SQLite, zero config)
+      - SQLITE_FILE=/data/fauxdash.db
 
-      # -----------------------------------------------------------------------
-      # Redis Cache (recommended for performance)
-      # -----------------------------------------------------------------------
+      # Cache (recommended for performance)
       - REDIS_ENABLED=${REDIS_ENABLED:-true}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - REDIS_URL=redis://redis:6379
 
-      # -----------------------------------------------------------------------
-      # Authentication (REQUIRED)
-      # -----------------------------------------------------------------------
-      # Generate with: openssl rand -base64 32
+      # Authentication (REQUIRED - generate with: openssl rand -base64 32)
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      # Your deployment URL (change if using reverse proxy)
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:8080}
 
-      # -----------------------------------------------------------------------
-      # Optional: Weather API
-      # -----------------------------------------------------------------------
-      # Get free key at: https://www.weatherapi.com/
-      # - WEATHERAPI_KEY=${WEATHERAPI_KEY}
-
-      # -----------------------------------------------------------------------
-      # Optional: GeoIP (visitor location analytics)
-      # -----------------------------------------------------------------------
-      # Get free MaxMind license at: https://www.maxmind.com/en/geolite2/signup
-      # - GEOIP_PROVIDER=${GEOIP_PROVIDER:-maxmind}
-      # - GEOIP_MAXMIND_LICENSE_KEY=${GEOIP_MAXMIND_LICENSE_KEY}
-
-      # -----------------------------------------------------------------------
-      # Optional: Debug IP detection (for Cloudflare/proxy troubleshooting)
-      # -----------------------------------------------------------------------
-      # Enable to log IP detection headers on each pageview
+      # Optional: Debug IP detection (for proxy troubleshooting)
       # - DEBUG_IP=true
 
     volumes:
-      # Database and configuration storage
       - fauxdash-data:/data
-
-      # Downloaded favicon images (can grow large with many bookmarks)
       - fauxdash-favicons:/app/public/favicons
-
-      # Application logs (viewable in Admin > Logs)
       - fauxdash-logs:/data/logs
-
-      # Optional: Mount local GeoIP database
-      # - ./GeoLite2-City.mmdb:/data/GeoLite2-City.mmdb:ro
 
     depends_on:
       - redis
 
     restart: unless-stopped
 
-    # Optional: Health check
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/setup/status"]
       interval: 30s
@@ -105,11 +58,6 @@ services:
       retries: 3
       start_period: 40s
 
-  # ---------------------------------------------------------------------------
-  # Redis Cache Server
-  # ---------------------------------------------------------------------------
-  # Provides caching for improved performance. Can be disabled by setting
-  # REDIS_ENABLED=false in .env, but not recommended for production.
   redis:
     image: redis:7-alpine
     command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
@@ -117,37 +65,8 @@ services:
       - redis-data:/data
     restart: unless-stopped
 
-    # Optional: Expose Redis port for debugging
-    # ports:
-    #   - "6379:6379"
-
-# =============================================================================
-# Named Volumes
-# =============================================================================
-# Docker manages these volumes. Data persists across container restarts.
-# To backup: docker run --rm -v fauxdash-data:/data -v $(pwd):/backup alpine tar cvf /backup/backup.tar /data
-# To restore: docker run --rm -v fauxdash-data:/data -v $(pwd):/backup alpine tar xvf /backup/backup.tar -C /
 volumes:
   fauxdash-data:
-    # SQLite database, settings, configuration
-    # Location: /var/lib/docker/volumes/fauxdash_fauxdash-data/_data
-
   fauxdash-favicons:
-    # Downloaded and processed favicon images
-    # Can be safely deleted - favicons will be re-downloaded
-
   fauxdash-logs:
-    # Application logs
-    # Automatically rotated when exceeding 10MB
-
   redis-data:
-    # Redis AOF persistence
-    # Safe to delete - cache will rebuild
-
-# =============================================================================
-# Networks (optional - Docker creates default network automatically)
-# =============================================================================
-# Uncomment to use a custom network name
-# networks:
-#   default:
-#     name: fauxdash-network

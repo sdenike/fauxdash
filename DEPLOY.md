@@ -1,10 +1,54 @@
-# FauxDash Deployment Guide
+# Faux|Dash Deployment Guide
 
-## Current Deployment Method
+## Quick Deploy (Using Pre-built Image)
 
-**Important**: With the current Docker setup, code changes require a full rebuild because the Next.js build is created inside the Docker image.
+The easiest deployment uses the pre-built image from GitHub Container Registry:
 
-### Full Rebuild (Required for ALL changes)
+```bash
+# Download compose file and environment template
+curl -O https://raw.githubusercontent.com/sdenike/fauxdash/master/docker-compose.sample.yml
+mv docker-compose.sample.yml docker-compose.yml
+curl -O https://raw.githubusercontent.com/sdenike/fauxdash/master/.env.example
+mv .env.example .env
+
+# Generate and add secret
+echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> .env
+
+# Start
+docker compose up -d
+```
+
+Access at http://localhost:8080 and complete the setup wizard.
+
+## Upgrade
+
+```bash
+# Pull latest image
+docker compose pull
+
+# Restart with new image
+docker compose up -d
+```
+
+Migrations run automatically on container start.
+
+## Build from Source
+
+If you need to build locally (for development or custom modifications):
+
+```bash
+# Clone repository
+git clone https://github.com/sdenike/fauxdash.git
+cd fauxdash
+
+# Build and start
+docker compose build
+docker compose up -d
+```
+
+### Rebuild After Code Changes
+
+Code changes require a full rebuild:
 
 ```bash
 docker compose down
@@ -12,56 +56,126 @@ docker compose build
 docker compose up -d
 ```
 
-This takes ~90 seconds and is needed for:
-- Code changes (TypeScript, React components, API routes)
-- Dependency changes (package.json)
-- Docker configuration changes
-- Any source file modifications
+This is required because Next.js builds the application inside the Docker image.
 
-### Why Full Rebuilds?
+## Version Management
 
-The Dockerfile currently:
-1. Copies source code into the image
-2. Runs `npm run build` inside Docker
-3. Creates the standalone output as part of the image
+Version is stored in `package.json` and displayed in Admin Dashboard.
 
-This means the built code is baked into the Docker image, so we can't just restart the container to pick up changes.
+### Versioning
 
-### Future Optimization
+We follow semantic versioning:
+- **MAJOR** (X.0.0): Breaking changes
+- **MINOR** (0.X.0): New features, backward compatible
+- **PATCH** (0.0.X): Bug fixes
 
-To enable quick deploys without rebuilds, we could:
-- Mount `.next/standalone` as a volume
-- Build locally and copy into running container
-- Use development mode with volume mounts
+### Creating a Release
 
-But for now, full rebuilds are the simplest and most reliable approach.
+```bash
+./scripts/release.sh patch "Fix description"
+./scripts/release.sh minor "New feature description"
+```
 
-## How It Works
+This updates version, creates git tag, and triggers automated Docker build.
 
-The Docker container uses Next.js standalone output mode:
-- `npm run build` creates `.next/standalone` locally
-- Docker copies this pre-built output
-- `docker compose restart app` picks up the new build
+## CI/CD
 
-This means code changes don't require rebuilding the Docker image - just restart!
+GitHub Actions automatically:
+1. Builds Docker images on tag push
+2. Publishes to `ghcr.io/sdenike/fauxdash`
+3. Creates GitHub release with changelog
 
-## Version Updates
+## Data Volumes
 
-The version is stored in `package.json` and displayed in the Admin Dashboard.
+Data persists in Docker volumes:
 
-When making changes:
-1. Update version in `package.json` using semantic versioning:
-   - **MAJOR**: Breaking changes (e.g., 1.0.0 → 2.0.0)
-   - **MINOR**: New features, backward compatible (e.g., 0.4.0 → 0.5.0)
-   - **PATCH**: Bug fixes (e.g., 0.4.0 → 0.4.1)
-2. Build and restart
-3. The new version will appear in Admin Dashboard header
+| Volume | Purpose |
+|--------|---------|
+| `fauxdash-data` | SQLite database, settings |
+| `fauxdash-favicons` | Downloaded favicons |
+| `fauxdash-logs` | Application logs |
+| `redis-data` | Cache data |
 
-## Version History
+### Backup
 
-**v0.4.1** - Added uncategorized items section, version display in admin dashboard
-- Uncategorized items now show at the top with warning banner
-- Drag uncategorized items into categories to organize them
-- Version number displayed in admin dashboard header
+```bash
+# In-app backup (recommended)
+# Admin > Tools > Create Backup
 
-**v0.4.0** - Added category expand/collapse, category conversion, item conversion with category selection, and cache clearing.
+# Manual volume backup
+docker run --rm -v fauxdash-data:/data -v $(pwd):/backup alpine tar czf /backup/fauxdash-backup.tar.gz /data
+```
+
+### Restore
+
+```bash
+# In-app restore
+# Admin > Tools > Import/Restore
+
+# Manual volume restore
+docker run --rm -v fauxdash-data:/data -v $(pwd):/backup alpine tar xzf /backup/fauxdash-backup.tar.gz -C /
+```
+
+## Environment Variables
+
+Key variables (see `.env.example` for all):
+
+```env
+NEXTAUTH_SECRET=<required>
+NEXTAUTH_URL=http://localhost:8080
+REDIS_ENABLED=true
+PUID=1000
+PGID=1000
+```
+
+## Reverse Proxy
+
+When using a reverse proxy (nginx, Caddy, Traefik):
+
+1. Set `NEXTAUTH_URL` to your external URL
+2. Ensure proxy passes required headers:
+   - `X-Forwarded-For`
+   - `X-Forwarded-Proto`
+   - `X-Forwarded-Host`
+
+Example nginx:
+
+```nginx
+location / {
+    proxy_pass http://localhost:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+## Troubleshooting
+
+### Container won't start
+
+```bash
+docker compose logs app
+```
+
+### Permission issues
+
+Set `PUID` and `PGID` in your `.env` to match your host user:
+
+```bash
+id  # Shows your UID/GID
+```
+
+### Database errors
+
+If database is corrupted, restore from backup or reset:
+
+```bash
+docker compose down
+docker volume rm fauxdash-data
+docker compose up -d
+```
+
+---
+
+See CHANGELOG.md for version history.

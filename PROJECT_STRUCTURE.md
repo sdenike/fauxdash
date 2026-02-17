@@ -1,191 +1,198 @@
-# FauxDash Homepage - Project Structure
+# Faux|Dash - Project Structure
 
-This document provides a complete overview of the project structure and file organization.
+This document provides an overview of the project structure and file organization.
 
-## Directory Tree
+## Directory Overview
 
 ```
 fauxdash/
-├── .dockerignore                 # Docker build exclusions
-├── .env.example                  # Production environment template
-├── .env.local.example            # Development environment template
-├── .eslintrc.json               # ESLint configuration
-├── .gitignore                   # Git exclusions
-├── BACKLOG.md                   # Feature backlog and future plans
-├── CHANGELOG.md                 # Version history and changes
-├── DECISIONS.md                 # Architectural decision records
-├── Dockerfile                   # Container image definition
-├── LICENSE                      # MIT License
-├── README.md                    # Main documentation
-├── SMOKE_TEST.md                # Manual testing checklist
-├── docker-compose.yml           # Multi-container orchestration
-├── drizzle.config.ts            # Database ORM configuration
-├── next-env.d.ts                # Next.js TypeScript definitions
-├── next.config.js               # Next.js configuration
-├── package.json                 # Node.js dependencies and scripts
-├── postcss.config.js            # PostCSS configuration
-├── tailwind.config.js           # Tailwind CSS configuration
-├── tsconfig.json                # TypeScript compiler options
+├── .github/                     # GitHub Actions workflows
+│   └── workflows/
+│       └── docker-build.yml     # Automated Docker builds
+│
+├── docs/                        # Documentation
+│   ├── screenshots/             # UI screenshots
+│   ├── plans/                   # Development plans
+│   └── OIDC-SETUP-GUIDE.md     # OIDC configuration guide
+│
+├── drizzle/                     # Database migrations (generated)
+│   └── [migration files]        # SQL migration files
 │
 ├── public/                      # Static assets
-│   └── favicon.ico              # Browser favicon
+│   ├── favicons/                # Downloaded bookmark favicons
+│   ├── icons/                   # PWA icons
+│   └── favicon.ico              # Default browser favicon
 │
-├── drizzle/                     # Generated database migrations (gitignored)
-│   └── [migration files]        # SQL migration files
+├── scripts/                     # Utility scripts
+│   ├── docker-entrypoint.sh     # Container startup script
+│   ├── init-db.js               # Database initialization
+│   ├── migrate-all.js           # Consolidated migrations
+│   ├── generate-pwa-icons.js    # PWA icon generator
+│   └── release.sh               # Version release automation
 │
 └── src/                         # Source code
     ├── app/                     # Next.js App Router
-    │   ├── globals.css          # Global styles and CSS variables
-    │   ├── layout.tsx           # Root layout component
-    │   ├── page.tsx             # Homepage
-    │   ├── providers.tsx        # Client-side providers (session, theme)
-    │   │
-    │   ├── admin/               # Admin panel
-    │   │   └── page.tsx         # Admin dashboard
-    │   │
-    │   ├── login/               # Authentication
-    │   │   └── page.tsx         # Login page
-    │   │
-    │   └── api/                 # API routes
-    │       ├── auth/
-    │       │   └── [...nextauth]/
-    │       │       └── route.ts # NextAuth handler
-    │       │
-    │       ├── categories/
-    │       │   ├── route.ts     # GET (list), POST (create)
-    │       │   └── [id]/
-    │       │       └── route.ts # PATCH (update), DELETE
-    │       │
-    │       ├── bookmarks/
-    │       │   ├── route.ts     # POST (create)
-    │       │   └── [id]/
-    │       │       ├── route.ts # PATCH (update), DELETE
-    │       │       └── click/
-    │       │           └── route.ts # POST (track click)
-    │       │
-    │       └── weather/
-    │           └── route.ts     # GET (fetch weather)
-    │
     ├── components/              # React components
-    │   ├── category-section.tsx # Homepage category display
-    │   ├── header.tsx           # App header with nav
-    │   ├── search-bar.tsx       # Search input
-    │   ├── weather-widget.tsx   # Weather display
-    │   │
-    │   ├── admin/               # Admin-specific components
-    │   │   ├── bookmark-manager.tsx  # Bookmark CRUD
-    │   │   └── category-manager.tsx  # Category CRUD
-    │   │
-    │   └── ui/                  # Reusable UI components (shadcn/ui)
-    │       ├── button.tsx       # Button component
-    │       ├── card.tsx         # Card component
-    │       ├── dialog.tsx       # Modal dialog
-    │       ├── input.tsx        # Input field
-    │       └── label.tsx        # Form label
-    │
     ├── db/                      # Database layer
-    │   ├── index.ts             # Database connection factory
-    │   ├── migrate.ts           # Migration runner
-    │   └── schema.ts            # Database schema definitions
-    │
     ├── lib/                     # Utility libraries
-    │   ├── auth.ts              # NextAuth configuration
-    │   ├── redis.ts             # Redis client and cache helpers
-    │   ├── utils.ts             # Utility functions (cn)
-    │   └── weather.ts           # Weather provider abstraction
-    │
-    └── types/                   # TypeScript type definitions
-        └── next-auth.d.ts       # NextAuth type extensions
+    └── types/                   # TypeScript definitions
 ```
 
-## File Descriptions
+## Source Code Structure
 
-### Root Configuration Files
+### `/src/app` - Next.js App Router
 
-- **docker-compose.yml**: Defines all services (app, redis)
-- **Dockerfile**: Multi-stage build for production container
-- **next.config.js**: Next.js framework configuration (standalone output)
-- **tailwind.config.js**: Tailwind CSS theme and plugin configuration
-- **tsconfig.json**: TypeScript compiler settings
-- **drizzle.config.ts**: Drizzle ORM SQLite configuration
+```
+app/
+├── layout.tsx                   # Root layout with providers
+├── page.tsx                     # Homepage
+├── globals.css                  # Global styles and CSS variables
+├── providers.tsx                # Client-side providers
+│
+├── admin/page.tsx               # Admin dashboard
+├── login/page.tsx               # Login page
+├── setup/page.tsx               # First-run setup wizard
+├── settings/page.tsx            # User settings page
+├── profile/page.tsx             # User profile page
+│
+└── api/                         # API routes
+    ├── auth/[...nextauth]/      # NextAuth handlers
+    ├── categories/              # Category CRUD
+    ├── service-categories/      # Service category CRUD
+    ├── bookmarks/               # Bookmark CRUD
+    ├── services/                # Service CRUD
+    ├── settings/                # Settings management
+    ├── weather/                 # Weather data
+    ├── analytics/               # Analytics endpoints
+    ├── pageview/                # Pageview tracking
+    ├── backup/                  # Backup/restore
+    ├── media-library/           # Uploaded images
+    ├── site-favicon/            # Site favicon management
+    ├── header-logo/             # Header logo management
+    ├── pwa-icons/               # PWA icon serving
+    ├── demo/                    # Demo content
+    └── debug/                   # Debug endpoints
+```
 
-### Documentation
+### `/src/components` - React Components
 
-- **README.md**: Installation, usage, and configuration guide
-- **DECISIONS.md**: Architectural decisions and rationale
-- **CHANGELOG.md**: Version history and changes
-- **SMOKE_TEST.md**: Manual testing checklist
-- **BACKLOG.md**: Future features and improvements
-- **PROJECT_STRUCTURE.md**: This file
+```
+components/
+├── ui/                          # shadcn/ui components
+│   ├── button.tsx
+│   ├── card.tsx
+│   ├── dialog.tsx
+│   ├── dropdown-menu.tsx
+│   ├── input.tsx
+│   ├── select.tsx
+│   ├── switch.tsx
+│   ├── tabs.tsx
+│   └── [more...]
+│
+├── admin/                       # Admin panel components
+│   ├── category-manager.tsx     # Bookmark categories
+│   ├── service-category-manager.tsx
+│   ├── bookmark-manager.tsx
+│   ├── service-manager.tsx
+│   ├── content-manager.tsx      # Unified content management
+│   ├── settings-tabs.tsx        # Settings interface
+│   ├── user-manager.tsx         # User administration
+│   ├── log-viewer.tsx           # Application logs
+│   └── analytics-map.tsx        # GeoIP visualization
+│
+├── settings/                    # Settings tab components
+│   ├── general-settings.tsx
+│   ├── weather-settings.tsx
+│   ├── appearance-settings.tsx
+│   ├── email-settings.tsx
+│   ├── auth-settings.tsx
+│   └── geoip-settings.tsx
+│
+├── header.tsx                   # App header with navigation
+├── search-bar.tsx               # Search input
+├── weather-widget.tsx           # Weather display
+├── category-section.tsx         # Homepage category display
+├── icon-selector.tsx            # Icon picker component
+├── pwa-install-prompt.tsx       # PWA install banner
+├── dynamic-favicon.tsx          # Dynamic favicon updates
+└── changelog-dialog.tsx         # Version changelog viewer
+```
 
-### Source Code Organization
+### `/src/db` - Database Layer
 
-#### `/src/app`
-Next.js App Router directory with file-based routing.
+```
+db/
+├── index.ts                     # Database connection factory
+├── schema.ts                    # Drizzle ORM schema (13 tables)
+└── migrate.ts                   # Migration runner
+```
 
-- **layout.tsx**: Root layout with providers
-- **page.tsx**: Homepage (public view)
-- **globals.css**: Global styles, CSS variables, Tailwind directives
-- **providers.tsx**: Client-side context providers
+**Database Tables**:
+- users, categories, bookmarks
+- service_categories, services
+- settings, pageviews
+- bookmark_clicks, service_clicks
+- analytics_daily, geo_cache
+- password_reset_tokens, themes
 
-#### `/src/app/api`
-API routes for backend functionality.
+### `/src/lib` - Utility Libraries
 
-- **categories**: CRUD operations for categories
-- **bookmarks**: CRUD operations for bookmarks
-- **weather**: Weather data fetching
-- **auth**: NextAuth authentication handlers
+```
+lib/
+├── auth.ts                      # NextAuth configuration
+├── redis.ts                     # Redis client and cache helpers
+├── weather.ts                   # Weather provider abstraction
+├── icons.ts                     # Icon library utilities
+├── favicon.ts                   # Favicon fetching utilities
+├── geoip.ts                     # GeoIP lookup providers
+├── email.ts                     # Email template builder
+├── logger.ts                    # Application logging
+├── utils.ts                     # General utilities
+└── version.ts                   # Version from package.json
+```
 
-#### `/src/components`
-React components organized by feature.
+## Configuration Files
 
-- **UI components**: Reusable primitives from shadcn/ui
-- **Feature components**: Category sections, search, weather
-- **Admin components**: Category and bookmark management
+| File | Purpose |
+|------|---------|
+| `docker-compose.yml` | Production multi-container setup |
+| `docker-compose.sample.yml` | Template with comments |
+| `Dockerfile` | Multi-stage container build |
+| `next.config.js` | Next.js configuration |
+| `tailwind.config.js` | Tailwind CSS theme |
+| `drizzle.config.ts` | Database ORM configuration |
+| `tsconfig.json` | TypeScript settings |
+| `.env.example` | Environment variable template |
 
-#### `/src/db`
-Database abstraction layer.
+## Documentation Files
 
-- **schema.ts**: SQLite table definitions
-- **index.ts**: SQLite connection factory
-- **migrate.ts**: Migration runner and default user creation
-
-#### `/src/lib`
-Utility libraries and helpers.
-
-- **auth.ts**: Authentication configuration
-- **redis.ts**: Cache helpers (get, set, delete)
-- **weather.ts**: Weather provider interface and implementations
-- **utils.ts**: General utilities (cn for classnames)
-
-### Database Schema
-
-The application uses 5 main tables:
-
-1. **users**: User accounts and authentication
-2. **categories**: Bookmark categories
-3. **bookmarks**: Individual bookmarks
-4. **settings**: User and system settings
-5. **themes**: Custom color themes
-
-See `src/db/schema.ts` for full schema definition.
+| File | Purpose |
+|------|---------|
+| `README.md` | Main documentation |
+| `QUICK_START.md` | 5-minute setup guide |
+| `CHANGELOG.md` | Version history |
+| `DECISIONS.md` | Architecture decisions |
+| `BACKLOG.md` | Feature backlog |
+| `SMOKE_TEST.md` | Testing checklist |
+| `docs/OIDC-SETUP-GUIDE.md` | OIDC configuration |
 
 ## Data Flow
 
-### Public Homepage
+### Homepage Request
 ```
 Browser → GET /
-       → Layout (providers)
+       → Layout (providers, session)
        → Homepage
-       → Fetch /api/categories (SSR or client-side)
-       → Display categories and bookmarks
+       → Fetch /api/categories, /api/service-categories
+       → Track pageview (/api/pageview)
+       → Display categories with bookmarks/services
 ```
 
 ### Admin Panel
 ```
 Browser → GET /admin (auth required)
-       → Admin page
-       → Category Manager & Bookmark Manager components
+       → Admin dashboard
+       → Content Manager, Settings, Users, Logs, Analytics
        → CRUD operations via API
        → Optimistic updates + cache invalidation
 ```
@@ -193,19 +200,9 @@ Browser → GET /admin (auth required)
 ### Authentication
 ```
 Browser → POST /api/auth/signin
-       → NextAuth credentials provider
-       → Argon2 password verification
+       → NextAuth (credentials or OIDC)
        → JWT session creation
        → Set session cookie
-```
-
-### Weather Widget
-```
-Browser → GET /api/weather?location=90210
-       → Check Redis cache
-       → If miss: fetch from weather provider
-       → Cache result (10 min TTL)
-       → Return weather data
 ```
 
 ## Build & Deployment
@@ -214,51 +211,35 @@ Browser → GET /api/weather?location=90210
 ```bash
 npm install
 npm run dev
+# Access at http://localhost:3000
 ```
 
 ### Production (Docker)
 ```bash
-docker compose build
 docker compose up -d
+# Access at http://localhost:8080
 ```
 
 ### Database Migrations
 ```bash
-npm run db:generate  # Generate migrations from schema
-npm run db:migrate   # Apply migrations to database
+npm run db:generate  # Generate from schema
+npm run db:migrate   # Apply migrations
 ```
 
 ## Environment Variables
 
-See `.env.example` for all available environment variables.
+Key variables (see `.env.example` for full list):
 
-Key variables:
-- `SQLITE_FILE`: Path to SQLite database file
-- `REDIS_ENABLED`: Enable/disable Redis caching
-- `NEXTAUTH_SECRET`: Authentication secret
-- `WEATHER_PROVIDER`: Weather API provider
-
-## Code Style
-
-- **TypeScript**: Strict mode enabled
-- **Linting**: ESLint with Next.js config
-- **Formatting**: Follow Next.js conventions
-- **Components**: Functional components with hooks
-- **API Routes**: Async/await, proper error handling
-
-## Testing
-
-Currently manual testing via smoke test checklist.
-
-Future: Jest + React Testing Library for unit tests.
-
-## Performance Optimizations
-
-- Redis caching for API responses
-- Next.js standalone build (smaller image)
-- Component code splitting (admin lazy loaded)
-- Database connection pooling
-- Optimistic UI updates
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `NEXTAUTH_SECRET` | Yes | Session encryption key |
+| `NEXTAUTH_URL` | Yes | Deployment URL |
+| `SQLITE_FILE` | No | Database path (default: /data/fauxdash.db) |
+| `REDIS_ENABLED` | No | Enable caching (default: true) |
+| `REDIS_URL` | No | Redis connection URL |
+| `OIDC_ENABLED` | No | Enable OIDC authentication |
+| `WEATHER_PROVIDER` | No | Weather API provider |
+| `GEOIP_PROVIDER` | No | GeoIP lookup provider |
 
 ## Security Measures
 
@@ -268,27 +249,17 @@ Future: Jest + React Testing Library for unit tests.
 - Server-side authentication checks
 - Secure cookie settings
 - Input validation
+- Path traversal protection
 
-## Scaling Considerations
+## Performance Optimizations
 
-- **Database**: SQLite with WAL mode for concurrent reads
-- **Redis**: Single instance sufficient for self-hosted use
-- **Static assets**: Served by Next.js (can use CDN later)
-
-## Future Architecture
-
-Potential improvements documented in DECISIONS.md:
-
-- OIDC authentication providers
-- S3-compatible storage for custom icons
-- Time-series analytics database
-- Job queue for background tasks
-- API documentation with OpenAPI
+- Redis caching for API responses
+- Next.js standalone build (smaller image)
+- Component code splitting
+- Optimistic UI updates
+- In-memory settings cache with TTL
+- Efficient database queries (N+1 fixes)
 
 ---
 
-This structure is designed for:
-- **Simplicity**: Easy to understand and navigate
-- **Modularity**: Components and features are isolated
-- **Scalability**: Can grow with additional features
-- **Maintainability**: Clear separation of concerns
+This structure is designed for simplicity, modularity, and maintainability.
