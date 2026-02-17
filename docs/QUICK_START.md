@@ -84,4 +84,4 @@ docker compose down
 
 ## Full Documentation
 
-See [README.md](README.md) for complete documentation.
+See [README.md](../README.md) for complete documentation.

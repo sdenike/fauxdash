@@ -106,6 +106,15 @@ Redis is not included with Faux|Dash. To use Redis caching:
 
 ---
 
+## 📖 Documentation
+
+- [Quick Start Guide](docs/QUICK_START.md)
+- [Deployment Guide](docs/DEPLOY.md)
+- [OIDC Setup Guide](docs/OIDC-SETUP-GUIDE.md)
+- [Project Structure](docs/PROJECT_STRUCTURE.md)
+
+---
+
 ## 📝 License
 
 MIT License
