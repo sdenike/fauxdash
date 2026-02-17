@@ -313,12 +313,14 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                             )}
                           </div>
                         )}
-                        {/* Download button when database not found */}
-                        {!testResult.success && testResult.message.toLowerCase().includes('not found') && (
-                          <div className="mt-3 pt-3 border-t border-red-200 dark:border-red-800">
+                        {/* Download button when database not found or outdated */}
+                        {(!testResult.success && testResult.message.toLowerCase().includes('not found')) || testResult.details?.isOutdated ? (
+                          <div className={`mt-3 pt-3 border-t ${testResult.success ? 'border-green-200 dark:border-green-800' : 'border-red-200 dark:border-red-800'}`}>
                             <p className="text-sm text-muted-foreground mb-2">
                               {settings.geoipMaxmindAccountId && settings.geoipMaxmindLicenseKey
-                                ? 'Click below to download the GeoLite2-City database using your MaxMind credentials.'
+                                ? testResult.details?.isOutdated
+                                  ? 'A newer database version may be available. Click to update.'
+                                  : 'Click below to download the GeoLite2-City database using your MaxMind credentials.'
                                 : 'Enter your MaxMind Account ID and License Key above, then click download.'}
                             </p>
                             <Button
@@ -328,10 +330,10 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                               className="gap-2"
                             >
                               <ArrowDownTrayIcon className={`h-4 w-4 ${downloading ? 'animate-bounce' : ''}`} />
-                              {downloading ? 'Downloading...' : 'Download GeoLite2-City Database'}
+                              {downloading ? 'Downloading...' : testResult.details?.isOutdated ? 'Update Database' : 'Download GeoLite2-City Database'}
                             </Button>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     )}
                     {/* Download result */}
@@ -557,12 +559,14 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                           Test: {testResult.results.maxmind.details.testLookup.city}, {testResult.results.maxmind.details.testLookup.country}
                         </div>
                       )}
-                      {/* Download button when MaxMind database not found in chain mode */}
-                      {!testResult.results.maxmind.success && testResult.results.maxmind.message.toLowerCase().includes('not found') && (
-                        <div className="mt-3 pt-3 border-t border-red-200 dark:border-red-800">
+                      {/* Download button when MaxMind database not found or outdated in chain mode */}
+                      {(!testResult.results.maxmind.success && testResult.results.maxmind.message.toLowerCase().includes('not found')) || testResult.results.maxmind.details?.isOutdated ? (
+                        <div className={`mt-3 pt-3 border-t ${testResult.results.maxmind.success ? 'border-green-200 dark:border-green-800' : 'border-red-200 dark:border-red-800'}`}>
                           <p className="text-sm text-muted-foreground mb-2">
                             {settings.geoipMaxmindAccountId && settings.geoipMaxmindLicenseKey
-                              ? 'Click below to download the GeoLite2-City database using your MaxMind credentials.'
+                              ? testResult.results.maxmind.details?.isOutdated
+                                ? 'A newer database version may be available. Click to update.'
+                                : 'Click below to download the GeoLite2-City database using your MaxMind credentials.'
                               : 'Enter your MaxMind Account ID and License Key above, then click download.'}
                           </p>
                           <Button
@@ -572,10 +576,10 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                             className="gap-2"
                           >
                             <ArrowDownTrayIcon className={`h-4 w-4 ${downloading ? 'animate-bounce' : ''}`} />
-                            {downloading ? 'Downloading...' : 'Download GeoLite2-City Database'}
+                            {downloading ? 'Downloading...' : testResult.results.maxmind.details?.isOutdated ? 'Update Database' : 'Download GeoLite2-City Database'}
                           </Button>
                         </div>
-                      )}
+                      ) : null}
                     </div>
                     {/* ipinfo Result */}
                     <div className={`p-3 rounded-lg ${testResult.results.ipinfo.success ? 'bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800'}`}>

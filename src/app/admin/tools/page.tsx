@@ -40,6 +40,12 @@ interface DemoStatus {
   }
 }
 
+interface Settings {
+  hideDemoContent: boolean
+  geoipMaxmindAccountId: string
+  geoipMaxmindLicenseKey: string
+}
+
 export default function ToolsPage() {
   const { toast } = useToast()
   const [loading, setLoading] = useState<Record<string, boolean>>({})
@@ -49,6 +55,8 @@ export default function ToolsPage() {
   const [importFile, setImportFile] = useState<File | null>(null)
   const [lastBackupDate, setLastBackupDate] = useState<string | null>(null)
   const [demoStatus, setDemoStatus] = useState<DemoStatus | null>(null)
+  const [settings, setSettings] = useState<Settings | null>(null)
+  const [downloadingMaxmind, setDownloadingMaxmind] = useState(false)
 
   useEffect(() => {
     // Fetch last backup date
@@ -63,6 +71,18 @@ export default function ToolsPage() {
 
     // Fetch demo status
     fetchDemoStatus()
+
+    // Fetch settings
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        setSettings({
+          hideDemoContent: data.hideDemoContent || false,
+          geoipMaxmindAccountId: data.geoipMaxmindAccountId || '',
+          geoipMaxmindLicenseKey: data.geoipMaxmindLicenseKey || '',
+        })
+      })
+      .catch(() => {})
   }, [])
 
   const fetchDemoStatus = async () => {
@@ -305,6 +325,76 @@ export default function ToolsPage() {
     }
   }
 
+  const downloadMaxmind = async () => {
+    setDownloadingMaxmind(true)
+
+    try {
+      const response = await fetch('/api/geoip/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          edition: 'GeoLite2-City',
+          accountId: settings?.geoipMaxmindAccountId,
+          licenseKey: settings?.geoipMaxmindLicenseKey,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast({
+          variant: 'success',
+          title: 'MaxMind Database Updated',
+          description: data.message,
+        })
+        // Refresh the MaxMind status
+        checkMaxMind()
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Download Failed',
+          description: data.message || data.error,
+        })
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Download Error',
+        description: error.message,
+      })
+    } finally {
+      setDownloadingMaxmind(false)
+    }
+  }
+
+  const toggleHideDemoContent = async () => {
+    const newValue = !settings?.hideDemoContent
+    setSettings(prev => prev ? { ...prev, hideDemoContent: newValue } : null)
+
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hideDemoContent: newValue }),
+      })
+      toast({
+        variant: 'success',
+        title: newValue ? 'Demo Section Hidden' : 'Demo Section Visible',
+        description: newValue
+          ? 'The demo content section is now hidden from this page'
+          : 'The demo content section is now visible',
+      })
+    } catch (error) {
+      // Revert on error
+      setSettings(prev => prev ? { ...prev, hideDemoContent: !newValue } : null)
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to save setting',
+      })
+    }
+  }
+
   return (
     <div className="space-y-6 p-6">
       <div>
@@ -497,96 +587,110 @@ export default function ToolsPage() {
 
       {/* Demo Content Section */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          <BeakerIcon className="h-5 w-5" />
-          Demo Content
-        </h2>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BeakerIcon className="h-5 w-5" />
-              Sample Bookmarks & Services
-            </CardTitle>
-            <CardDescription>
-              Test drive Faux|Dash with pre-populated demo data including bookmarks, services,
-              and 30 days of sample analytics. Demo content is marked and can be cleared
-              without affecting your real data.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {demoStatus && (
-              <div className={`text-sm p-3 rounded ${
-                demoStatus.hasDemo
-                  ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                  : 'bg-muted text-muted-foreground'
-              }`}>
-                {demoStatus.hasDemo ? (
-                  <>
-                    <span className="font-medium">Demo content loaded:</span>
-                    <div className="mt-1 text-xs grid grid-cols-2 gap-1">
-                      <span>Bookmark categories: {demoStatus.stats.bookmarkCategories}</span>
-                      <span>Bookmarks: {demoStatus.stats.bookmarks}</span>
-                      <span>Service categories: {demoStatus.stats.serviceCategories}</span>
-                      <span>Services: {demoStatus.stats.services}</span>
-                      <span className="col-span-2">Demo pageviews: {demoStatus.stats.pageviews}</span>
-                    </div>
-                  </>
-                ) : (
-                  'No demo content loaded'
-                )}
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <BeakerIcon className="h-5 w-5" />
+            Demo Content
+          </h2>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="hideDemoContent" className="text-sm text-muted-foreground">
+              {settings?.hideDemoContent ? 'Hidden' : 'Visible'}
+            </Label>
+            <Switch
+              id="hideDemoContent"
+              checked={!settings?.hideDemoContent}
+              onCheckedChange={() => toggleHideDemoContent()}
+            />
+          </div>
+        </div>
+        {!settings?.hideDemoContent && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BeakerIcon className="h-5 w-5" />
+                Sample Bookmarks & Services
+              </CardTitle>
+              <CardDescription>
+                Test drive Faux|Dash with pre-populated demo data including bookmarks, services,
+                and 30 days of sample analytics. Demo content is marked and can be cleared
+                without affecting your real data.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {demoStatus && (
+                <div className={`text-sm p-3 rounded ${
+                  demoStatus.hasDemo
+                    ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {demoStatus.hasDemo ? (
+                    <>
+                      <span className="font-medium">Demo content loaded:</span>
+                      <div className="mt-1 text-xs grid grid-cols-2 gap-1">
+                        <span>Bookmark categories: {demoStatus.stats.bookmarkCategories}</span>
+                        <span>Bookmarks: {demoStatus.stats.bookmarks}</span>
+                        <span>Service categories: {demoStatus.stats.serviceCategories}</span>
+                        <span>Services: {demoStatus.stats.services}</span>
+                        <span className="col-span-2">Demo pageviews: {demoStatus.stats.pageviews}</span>
+                      </div>
+                    </>
+                  ) : (
+                    'No demo content loaded'
+                  )}
+                </div>
+              )}
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Button
+                  onClick={loadDemo}
+                  disabled={loading.loadDemo || loading.clearDemo || demoStatus?.hasDemo}
+                  className="w-full"
+                >
+                  {loading.loadDemo ? (
+                    <>
+                      <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                      Loading Demo...
+                    </>
+                  ) : (
+                    <>
+                      <BeakerIcon className="h-4 w-4 mr-2" />
+                      Load Demo Content
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  onClick={clearDemo}
+                  disabled={loading.loadDemo || loading.clearDemo || !demoStatus?.hasDemo}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {loading.clearDemo ? (
+                    <>
+                      <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                      Clearing Demo...
+                    </>
+                  ) : (
+                    <>
+                      <TrashIcon className="h-4 w-4 mr-2" />
+                      Clear Demo Content
+                    </>
+                  )}
+                </Button>
               </div>
-            )}
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Button
-                onClick={loadDemo}
-                disabled={loading.loadDemo || loading.clearDemo || demoStatus?.hasDemo}
-                className="w-full"
-              >
-                {loading.loadDemo ? (
-                  <>
-                    <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                    Loading Demo...
-                  </>
-                ) : (
-                  <>
-                    <BeakerIcon className="h-4 w-4 mr-2" />
-                    Load Demo Content
-                  </>
-                )}
-              </Button>
-
-              <Button
-                onClick={clearDemo}
-                disabled={loading.loadDemo || loading.clearDemo || !demoStatus?.hasDemo}
-                variant="outline"
-                className="w-full"
-              >
-                {loading.clearDemo ? (
-                  <>
-                    <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                    Clearing Demo...
-                  </>
-                ) : (
-                  <>
-                    <TrashIcon className="h-4 w-4 mr-2" />
-                    Clear Demo Content
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {(results.loadDemo || results.clearDemo) && (
-              <div className={`text-sm p-3 rounded ${
-                (results.loadDemo?.success || results.clearDemo?.success)
-                  ? 'bg-green-500/10 text-green-600'
-                  : 'bg-red-500/10 text-red-600'
-              }`}>
-                <p>{results.loadDemo?.message || results.clearDemo?.message}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              {(results.loadDemo || results.clearDemo) && (
+                <div className={`text-sm p-3 rounded ${
+                  (results.loadDemo?.success || results.clearDemo?.success)
+                    ? 'bg-green-500/10 text-green-600'
+                    : 'bg-red-500/10 text-red-600'
+                }`}>
+                  <p>{results.loadDemo?.message || results.clearDemo?.message}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Maintenance Tools Section */}
@@ -859,28 +963,59 @@ export default function ToolsPage() {
               MaxMind GeoIP Database
             </CardTitle>
             <CardDescription>
-              Check the status of your MaxMind GeoIP database and see if updates are available.
+              Check the status of your MaxMind GeoIP database and download updates.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button
-              onClick={checkMaxMind}
-              disabled={loading.maxmind}
-              variant="outline"
-              className="w-full"
-            >
-              {loading.maxmind ? (
-                <>
-                  <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                  Checking...
-                </>
-              ) : (
-                <>
-                  <GlobeAltIcon className="h-4 w-4 mr-2" />
-                  Check MaxMind Status
-                </>
-              )}
-            </Button>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Button
+                onClick={checkMaxMind}
+                disabled={loading.maxmind}
+                variant="outline"
+                className="w-full"
+              >
+                {loading.maxmind ? (
+                  <>
+                    <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                    Checking...
+                  </>
+                ) : (
+                  <>
+                    <GlobeAltIcon className="h-4 w-4 mr-2" />
+                    Check Status
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={downloadMaxmind}
+                disabled={downloadingMaxmind || !settings?.geoipMaxmindAccountId || !settings?.geoipMaxmindLicenseKey}
+                variant="default"
+                className="w-full"
+              >
+                {downloadingMaxmind ? (
+                  <>
+                    <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <CloudArrowDownIcon className="h-4 w-4 mr-2" />
+                    Update Database
+                  </>
+                )}
+              </Button>
+            </div>
+            {!settings?.geoipMaxmindAccountId || !settings?.geoipMaxmindLicenseKey ? (
+              <div className="text-sm p-3 rounded bg-muted text-muted-foreground">
+                <p>To enable automatic updates, configure your MaxMind Account ID and License Key in <strong>Settings &gt; GeoIP</strong>.</p>
+                <p className="mt-1 text-xs">
+                  Get free credentials from{' '}
+                  <a href="https://www.maxmind.com/en/geolite2/signup" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    MaxMind GeoLite2
+                  </a>
+                </p>
+              </div>
+            ) : null}
             {results.maxmind && (
               <div className={`text-sm p-3 rounded ${
                 !results.maxmind.details?.installed
@@ -895,18 +1030,6 @@ export default function ToolsPage() {
                     <p>Installed version: {results.maxmind.details.installedDate || 'Unknown'}</p>
                     <p>File size: {results.maxmind.details.fileSize || 'Unknown'}</p>
                     <p>Database path: {results.maxmind.details.path || 'Not found'}</p>
-                    {results.maxmind.details.updateCommand && (
-                      <div className="mt-2 p-2 bg-muted rounded">
-                        <p className="font-medium mb-1">Update instructions:</p>
-                        <code className="text-xs break-all">{results.maxmind.details.updateCommand}</code>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {results.maxmind.details && !results.maxmind.details.installed && results.maxmind.details.updateCommand && (
-                  <div className="mt-2 p-2 bg-muted rounded">
-                    <p className="font-medium mb-1">Installation instructions:</p>
-                    <code className="text-xs break-all">{results.maxmind.details.updateCommand}</code>
                   </div>
                 )}
               </div>

@@ -183,6 +183,14 @@ export async function GET(request: NextRequest) {
     // PWA app icon settings
     pwaIconPath: settingsObj.pwaIconPath || '',
     pwaIconType: (settingsObj.pwaIconType || 'none') as 'upload' | 'library' | 'url' | 'none',
+    // Redis settings
+    redisEnabled: settingsObj.redisEnabled === 'true' || false,
+    redisHost: settingsObj.redisHost || 'localhost',
+    redisPort: parseInt(settingsObj.redisPort || '6379'),
+    redisPassword: settingsObj.redisPassword || '',
+    redisDatabase: parseInt(settingsObj.redisDatabase || '0'),
+    // Admin tools settings
+    hideDemoContent: settingsObj.hideDemoContent === 'true' || false,
   }, {
     headers: {
       'Cache-Control': 'no-store, no-cache, must-revalidate',
@@ -315,6 +323,14 @@ export async function POST(request: NextRequest) {
     // Update the logger's log level immediately
     logger.setLogLevel(body.logLevel as LogLevel);
   }
+  // Redis settings
+  if (body.redisEnabled !== undefined) settingsToSave.push({ key: 'redisEnabled', value: body.redisEnabled.toString() });
+  if (body.redisHost !== undefined) settingsToSave.push({ key: 'redisHost', value: body.redisHost || 'localhost' });
+  if (body.redisPort !== undefined) settingsToSave.push({ key: 'redisPort', value: body.redisPort.toString() });
+  if (body.redisPassword !== undefined) settingsToSave.push({ key: 'redisPassword', value: body.redisPassword || '' });
+  if (body.redisDatabase !== undefined) settingsToSave.push({ key: 'redisDatabase', value: body.redisDatabase.toString() });
+  // Admin tools settings
+  if (body.hideDemoContent !== undefined) settingsToSave.push({ key: 'hideDemoContent', value: body.hideDemoContent.toString() });
   // Homepage content settings
   if (body.homepageDescriptionEnabled !== undefined) settingsToSave.push({ key: 'homepageDescriptionEnabled', value: body.homepageDescriptionEnabled.toString() });
   if (body.homepageDescription !== undefined) settingsToSave.push({ key: 'homepageDescription', value: body.homepageDescription || '' });
@@ -357,6 +373,10 @@ export async function POST(request: NextRequest) {
     'siteFavicon', 'siteFaviconType',
     // PWA app icon settings
     'pwaIconPath', 'pwaIconType',
+    // Redis settings
+    'redisEnabled', 'redisHost', 'redisPort', 'redisPassword', 'redisDatabase',
+    // Admin tools settings
+    'hideDemoContent',
   ];
 
   // Split into global vs user settings

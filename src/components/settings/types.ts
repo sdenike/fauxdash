@@ -133,6 +133,8 @@ export interface Settings {
   // PWA App Icon
   pwaIconPath: string
   pwaIconType: 'upload' | 'library' | 'url' | 'none'
+  // Admin Tools
+  hideDemoContent: boolean
 }
 
 export interface SettingsTabProps {
@@ -268,4 +270,6 @@ export const defaultSettings: Settings = {
   // PWA App Icon
   pwaIconPath: '',
   pwaIconType: 'none',
+  // Admin Tools
+  hideDemoContent: false,
 }
