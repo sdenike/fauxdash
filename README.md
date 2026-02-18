@@ -2,7 +2,7 @@
 
 A modern, self-hosted homepage dashboard for managing bookmarks and services. Built as a replacement for [Flame](https://github.com/pawelmalak/flame) with a modern tech stack.
 
-> **Note**: This project was entirely built with AI assistance. Contributions welcome!
+> **Note**: This project was entirely built with AI assistance, if you couldn't tell from all the emojis in this readme. While I built this for myself and a few friends I am open for feature requests.
 
 ---
 
