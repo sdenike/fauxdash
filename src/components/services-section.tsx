@@ -103,6 +103,12 @@ function ServiceCategoryWithAccordion({
     const urls = category.services?.map(s => s.url) || []
     let blockedCount = 0
 
+    // Track clicks for all services in this category
+    category.services?.forEach(service => {
+      fetch(`/api/services/${service.id}/click`, { method: 'POST' })
+        .catch(err => console.error('Failed to track click:', err))
+    })
+
     // Open tabs using window.open - browsers allow multiple opens from a single user gesture
     // if done synchronously, though some browsers may still limit this
     for (let i = 0; i < urls.length; i++) {

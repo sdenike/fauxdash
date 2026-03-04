@@ -14,31 +14,22 @@ export function PWAInstallPrompt() {
   const [isIOS, setIsIOS] = useState(false)
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      return
-    }
-
-    // Check if already shown in this session
-    if (sessionStorage.getItem('pwa-prompt-shown')) {
-      return
-    }
-
-    // Check if dismissed recently (within 30 days)
-    const dismissedAt = localStorage.getItem('pwa-prompt-dismissed')
-    if (dismissedAt) {
-      const dismissedDate = new Date(dismissedAt)
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-      if (dismissedDate > thirtyDaysAgo) {
-        return
+    // Check all dismiss conditions
+    const shouldSuppress = () => {
+      if (window.matchMedia('(display-mode: standalone)').matches) return true
+      if (localStorage.getItem('pwa-prompt-permanent-dismiss') === 'true') return true
+      if (sessionStorage.getItem('pwa-prompt-shown')) return true
+      const dismissedAt = localStorage.getItem('pwa-prompt-dismissed')
+      if (dismissedAt) {
+        const dismissedDate = new Date(dismissedAt)
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+        if (dismissedDate > thirtyDaysAgo) return true
       }
+      return false
     }
 
-    // Check if permanently dismissed
-    if (localStorage.getItem('pwa-prompt-permanent-dismiss') === 'true') {
-      return
-    }
+    if (shouldSuppress()) return
 
     // Mark as shown in this session
     sessionStorage.setItem('pwa-prompt-shown', 'true')
@@ -57,7 +48,9 @@ export function PWAInstallPrompt() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
-      // Show prompt after a short delay
+      // Re-check dismiss conditions in case user dismissed after initial mount
+      // (e.g., service worker update re-fires this event)
+      if (shouldSuppress()) return
       setTimeout(() => setShowPrompt(true), 3000)
     }
 
@@ -87,6 +80,7 @@ export function PWAInstallPrompt() {
   const handlePermanentDismiss = () => {
     setShowPrompt(false)
     localStorage.setItem('pwa-prompt-permanent-dismiss', 'true')
+    sessionStorage.setItem('pwa-prompt-shown', 'true')
   }
 
   if (!showPrompt) {

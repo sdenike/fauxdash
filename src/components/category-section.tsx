@@ -94,6 +94,12 @@ export function CategorySection({ category, onBookmarkClick, iconSize = 32, font
     const urls = category.bookmarks.map(b => b.url)
     let blockedCount = 0
 
+    // Track clicks for all bookmarks in this category
+    category.bookmarks.forEach(bookmark => {
+      fetch(`/api/bookmarks/${bookmark.id}/click`, { method: 'POST' })
+        .catch(err => console.error('Failed to track click:', err))
+    })
+
     // Open tabs using window.open - browsers allow multiple opens from a single user gesture
     // if done synchronously, though some browsers may still limit this
     for (let i = 0; i < urls.length; i++) {
