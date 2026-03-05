@@ -5,6 +5,14 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.4] - 2026-03-04
+
+### Fixed
+- **Resolved all npm security vulnerabilities** — Updated hono, @hono/node-server, minimatch, rollup, tar, and lucide-react; added serialize-javascript override to address RCE vulnerability in @ducanh2912/next-pwa dependency chain
+
+### Changed
+- **Upgraded lucide-react** from 0.309.0 to 0.577.0 (React 19 peer dependency support)
+
 ## [0.12.3] - 2026-03-04
 
 ### Fixed
