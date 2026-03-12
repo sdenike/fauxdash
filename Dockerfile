@@ -55,6 +55,9 @@ EXPOSE 8080
 ENV PORT=8080
 ENV HOSTNAME="0.0.0.0"
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD wget -qO- http://localhost:8080/api/health || exit 1
+
 # Default PUID/PGID (can be overridden at runtime)
 ENV PUID=1000
 ENV PGID=1000
