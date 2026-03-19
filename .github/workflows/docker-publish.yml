@@ -4,8 +4,8 @@
 # This workflow builds and publishes Docker images to GitHub Container Registry
 #
 # Triggers:
-#   - Push to main branch (builds :latest tag)
-#   - New version tags (v*.*.* builds version tags)
+#   - Push to master branch (builds :latest tag)
+#   - New version tags (v*.*.* builds version + latest tags)
 #   - Manual dispatch (workflow_dispatch)
 #
 # Images are published to: ghcr.io/OWNER/fauxdash
@@ -16,7 +16,6 @@ name: Build and Publish Docker Image
 on:
   push:
     branches:
-      - main
       - master
     tags:
       - 'v*.*.*'
@@ -71,8 +70,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # Tag with 'latest' for main branch
-            type=raw,value=latest,enable={{is_default_branch}}
+            # Tag with 'latest' for master branch pushes AND version tag pushes
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v') }}
             # Tag with version for version tags (v1.0.0 -> 1.0.0)
             type=semver,pattern={{version}}
             # Tag with major.minor for version tags (v1.0.0 -> 1.0)
