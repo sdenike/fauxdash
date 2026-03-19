@@ -5,6 +5,16 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.6] - 2026-03-19
+
+### Fixed
+- **OIDC log noise when disabled** — Startup and per-request auth checks no longer emit verbose OIDC config dumps when OIDC is not enabled; warnings now only appear when OIDC is enabled but misconfigured
+- **Redirect and sign-in event logging** — Removed per-request redirect logging; sign-in events now route through the logger and respect `LOG_LEVEL`
+
+### Changed
+- **CI: `:latest` tag now applied on version releases** — Pushing a version tag (`v*.*.*`) now tags the image as `:latest` in addition to the versioned tags, eliminating the previous two-build race condition
+- **CI: removed stale `main` branch trigger** — Workflow now only triggers on `master` (the actual default branch)
+
 ## [0.12.5] - 2026-03-19
 
 ### Added
