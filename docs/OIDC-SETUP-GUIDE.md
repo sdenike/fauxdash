@@ -7,7 +7,7 @@
 ## Prerequisites
 
 Before you begin:
-- ✅ Faux|Dash v0.9.16+ deployed
+- ✅ Faux|Dash deployed
 - ✅ OIDC provider configured (Authentik, Keycloak, PocketID, Okta, etc.)
 - ✅ Admin access to Faux|Dash
 - ✅ HTTPS enabled (required for production OIDC)
@@ -226,9 +226,7 @@ docker logs fauxdash | grep "OIDC provider"
 #   clientSecret: '***SET***'
 # }
 
-# If shows 'MISSING', settings not saved correctly
-# With v0.9.16+: Just save settings again (no restart!)
-# Before v0.9.16: Restart container
+# If shows 'MISSING', settings not saved correctly - just save settings again (no restart needed)
 ```
 
 ### Issue 2: "Invalid callback URL"
@@ -300,7 +298,7 @@ docker logs fauxdash | grep "OIDC provider"
 - Shows green check then redirects
 
 **Solution:**
-- Update to v0.9.14+ (fixes session expiration)
+- Verify NEXTAUTH_SECRET is set and stable (auto-generated on first run)
 - Check JWT token expiration in logs
 - Verify NEXTAUTH_SECRET is set
 
@@ -457,7 +455,7 @@ docker logs -f fauxdash | grep -E "OIDC|Sign in event"
 ## Common Questions
 
 **Q: Do I need to restart after changing OIDC settings?**
-A: No! v0.9.16+ reloads settings automatically. Just save and test.
+A: No! Settings are reloaded automatically. Just save and test.
 
 **Q: Can I use both password and OIDC login?**
 A: Yes! Both are available by default. Disable password login in OIDC-Only Mode.

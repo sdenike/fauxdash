@@ -5,16 +5,11 @@
 The easiest deployment uses the pre-built image from GitHub Container Registry:
 
 ```bash
-# Download compose file and environment template
+# Download compose file
 curl -O https://raw.githubusercontent.com/sdenike/fauxdash/master/docker-compose.sample.yml
 mv docker-compose.sample.yml docker-compose.yml
-curl -O https://raw.githubusercontent.com/sdenike/fauxdash/master/.env.example
-mv .env.example .env
 
-# Generate and add secret
-echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> .env
-
-# Start
+# Start (no other configuration needed)
 docker compose up -d
 ```
 
@@ -76,14 +71,15 @@ We follow semantic versioning:
 ./scripts/release.sh minor "New feature description"
 ```
 
-This updates version, creates git tag, and triggers automated Docker build.
+This updates version, commits the change, creates a GitHub release + tag, and triggers the automated Docker build.
 
 ## CI/CD
 
 GitHub Actions automatically:
-1. Builds Docker images on tag push
-2. Publishes to `ghcr.io/sdenike/fauxdash`
-3. Creates GitHub release with changelog
+1. Builds and tags `:latest` on every push to `master`
+2. Builds version tags (`:0.12.5`, `:0.12`, `:0`) AND `:latest` on every version tag push
+3. Publishes all images to `ghcr.io/sdenike/fauxdash`
+4. Creates or updates a GitHub release with the changelog entry
 
 ## Data Volumes
 
@@ -94,7 +90,6 @@ Data persists in Docker volumes:
 | `fauxdash-data` | SQLite database, settings |
 | `fauxdash-favicons` | Downloaded favicons |
 | `fauxdash-logs` | Application logs |
-| `redis-data` | Cache data |
 
 ### Backup
 
@@ -121,12 +116,14 @@ docker run --rm -v fauxdash-data:/data -v $(pwd):/backup alpine tar xzf /backup/
 Key variables (see `.env.example` for all):
 
 ```env
-NEXTAUTH_SECRET=<required>
-NEXTAUTH_URL=http://localhost:8080
-REDIS_ENABLED=true
-PUID=1000
-PGID=1000
+NEXTAUTH_URL=http://localhost:8080   # Change when using a reverse proxy
+NEXTAUTH_SECRET=                     # Auto-generated on first run if not set
+PUID=1000                            # Container user ID
+PGID=1000                            # Container group ID
+LOG_LEVEL=error                      # debug | info | warn | error
 ```
+
+All other settings (Redis, weather API keys, SMTP, OIDC, GeoIP) are configured through Admin > Settings.
 
 ## Reverse Proxy
 

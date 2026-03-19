@@ -10,12 +10,15 @@
 # Complete the setup wizard on first run to create your admin account.
 # NEXTAUTH_SECRET is auto-generated on first run if not provided.
 #
+# All other settings (weather, SMTP, OIDC, Redis, GeoIP) are configured
+# through the Admin > Settings UI — no env vars required.
+#
 # =============================================================================
 
 services:
   app:
     image: ghcr.io/sdenike/fauxdash:latest
-    # build: .  # Uncomment to build locally
+    # build: .  # Uncomment to build locally instead
 
     ports:
       - "8080:8080"
@@ -27,20 +30,20 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
 
-      # Database (SQLite, zero config)
-      - SQLITE_FILE=/data/fauxdash.db
-
-      # Authentication URL (change if using reverse proxy)
+      # Your deployment URL — change this if using a reverse proxy or custom domain
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:8080}
 
-      # Optional: Provide your own secret (auto-generated if not set)
+      # Optional: Provide your own auth secret (auto-generated and persisted if not set)
       # Generate with: openssl rand -base64 32
       # - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
 
+      # Optional: Log level (debug, info, warn, error) — default: error
+      # - LOG_LEVEL=info
+
     volumes:
-      - fauxdash-data:/data
-      - fauxdash-favicons:/app/public/favicons
-      - fauxdash-logs:/data/logs
+      - fauxdash-data:/data          # SQLite database and settings
+      - fauxdash-favicons:/app/public/favicons  # Downloaded favicons
+      - fauxdash-logs:/data/logs     # Application logs
 
     restart: unless-stopped
 
