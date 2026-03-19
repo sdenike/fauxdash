@@ -41,20 +41,14 @@ function getOidcSettingsSync(): {
       disablePasswordLogin: settingsObj.disablePasswordLogin === 'true',
     };
 
-    console.log(`[${ts()}] [OIDC] getOidcSettingsSync result:`, {
-      enabled: result.enabled,
-      hasClientId: !!result.clientId,
-      clientIdLength: result.clientId.length,
-      hasClientSecret: !!result.clientSecret,
-      clientSecretLength: result.clientSecret.length,
-      hasIssuerUrl: !!result.issuerUrl,
-      issuerUrl: result.issuerUrl || '(empty)',
-      dbHasOidcEnabled: 'oidcEnabled' in settingsObj,
-      dbHasClientId: 'oidcClientId' in settingsObj,
-      dbHasClientSecret: 'oidcClientSecret' in settingsObj,
-      dbHasIssuerUrl: 'oidcIssuerUrl' in settingsObj,
-      totalGlobalSettings: allSettings.length,
-    });
+    // Only log OIDC details when it's actually enabled
+    if (result.enabled) {
+      console.log(`[${ts()}] [OIDC] Settings loaded:`, {
+        hasClientId: !!result.clientId,
+        hasClientSecret: !!result.clientSecret,
+        issuerUrl: result.issuerUrl || '(empty)',
+      });
+    }
 
     return result;
   } catch (e) {
@@ -248,11 +242,10 @@ function addOidcProvider(providers: any[], config: ReturnType<typeof getOidcSett
       },
     });
     console.log(`[${ts()}] [OIDC] Provider configured successfully`);
-  } else {
-    console.log(`[${ts()}] [OIDC] Provider NOT configured:`, {
-      enabled: config.enabled,
+  } else if (config.enabled) {
+    // Enabled but missing required fields — this is a misconfiguration worth logging
+    console.warn(`[${ts()}] [OIDC] Enabled but missing required fields:`, {
       hasClientId: !!config.clientId,
-      hasClientSecret: !!config.clientSecret,
       hasIssuerUrl: !!config.issuerUrl,
     });
   }
@@ -267,21 +260,12 @@ let dynamicProviders: any[] = [...initialProviders];
 
 // Function to reload OIDC provider configuration without restart
 export async function reloadOidcProvider() {
-  console.log(`[${ts()}] [OIDC] ===============================================`);
-  console.log(`[${ts()}] [OIDC] RELOAD: Starting provider reload...`);
-  console.log(`[${ts()}] [OIDC] ===============================================`);
-
   try {
     const currentConfig = await getOidcSettings();
 
-    console.log(`[${ts()}] [OIDC] RELOAD: Current configuration:`, {
-      enabled: currentConfig.enabled,
-      hasClientId: !!currentConfig.clientId,
-      clientIdPrefix: currentConfig.clientId ? currentConfig.clientId.substring(0, 8) + '...' : 'MISSING',
-      hasClientSecret: !!currentConfig.clientSecret,
-      issuerUrl: currentConfig.issuerUrl || 'MISSING',
-      disablePasswordLogin: currentConfig.disablePasswordLogin,
-    });
+    if (currentConfig.enabled) {
+      console.log(`[${ts()}] [OIDC] Reloading provider — issuerUrl: ${currentConfig.issuerUrl}, hasClientId: ${!!currentConfig.clientId}, hasClientSecret: ${!!currentConfig.clientSecret}`);
+    }
 
     // Rebuild providers array
     const newProviders = buildProviders(currentConfig);
@@ -290,15 +274,13 @@ export async function reloadOidcProvider() {
     // Update dynamic providers
     dynamicProviders = newProviders;
 
-    console.log(`[${ts()}] [OIDC] RELOAD: Provider reloaded successfully`);
-    console.log(`[${ts()}] [OIDC] RELOAD: Active providers:`, dynamicProviders.map(p => p.id || p.name));
-    console.log(`[${ts()}] [OIDC] ===============================================`);
+    if (currentConfig.enabled) {
+      console.log(`[${ts()}] [OIDC] Provider reloaded successfully`);
+    }
 
     return { success: true, message: 'OIDC configuration reloaded' };
   } catch (error) {
-    console.error(`[${ts()}] [OIDC] RELOAD ERROR: Failed to reload provider:`, error);
-    console.error(`[${ts()}] [OIDC] RELOAD ERROR: Stack trace:`, (error as Error).stack);
-    console.log(`[${ts()}] [OIDC] ===============================================`);
+    console.error(`[${ts()}] [OIDC] Failed to reload provider:`, error);
     return { success: false, error: 'Failed to reload OIDC configuration' };
   }
 }
@@ -365,28 +347,20 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async redirect({ url, baseUrl }) {
-      // Log redirect for debugging
-      console.log(`[${ts()}] [AUTH] Redirect callback:`, { url, baseUrl });
-
-      // If URL is already absolute and different from baseUrl, use it
+      // If URL is already absolute and same origin, allow it
       if (url.startsWith('http')) {
-        // Allow redirects to same origin
         const urlObj = new URL(url);
         const baseUrlObj = new URL(baseUrl);
         if (urlObj.origin === baseUrlObj.origin) {
-          console.log(`[${ts()}] [AUTH] Allowing redirect to same origin:`, url);
           return url;
         }
       }
 
-      // If URL starts with /, it's relative, prepend baseUrl
+      // Relative URL — prepend baseUrl
       if (url.startsWith('/')) {
-        console.log(`[${ts()}] [AUTH] Redirecting to relative URL:`, `${baseUrl}${url}`);
         return `${baseUrl}${url}`;
       }
 
-      // Default to baseUrl
-      console.log(`[${ts()}] [AUTH] Defaulting to baseUrl:`, baseUrl);
       return baseUrl;
     },
     async jwt({ token, user, account, profile, trigger }) {
@@ -562,12 +536,8 @@ export const authOptions: NextAuthOptions = {
     maxAge: 2 * 24 * 60 * 60, // 2 days
   },
   events: {
-    async signIn({ user, account, profile, isNewUser }) {
-      console.log(`[${ts()}] [AUTH] Sign in event:`, {
-        provider: account?.provider,
-        userEmail: user?.email,
-        isNewUser,
-      });
+    async signIn({ user, account, isNewUser }) {
+      logAuth('info', 'Sign in', { provider: account?.provider, email: user?.email, isNewUser });
     },
   },
   logger: {
