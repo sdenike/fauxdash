@@ -5,6 +5,32 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.7] - 2026-03-26
+
+### Added
+- **Uploads tab in icon selector** — bookmarks and services can now use images from your media library as icons; the dialog has a new "Uploads" tab with a searchable grid, an inline Upload button, and real-time display of newly uploaded files
+- **Media icon type in icon save API** — selecting a media library image copies and converts it to a 128×128 PNG in the favicons directory, giving it the same color/grayscale editing capabilities as HeroIcon and Selfh.st icons
+
+### Fixed
+- **ICO favicon support** — `.ico` files no longer produce "Unsupported format" errors; conversion now uses a three-method fallback chain (Sharp native → icojs → embedded PNG scan) covering standard, non-standard, and embedded-PNG ICOs
+- **Log injection via URL newlines** — favicon fetch log calls now strip `\r\n` from URLs before interpolating into log messages
+
+### Security
+- **SSRF protection on favicon fetch** — added hostname blocklist covering loopback, RFC-1918 ranges, link-local, carrier-grade NAT, multicast, IPv6 private ranges, and bracketed IPv6 literals
+- **DoS prevention on favicon fetch** — response body is now streamed with a 2 MB hard cap; Content-Length is checked before buffering
+- **SVG XSS prevention** — SVGs containing `<script`, `<!entity`, `<foreignObject`, `xlink:href=`, or `javascript:` are rejected at ingestion; served SVGs use `Content-Disposition: attachment` to block inline rendering
+- **Path traversal hardening** — favicon serve route uses a tighter regex (`/^[a-zA-Z0-9_\-]+(\.[a-zA-Z0-9]+)?$/`) that structurally prevents `..`; favicon save asserts all constructed paths stay within the favicon directory boundary
+- **Filename sanitization** — generated favicon filenames are restricted to alphanumeric and hyphen characters, capped at 64 characters
+
+### Changed
+- **Parallel ICO page metadata** — multi-page ICO best-page selection now fetches all page metadata concurrently with `Promise.all` instead of sequentially
+- **Parallel favicon file writes** — original and active PNG copies are written concurrently
+- **Native PNG signature scan** — embedded PNG detection in ICOs now uses `Buffer.indexOf()` (native C) instead of a JS byte-by-byte loop
+- **Async favicon serving** — removed three blocking `existsSync` calls from the per-request hot path; grayscale/monotone fallback now uses async `readFile` with catch
+- **Memoized favicon directory** — `getFaviconDir()` now memoizes the path and avoids repeated `mkdirSync` calls after the first
+- **Module-level constants** — `ALLOWED_TYPES`, `DANGEROUS_SVG_PATTERNS`, `BLOCKED_HOSTNAME_PATTERNS` moved out of request handlers to avoid per-request allocation
+- **README simplified** — removed stale Redis Cache section, nginx config block, and Documentation links list
+
 ## [0.12.6] - 2026-03-19
 
 ### Fixed

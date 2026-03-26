@@ -1,20 +1,20 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
 import { AVAILABLE_ICONS, ICON_CATEGORIES, getIconByName } from '@/lib/icons'
-import { MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import { useToast } from './ui/use-toast'
 
 interface IconSelectorProps {
   value?: string
   onChange: (iconName: string) => void
   trigger?: React.ReactNode
-  defaultTab?: 'heroicons' | 'selfhst' | 'url'
+  defaultTab?: 'heroicons' | 'selfhst' | 'url' | 'uploads'
 }
 
 interface SelfhstIcon {
@@ -24,19 +24,32 @@ interface SelfhstIcon {
   tags: string
 }
 
+interface MediaLibraryItem {
+  filename: string
+  size: number
+  createdAt: string
+  thumbnailUrl: string
+  originalUrl: string
+}
+
 export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons' }: IconSelectorProps) {
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
-  const [selectedTab, setSelectedTab] = useState<'heroicons' | 'selfhst' | 'url'>(defaultTab)
+  const [selectedTab, setSelectedTab] = useState<'heroicons' | 'selfhst' | 'url' | 'uploads'>(defaultTab)
   const [showLeftArrow, setShowLeftArrow] = useState(false)
   const [showRightArrow, setShowRightArrow] = useState(false)
   const [selfhstIcons, setSelfhstIcons] = useState<SelfhstIcon[]>([])
   const [loadingSelfhst, setLoadingSelfhst] = useState(false)
   const [faviconUrl, setFaviconUrl] = useState('')
   const [fetchingFavicon, setFetchingFavicon] = useState(false)
+  const [mediaItems, setMediaItems] = useState<MediaLibraryItem[]>([])
+  const [loadingMedia, setLoadingMedia] = useState(false)
+  const [uploadingMedia, setUploadingMedia] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const mediaFileInputRef = useRef<HTMLInputElement>(null)
+  const [savingIcon, setSavingIcon] = useState(false)
 
   // Fetch selfh.st icons when tab is selected with caching
   useEffect(() => {
@@ -97,6 +110,71 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
     }
   }, [selectedTab, selfhstIcons.length, loadingSelfhst])
 
+  // Load media library when uploads tab is opened
+  useEffect(() => {
+    if (selectedTab === 'uploads' && mediaItems.length === 0 && !loadingMedia) {
+      setLoadingMedia(true)
+      fetch('/api/media-library')
+        .then(res => res.json())
+        .then(data => setMediaItems(data.items || []))
+        .catch(err => console.error('Failed to load media library:', err))
+        .finally(() => setLoadingMedia(false))
+    }
+  }, [selectedTab, mediaItems.length, loadingMedia])
+
+  const handleUploadMedia = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingMedia(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/media-library', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (data.filename) {
+        setMediaItems(prev => [{
+          filename: data.filename,
+          size: file.size,
+          createdAt: new Date().toISOString(),
+          thumbnailUrl: data.thumbnailUrl,
+          originalUrl: data.originalUrl,
+        }, ...prev])
+        toast({ variant: 'success', title: 'Uploaded', description: 'Image added to your media library.' })
+      } else {
+        toast({ variant: 'destructive', title: 'Upload failed', description: data.error || 'Failed to upload image.' })
+      }
+    } catch {
+      toast({ variant: 'destructive', title: 'Upload failed', description: 'Failed to upload image.' })
+    } finally {
+      setUploadingMedia(false)
+      if (mediaFileInputRef.current) mediaFileInputRef.current.value = ''
+    }
+  }, [toast])
+
+  const handleSelectMedia = useCallback(async (filename: string) => {
+    setSavingIcon(true)
+    try {
+      const res = await fetch('/api/icons/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ iconType: 'media', iconId: filename, iconName: filename }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        onChange(`favicon:${data.path}`)
+        toast({ variant: 'success', title: 'Icon set', description: 'Image saved as icon.' })
+        setOpen(false)
+      } else {
+        toast({ variant: 'destructive', title: 'Failed to set icon', description: data.error || 'Could not save icon.' })
+      }
+    } catch {
+      toast({ variant: 'destructive', title: 'Failed to set icon', description: 'Could not save icon.' })
+    } finally {
+      setSavingIcon(false)
+    }
+  }, [onChange, toast])
+
   const allFilteredIcons = AVAILABLE_ICONS.filter(icon => {
     try {
       const searchLower = search.toLowerCase()
@@ -125,8 +203,6 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
   const hasMore = totalCount > 500
 
   const allCategories = ['All', ...ICON_CATEGORIES].filter(Boolean)
-
-  const [savingIcon, setSavingIcon] = useState(false)
 
   const handleSelect = async (iconName: string) => {
     // Check if this is a selfh.st or heroicon that should be saved locally
@@ -396,9 +472,16 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
           >
             URL
           </Button>
+          <Button
+            variant={selectedTab === 'uploads' ? 'default' : 'outline'}
+            onClick={() => setSelectedTab('uploads')}
+            size="sm"
+          >
+            Uploads
+          </Button>
         </div>
 
-        {selectedTab !== 'url' && (
+        {selectedTab !== 'url' && selectedTab !== 'uploads' && (
           <div className="relative mb-4">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -410,7 +493,85 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
           </div>
         )}
 
-        {selectedTab === 'url' ? (
+        {selectedTab === 'uploads' ? (
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Upload bar */}
+            <div className="flex items-center gap-3 mb-4">
+              <input
+                ref={mediaFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleUploadMedia}
+                className="hidden"
+              />
+              <div className="relative flex-1">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search uploads..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => mediaFileInputRef.current?.click()}
+                disabled={uploadingMedia}
+              >
+                <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
+                {uploadingMedia ? 'Uploading...' : 'Upload'}
+              </Button>
+            </div>
+
+            {/* Media grid */}
+            <div className="flex-1 overflow-y-auto">
+              {loadingMedia ? (
+                <div className="flex items-center justify-center h-32 text-muted-foreground">
+                  Loading media library...
+                </div>
+              ) : (() => {
+                const filtered = mediaItems.filter(item =>
+                  search === '' || item.filename.toLowerCase().includes(search.toLowerCase())
+                )
+                return filtered.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-32 gap-1 text-muted-foreground">
+                    <p className="text-sm">{mediaItems.length === 0 ? 'No images uploaded yet.' : 'No results.'}</p>
+                    {mediaItems.length === 0 && (
+                      <p className="text-xs">Use the Upload button above to add images.</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                    {filtered.map(item => (
+                      <button
+                        key={item.filename}
+                        type="button"
+                        onClick={() => handleSelectMedia(item.filename)}
+                        className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-accent transition-colors group min-h-[80px]"
+                        title={item.filename}
+                      >
+                        <div className="flex items-center justify-center h-12 w-12">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={item.thumbnailUrl}
+                            alt={item.filename}
+                            className="h-12 w-12 object-contain rounded"
+                          />
+                        </div>
+                        <span className="text-xs text-muted-foreground group-hover:text-foreground truncate w-full text-center leading-tight">
+                          {item.filename.replace(/^\d+-/, '')}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+        ) : selectedTab === 'url' ? (
           <div className="flex-1 flex items-center justify-center p-8">
             <div className="w-full max-w-md space-y-4">
               <div>

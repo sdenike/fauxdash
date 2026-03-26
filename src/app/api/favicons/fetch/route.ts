@@ -18,7 +18,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    logFavicon('info', `Fetching favicon for: ${url}`);
+    // Sanitize URL before interpolating into log message to prevent log injection
+    logFavicon('info', 'Fetching favicon', { url: url.replace(/[\r\n]/g, ' ') });
     const result = await fetchAndSaveFavicon(url, { isDirectFaviconUrl });
 
     if (!result.success) {

@@ -3,7 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
+import { readFile } from 'fs/promises';
 import sharp from 'sharp';
+import { getOriginalPath } from '@/lib/media-library';
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -115,6 +117,22 @@ export async function POST(request: NextRequest) {
         .toBuffer();
 
       baseFilename = `heroicon_${svgFilename.replace(/-/g, '_')}_${timestamp}`;
+
+    } else if (iconType === 'media') {
+      // Use an image from the media library as an icon
+      const filepath = getOriginalPath(iconId);
+      if (!filepath) {
+        return NextResponse.json({ error: 'Media file not found' }, { status: 404 });
+      }
+
+      const fileBuffer = await readFile(filepath);
+      pngBuffer = await sharp(fileBuffer)
+        .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
+        .png()
+        .toBuffer();
+
+      const safeName = iconId.replace(/[^a-zA-Z0-9-]/g, '_').slice(0, 64);
+      baseFilename = `media_${safeName}_${timestamp}`;
 
     } else {
       return NextResponse.json({ error: 'Invalid icon type' }, { status: 400 });

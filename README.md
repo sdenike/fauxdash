@@ -88,32 +88,9 @@ Migrations run automatically on container start.
 
 ---
 
-## Redis Cache (Optional)
-
-Redis is not bundled. To enable caching:
-
-1. Run your own Redis:
-   ```bash
-   docker run -d --name redis -p 6379:6379 redis:7-alpine
-   ```
-
-2. Configure in **Admin > Settings > Cache**
-
----
-
 ## Reverse Proxy
 
-When using nginx, Caddy, Traefik, or similar, set `NEXTAUTH_URL` to your external URL and pass the standard forwarding headers:
-
-```nginx
-location / {
-    proxy_pass http://localhost:8080;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-}
-```
+Set `NEXTAUTH_URL` to your external URL. See [Deployment Guide](docs/DEPLOY.md) for reverse proxy configuration.
 
 ---
 
@@ -123,15 +100,6 @@ location / {
 - **SQLite** with Drizzle ORM
 - **Tailwind CSS** with shadcn/ui
 - **NextAuth.js** for authentication
-
----
-
-## Documentation
-
-- [Quick Start Guide](docs/QUICK_START.md)
-- [Deployment Guide](docs/DEPLOY.md)
-- [OIDC Setup Guide](docs/OIDC-SETUP-GUIDE.md)
-- [Project Structure](docs/PROJECT_STRUCTURE.md)
 
 ---
 

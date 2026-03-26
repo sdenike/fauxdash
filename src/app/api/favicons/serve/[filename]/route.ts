@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
-import { existsSync } from 'fs';
+
+const ALLOWED_TYPES: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+};
 
 export async function GET(
   request: NextRequest,
@@ -11,17 +18,8 @@ export async function GET(
     const { filename: paramFilename } = await params;
     let filename = paramFilename;
 
-    // Validate filename to prevent path traversal attacks
-    // Only allow alphanumeric, underscore, hyphen, and dot characters
-    if (!filename || !/^[a-zA-Z0-9_\-\.]+$/.test(filename)) {
-      return NextResponse.json(
-        { error: 'Invalid filename' },
-        { status: 400 }
-      );
-    }
-
-    // Additional check: ensure no path traversal attempts
-    if (filename.includes('..')) {
+    // Only allow a single optional extension — prevents path traversal and bare dots
+    if (!filename || !/^[a-zA-Z0-9_\-]+(\.[a-zA-Z0-9]+)?$/.test(filename)) {
       return NextResponse.json(
         { error: 'Invalid filename' },
         { status: 400 }
@@ -29,43 +27,54 @@ export async function GET(
     }
 
     const faviconDir = join(process.cwd(), 'public', 'favicons');
-    let filepath = join(faviconDir, filename);
 
-    // Handle grayscale/monotone files - if filename ends with _grayscale or _monotone (no extension),
-    // try to find the black or white version
-    if ((filename.endsWith('_grayscale') || filename.endsWith('_monotone')) && !existsSync(filepath)) {
-      // Try black version first (for light theme), then white
-      const blackPath = join(faviconDir, `${filename}_black.png`);
-      const whitePath = join(faviconDir, `${filename}_white.png`);
-
-      if (existsSync(blackPath)) {
-        filepath = blackPath;
-        filename = `${filename}_black.png`;
-      } else if (existsSync(whitePath)) {
-        filepath = whitePath;
-        filename = `${filename}_white.png`;
+    // convertToGrayscale only creates _grayscale_black.png / _grayscale_white.png,
+    // so probe for those variants directly rather than pre-checking existence.
+    let fileBuffer: Buffer;
+    if (filename.endsWith('_grayscale') || filename.endsWith('_monotone')) {
+      try {
+        const blackFilename = `${filename}_black.png`;
+        fileBuffer = await readFile(join(faviconDir, blackFilename));
+        filename = blackFilename;
+      } catch {
+        const whiteFilename = `${filename}_white.png`;
+        fileBuffer = await readFile(join(faviconDir, whiteFilename));
+        filename = whiteFilename;
       }
+    } else {
+      fileBuffer = await readFile(join(faviconDir, filename));
     }
 
-    // Read the file
-    const fileBuffer = await readFile(filepath);
-
-    // Determine content type from extension
+    // Determine content type from extension.
+    // SVG files are served with Content-Disposition: attachment to prevent
+    // inline rendering and XSS if a user navigates directly to the URL.
+    // All other non-image extensions are rejected.
     const ext = filename.split('.').pop()?.toLowerCase();
-    let contentType = 'image/x-icon';
 
-    if (ext === 'png') contentType = 'image/png';
-    else if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
-    else if (ext === 'svg') contentType = 'image/svg+xml';
-    else if (ext === 'gif') contentType = 'image/gif';
-    else if (ext === 'webp') contentType = 'image/webp';
+    if (ext === 'svg') {
+      return new NextResponse(fileBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/svg+xml',
+          'Content-Disposition': 'attachment; filename="favicon.svg"',
+          'Cache-Control': 'public, max-age=3600',
+          'X-Content-Type-Options': 'nosniff',
+        },
+      });
+    }
 
-    // Return the file with appropriate headers
+    const contentType = ALLOWED_TYPES[ext ?? ''];
+    if (!contentType) {
+      return NextResponse.json({ error: 'Unsupported file type' }, { status: 415 });
+    }
+
+    // Filenames include a timestamp so immutable caching is safe
     return new NextResponse(fileBuffer, {
       status: 200,
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=31536000, immutable',
+        'X-Content-Type-Options': 'nosniff',
       },
     });
   } catch (error) {

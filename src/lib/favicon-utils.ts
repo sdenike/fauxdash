@@ -1,7 +1,85 @@
 import sharp from 'sharp';
-import { join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { join, resolve, sep } from 'path';
+import { mkdirSync } from 'fs';
 import { parseICO } from 'icojs';
+
+// ── Security constants ─────────────────────────────────────────────────────
+
+/** Maximum response body size accepted when fetching a favicon (2 MB). */
+const MAX_FAVICON_BYTES = 2 * 1024 * 1024;
+
+/** SVG patterns that indicate unsafe content (scripts, external entities, remote fetches). */
+const DANGEROUS_SVG_PATTERNS = ['<script', '<!entity', '<foreignobject', 'xlink:href=', 'javascript:'];
+
+/** Hostnames / prefixes that must never be fetched (SSRF protection). */
+const BLOCKED_HOSTNAME_PATTERNS = [
+  /^localhost$/i,
+  /^127\./,                              // loopback
+  /^10\./,                               // RFC-1918
+  /^172\.(1[6-9]|2[0-9]|3[01])\./,      // RFC-1918
+  /^192\.168\./,                         // RFC-1918
+  /^169\.254\./,                         // link-local
+  /^::1$/,                               // IPv6 loopback
+  /^fc[0-9a-f]{2}:/i,                   // IPv6 unique-local
+  /^fe80:/i,                             // IPv6 link-local
+  /^\[/,                                 // any bracketed IPv6 literal
+  /^0\./,                                // 0.x.x.x
+  /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./, // 100.64/10 carrier-grade NAT
+  /^224\./,                              // multicast
+  /^240\./,                              // reserved
+];
+
+/** Returns true if the hostname resolves to a blocked (internal) address. */
+function isBlockedHostname(hostname: string): boolean {
+  return BLOCKED_HOSTNAME_PATTERNS.some(p => p.test(hostname));
+}
+
+/**
+ * Validates a pre-parsed URL is safe to fetch (no SSRF risk).
+ * Returns an error string if blocked, undefined if safe.
+ */
+function validateFetchUrl(urlObj: URL): string | undefined {
+  if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+    return `Scheme not allowed: ${urlObj.protocol}`;
+  }
+  if (isBlockedHostname(urlObj.hostname)) {
+    return `Host not allowed: ${urlObj.hostname}`;
+  }
+  return undefined;
+}
+
+/**
+ * Streams a fetch response body with a hard size cap.
+ * Returns null if the body is missing, too large, or the Content-Length
+ * header already indicates it would exceed maxBytes.
+ */
+async function fetchWithSizeLimit(response: Response, maxBytes: number): Promise<Buffer | null> {
+  const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
+  if (contentLength > maxBytes) return null;
+  if (!response.body) return null;
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  // Uint8Array chunks are passed directly — no intermediate Buffer.from() copy needed
+  return Buffer.concat(chunks);
+}
+
+// ──────────────────────────────────────────────────────────────────────────
 
 export interface FaviconResult {
   success: boolean;
@@ -11,15 +89,18 @@ export interface FaviconResult {
   error?: string;
 }
 
+let _faviconDir: string | null = null;
+
 /**
- * Get the favicon directory path, creating it if it doesn't exist
+ * Returns the favicon directory path, creating it on first call.
+ * Memoized — the existsSync check is skipped after the first call.
  */
 export function getFaviconDir(): string {
-  const faviconDir = join(process.cwd(), 'public', 'favicons');
-  if (!existsSync(faviconDir)) {
-    mkdirSync(faviconDir, { recursive: true });
+  if (!_faviconDir) {
+    _faviconDir = join(process.cwd(), 'public', 'favicons');
+    mkdirSync(_faviconDir, { recursive: true });
   }
-  return faviconDir;
+  return _faviconDir;
 }
 
 /**
@@ -36,8 +117,12 @@ export async function fetchAndSaveFavicon(
 
   try {
     const urlObj = new URL(url);
-    const domain = urlObj.hostname.replace('www.', '');
+    const domain = urlObj.hostname.replace(/^www\./, '');  // anchored: only strip leading www.
     const faviconDir = getFaviconDir();
+
+    // SSRF protection — validate using the already-parsed urlObj (no redundant re-parse)
+    const ssrfError = validateFetchUrl(urlObj);
+    if (ssrfError) return { success: false, error: ssrfError };
 
     // Build list of URLs to try
     const faviconUrls = isDirectFaviconUrl
@@ -66,7 +151,8 @@ export async function fetchAndSaveFavicon(
 
     for (const faviconUrl of faviconUrls) {
       try {
-        console.log(`Trying favicon source: ${faviconUrl}`);
+        const safeLogUrl = faviconUrl.replace(/[\r\n]/g, ' ');
+        console.log(`Trying favicon source: ${safeLogUrl}`);
 
         const response = await fetch(faviconUrl, {
           headers: {
@@ -76,14 +162,19 @@ export async function fetchAndSaveFavicon(
         });
 
         if (!response.ok) {
-          console.log(`HTTP ${response.status} from ${faviconUrl}`);
-          lastError = `HTTP ${response.status} from ${faviconUrl}`;
+          console.log(`HTTP ${response.status} from ${safeLogUrl}`);
+          lastError = `HTTP ${response.status}`;
           continue;
         }
 
-        const data = await response.arrayBuffer();
-        const buffer = Buffer.from(data);
-        console.log(`Fetched ${buffer.length} bytes from ${faviconUrl}`);
+        // Stream body with a 2 MB cap — no full buffer in memory before check
+        const buffer = await fetchWithSizeLimit(response, MAX_FAVICON_BYTES);
+        if (!buffer) {
+          console.log(`Response too large or empty from ${safeLogUrl}`);
+          lastError = 'Response too large or empty';
+          continue;
+        }
+        console.log(`Fetched ${buffer.length} bytes from ${safeLogUrl}`);
 
         // Skip empty or tiny responses (likely placeholder)
         if (buffer.length < 100) {
@@ -96,13 +187,13 @@ export async function fetchAndSaveFavicon(
         const result = await convertToPng(buffer, domain);
         if (result.success && result.buffer) {
           pngBuffer = result.buffer;
-          console.log(`Successfully fetched from: ${faviconUrl}`);
+          console.log(`Successfully fetched from: ${safeLogUrl}`);
           break;
         } else {
           lastError = result.error || 'Conversion failed';
         }
       } catch (fetchError: any) {
-        console.log(`Fetch error from ${faviconUrl}: ${fetchError.message}`);
+        console.log(`Fetch error from ${safeLogUrl}: ${fetchError.message}`);
         lastError = fetchError.message || 'Fetch failed';
         continue;
       }
@@ -114,15 +205,25 @@ export async function fetchAndSaveFavicon(
 
     // Generate filenames and save
     const timestamp = Date.now();
-    const baseFilename = `${domain.replace(/\./g, '_')}_${timestamp}`;
+    // Strict allowlist: only alphanum/hyphen in filename; capped at 64 chars
+    const safeDomain = domain.replace(/[^a-zA-Z0-9\-]/g, '_').slice(0, 64);
+    const baseFilename = `${safeDomain}_${timestamp}`;
     const originalFilename = `${baseFilename}_original.png`;
     const activeFilename = `${baseFilename}.png`;
     const originalPath = join(faviconDir, originalFilename);
     const activePath = join(faviconDir, activeFilename);
 
-    // Save both original and active copies
-    await sharp(pngBuffer).toFile(originalPath);
-    await sharp(pngBuffer).toFile(activePath);
+    // Path boundary assertion — ensure constructed paths stay inside faviconDir
+    const boundary = faviconDir + sep;
+    if (!resolve(originalPath).startsWith(boundary) || !resolve(activePath).startsWith(boundary)) {
+      return { success: false, error: 'Invalid file path' };
+    }
+
+    // Write both copies in parallel
+    await Promise.all([
+      sharp(pngBuffer).toFile(originalPath),
+      sharp(pngBuffer).toFile(activePath),
+    ]);
 
     return {
       success: true,
@@ -134,6 +235,85 @@ export async function fetchAndSaveFavicon(
     console.error('Error in fetchAndSaveFavicon:', error);
     return { success: false, error: error.message || 'Unknown error' };
   }
+}
+
+/**
+ * Convert an ICO buffer to PNG using a multi-method fallback chain:
+ * 1. Sharp native (best-page selection for multi-image ICOs)
+ * 2. icojs parser
+ * 3. Embedded PNG scan (some ICOs embed a raw PNG frame)
+ */
+async function icoToPng(buffer: Buffer): Promise<Buffer | null> {
+  // Method 1: Sharp native ICO support
+  try {
+    const metadata = await sharp(buffer).metadata();
+    let pngBuffer: Buffer;
+
+    if (metadata.pages && metadata.pages > 1) {
+      // Cap page count to prevent DoS on malformed ICOs advertising many pages
+      const pageCount = Math.min(metadata.pages, 16);
+      // Fetch all page metadata in parallel for speed
+      const pageSizes = await Promise.all(
+        Array.from({ length: pageCount }, (_, page) =>
+          sharp(buffer, { page }).metadata().catch(() => null)
+        )
+      );
+      let bestPage = 0;
+      let bestSize = 0;
+      for (let page = 0; page < pageSizes.length; page++) {
+        const meta = pageSizes[page];
+        const size = meta ? (meta.width || 0) * (meta.height || 0) : 0;
+        if (size > bestSize) { bestSize = size; bestPage = page; }
+      }
+      console.log(`Using ICO page ${bestPage} with size ${bestSize}`);
+      pngBuffer = await sharp(buffer, { page: bestPage })
+        .png()
+        .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
+        .toBuffer();
+    } else {
+      pngBuffer = await sharp(buffer)
+        .png()
+        .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
+        .toBuffer();
+    }
+    return pngBuffer;
+  } catch (e: any) {
+    console.warn('Sharp ICO processing failed, trying icojs:', e.message);
+  }
+
+  // Method 2: icojs fallback
+  try {
+    const images = await parseICO(buffer);
+    if (images && images.length > 0) {
+      let bestImage = images[0];
+      for (const img of images) {
+        if (img.width > bestImage.width) bestImage = img;
+      }
+      console.log(`icojs found ${images.length} images, using ${bestImage.width}x${bestImage.height}`);
+      return await sharp(Buffer.from(bestImage.buffer))
+        .png()
+        .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
+        .toBuffer();
+    }
+  } catch (e: any) {
+    console.warn('icojs fallback failed:', e.message);
+  }
+
+  // Method 3: Scan for an embedded PNG frame within the ICO
+  try {
+    const pngOffset = buffer.indexOf(Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+    if (pngOffset !== -1) {
+      console.log(`Found embedded PNG at offset ${pngOffset}`);
+      return await sharp(buffer.subarray(pngOffset))
+        .png()
+        .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
+        .toBuffer();
+    }
+  } catch (e: any) {
+    console.warn('Embedded PNG extraction failed:', e.message);
+  }
+
+  return null;
 }
 
 /**
@@ -164,6 +344,13 @@ export async function convertToPng(
     let pngBuffer: Buffer;
 
     if (isSvg) {
+      // Reject SVGs with script, external entities, or remote-fetch vectors.
+      // Scan up to 32 KB — the 500-byte preview is too short for these patterns.
+      const svgContent = buffer.toString('utf8', 0, Math.min(buffer.length, 32768)).toLowerCase();
+      if (DANGEROUS_SVG_PATTERNS.some(p => svgContent.includes(p))) {
+        return { success: false, error: 'SVG contains unsafe content' };
+      }
+
       // SVG needs special handling - try multiple approaches
       const svgAttempts = [
         // Attempt 1: High density with resize
@@ -207,132 +394,17 @@ export async function convertToPng(
     }
 
     if (isIco) {
-      // ICO files need special handling - try Sharp first, then icojs fallback
-      try {
-        const metadata = await sharp(buffer).metadata();
-        console.log('ICO metadata:', metadata);
-
-        if (metadata.pages && metadata.pages > 1) {
-          // Find the largest image in the ICO
-          let bestPage = 0;
-          let bestSize = 0;
-
-          for (let page = 0; page < metadata.pages; page++) {
-            try {
-              const pageMetadata = await sharp(buffer, { page }).metadata();
-              const size = (pageMetadata.width || 0) * (pageMetadata.height || 0);
-              if (size > bestSize) {
-                bestSize = size;
-                bestPage = page;
-              }
-            } catch (e) {
-              // Skip pages that can't be read
-            }
-          }
-
-          console.log(`Using ICO page ${bestPage} with size ${bestSize}`);
-          pngBuffer = await sharp(buffer, { page: bestPage })
-            .png()
-            .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
-            .toBuffer();
-        } else {
-          // Single page ICO
-          pngBuffer = await sharp(buffer)
-            .png()
-            .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
-            .toBuffer();
-        }
-        return { success: true, buffer: pngBuffer };
-      } catch (icoError: any) {
-        console.warn('Sharp ICO processing failed, trying icojs fallback:', icoError.message);
-
-        // Sharp failed - try icojs as fallback
-        try {
-          const images = await parseICO(buffer);
-          if (images && images.length > 0) {
-            // Find the largest image
-            let bestImage = images[0];
-            for (const img of images) {
-              if (img.width > bestImage.width) {
-                bestImage = img;
-              }
-            }
-
-            console.log(`icojs found ${images.length} images, using ${bestImage.width}x${bestImage.height}`);
-
-            // Convert the ArrayBuffer to Buffer and process with Sharp
-            const imageBuffer = Buffer.from(bestImage.buffer);
-            pngBuffer = await sharp(imageBuffer)
-              .png()
-              .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
-              .toBuffer();
-
-            return { success: true, buffer: pngBuffer };
-          }
-        } catch (icojsError: any) {
-          console.warn('icojs fallback also failed:', icojsError.message);
-        }
-
-        // Third fallback: Try to find embedded PNG data in the ICO
-        try {
-          // Look for PNG signature within the ICO file
-          const pngSignature = Buffer.from([0x89, 0x50, 0x4E, 0x47]);
-          let pngStart = -1;
-          for (let i = 0; i < buffer.length - 4; i++) {
-            if (buffer[i] === 0x89 && buffer[i+1] === 0x50 && buffer[i+2] === 0x4E && buffer[i+3] === 0x47) {
-              pngStart = i;
-              break;
-            }
-          }
-
-          if (pngStart !== -1) {
-            console.log(`Found embedded PNG at offset ${pngStart}`);
-            const embeddedPng = buffer.slice(pngStart);
-            pngBuffer = await sharp(embeddedPng)
-              .png()
-              .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
-              .toBuffer();
-            return { success: true, buffer: pngBuffer };
-          }
-        } catch (pngExtractError: any) {
-          console.warn('PNG extraction from ICO failed:', pngExtractError.message);
-        }
-
-        // Fourth fallback: Try to decode as raw BMP (some ICOs have non-standard BMP headers)
-        try {
-          // Skip ICO header (6 bytes) and directory entry (16 bytes per image)
-          // Try to find BMP data starting after the header
-          if (buffer.length > 22) {
-            const possibleBmpStart = 22; // Minimal ICO with one image
-            const bmpHeader = buffer.slice(possibleBmpStart, possibleBmpStart + 40);
-
-            // Check for BITMAPINFOHEADER (starts with 40 as DWORD)
-            if (bmpHeader.readUInt32LE(0) === 40) {
-              console.log('Found BITMAPINFOHEADER, attempting BMP decode');
-              // This is likely a DIB/BMP, try processing with Sharp anyway
-              const dibBuffer = buffer.slice(possibleBmpStart);
-              pngBuffer = await sharp(dibBuffer)
-                .png()
-                .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
-                .toBuffer();
-              return { success: true, buffer: pngBuffer };
-            }
-          }
-        } catch (bmpError: any) {
-          console.warn('BMP extraction from ICO failed:', bmpError.message);
-        }
-
-        return { success: false, error: `ICO processing failed: ${icoError.message}` };
-      }
+      const result = await icoToPng(buffer);
+      if (result) return { success: true, buffer: result };
+      return { success: false, error: 'ICO processing failed after all methods' };
     }
 
     // Standard image processing for PNG, JPEG, GIF, WebP, BMP
     try {
-      // Check if buffer looks like HTML/XML instead of an image
-      const bufferPreview = buffer.toString('utf8', 0, Math.min(buffer.length, 500));
-      if (bufferPreview.includes('<!DOCTYPE') ||
-          bufferPreview.includes('<html') ||
-          (bufferPreview.includes('<?xml') && !bufferPreview.includes('svg'))) {
+      // Reuse the bufferStr slice already computed above for SVG detection
+      if (bufferStr.includes('<!DOCTYPE') ||
+          bufferStr.includes('<html') ||
+          (bufferStr.includes('<?xml') && !bufferStr.includes('svg'))) {
         console.log('Buffer contains HTML/XML, not a valid image');
         return { success: false, error: 'Response is HTML/XML, not an image' };
       }
@@ -349,6 +421,12 @@ export async function convertToPng(
 
       // Check for supported formats
       const supportedFormats = ['png', 'jpeg', 'jpg', 'webp', 'gif', 'tiff', 'raw', 'heif', 'avif'];
+      if (metadata.format === 'ico') {
+        // ICO not caught by magic bytes — delegate to the full fallback chain
+        const result = await icoToPng(buffer);
+        if (result) return { success: true, buffer: result };
+        return { success: false, error: 'ICO processing failed after all methods' };
+      }
       if (!supportedFormats.includes(metadata.format)) {
         return { success: false, error: `Unsupported format: ${metadata.format}` };
       }
