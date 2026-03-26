@@ -150,8 +150,8 @@ export async function fetchAndSaveFavicon(
     let lastError = 'No favicon found';
 
     for (const faviconUrl of faviconUrls) {
+      const safeLogUrl = faviconUrl.replace(/[\r\n]/g, ' ');
       try {
-        const safeLogUrl = faviconUrl.replace(/[\r\n]/g, ' ');
         console.log(`Trying favicon source: ${safeLogUrl}`);
 
         const response = await fetch(faviconUrl, {
