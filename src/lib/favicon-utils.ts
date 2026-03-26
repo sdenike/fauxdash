@@ -421,7 +421,7 @@ export async function convertToPng(
 
       // Check for supported formats
       const supportedFormats = ['png', 'jpeg', 'jpg', 'webp', 'gif', 'tiff', 'raw', 'heif', 'avif'];
-      if (metadata.format === 'ico') {
+      if ((metadata.format as string) === 'ico') {
         // ICO not caught by magic bytes — delegate to the full fallback chain
         const result = await icoToPng(buffer);
         if (result) return { success: true, buffer: result };
