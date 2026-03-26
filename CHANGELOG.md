@@ -5,6 +5,11 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.8] - 2026-03-26
+
+### Fixed
+- **ICO BMP-encoded frame support** — ICOs containing raw BMP frames (not PNG-embedded) that both Sharp and icojs fail to parse are now handled by a manual ICO directory parser that extracts raw BGRA/BGR pixel data, flips rows, and converts to PNG via Sharp's raw input mode; supports 32-bit and 24-bit BMP frames
+
 ## [0.12.7] - 2026-03-26
 
 ### Added

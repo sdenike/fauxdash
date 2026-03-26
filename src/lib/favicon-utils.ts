@@ -313,6 +313,122 @@ async function icoToPng(buffer: Buffer): Promise<Buffer | null> {
     console.warn('Embedded PNG extraction failed:', e.message);
   }
 
+  // Method 4: Manual ICO directory parsing with raw BMP pixel extraction
+  // Handles ICOs with BMP-encoded frames that sharp/icojs can't parse
+  try {
+    if (buffer.length < 6) throw new Error('ICO too short');
+    const type = buffer.readUInt16LE(2);
+    const count = buffer.readUInt16LE(4);
+    if (type !== 1 || count === 0 || count > 256) throw new Error('Invalid ICO header');
+
+    let bestEntry = { width: 0, height: 0, offset: 0, size: 0 };
+    for (let i = 0; i < count; i++) {
+      const base = 6 + i * 16;
+      if (base + 16 > buffer.length) break;
+      let w = buffer.readUInt8(base);
+      let h = buffer.readUInt8(base + 1);
+      if (w === 0) w = 256;
+      if (h === 0) h = 256;
+      const size = buffer.readUInt32LE(base + 8);
+      const offset = buffer.readUInt32LE(base + 12);
+      if (w * h > bestEntry.width * bestEntry.height) {
+        bestEntry = { width: w, height: h, offset, size };
+      }
+    }
+
+    if (!bestEntry.size || bestEntry.offset + bestEntry.size > buffer.length) {
+      throw new Error('Invalid ICO entry bounds');
+    }
+
+    const imageData = buffer.subarray(bestEntry.offset, bestEntry.offset + bestEntry.size);
+
+    // Check if this entry is actually an embedded PNG
+    if (imageData.length >= 4 && imageData[0] === 0x89 && imageData[1] === 0x50 &&
+        imageData[2] === 0x4e && imageData[3] === 0x47) {
+      return await sharp(imageData)
+        .png()
+        .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
+        .toBuffer();
+    }
+
+    // BMP DIB — extract raw pixels
+    if (imageData.length < 40) throw new Error('DIB header too short');
+    const dibHeaderSize = imageData.readUInt32LE(0);
+    const bmpWidth = imageData.readInt32LE(4);
+    const bmpHeightRaw = imageData.readInt32LE(8);
+    const bpp = imageData.readUInt16LE(14);
+    const compression = imageData.readUInt32LE(16);
+    const actualHeight = Math.abs(bmpHeightRaw) / 2; // ICO doubles height for AND mask
+
+    if (compression !== 0) throw new Error(`Compressed ICO BMP (${compression})`);
+
+    if (bpp === 32) {
+      const rowBytes = bmpWidth * 4;
+      const pixelDataSize = rowBytes * actualHeight;
+      const pixelStart = dibHeaderSize;
+      if (pixelStart + pixelDataSize > imageData.length) throw new Error('Pixel data overflows entry');
+      const pixels = imageData.subarray(pixelStart, pixelStart + pixelDataSize);
+
+      // Flip rows (bottom-up → top-down) and convert BGRA → RGBA
+      const rgba = Buffer.alloc(pixelDataSize);
+      for (let y = 0; y < actualHeight; y++) {
+        const srcRow = (actualHeight - 1 - y) * rowBytes;
+        const dstRow = y * rowBytes;
+        for (let x = 0; x < bmpWidth; x++) {
+          const si = srcRow + x * 4;
+          const di = dstRow + x * 4;
+          rgba[di]     = pixels[si + 2]; // R
+          rgba[di + 1] = pixels[si + 1]; // G
+          rgba[di + 2] = pixels[si];     // B
+          rgba[di + 3] = pixels[si + 3]; // A
+        }
+      }
+
+      console.log(`Manual ICO parse: ${bmpWidth}x${actualHeight} @ ${bpp}bpp`);
+      return await sharp(rgba, {
+        raw: { width: bmpWidth, height: actualHeight, channels: 4 }
+      })
+        .png()
+        .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
+        .toBuffer();
+    }
+
+    if (bpp === 24) {
+      const srcRowBytes = ((bmpWidth * 3 + 3) & ~3); // BMP rows padded to 4 bytes
+      const pixelDataSize = srcRowBytes * actualHeight;
+      const pixelStart = dibHeaderSize;
+      if (pixelStart + pixelDataSize > imageData.length) throw new Error('Pixel data overflows entry');
+      const pixels = imageData.subarray(pixelStart, pixelStart + pixelDataSize);
+
+      // Flip rows and convert BGR → RGB
+      const dstRowBytes = bmpWidth * 3;
+      const rgb = Buffer.alloc(dstRowBytes * actualHeight);
+      for (let y = 0; y < actualHeight; y++) {
+        const srcRow = (actualHeight - 1 - y) * srcRowBytes;
+        const dstRow = y * dstRowBytes;
+        for (let x = 0; x < bmpWidth; x++) {
+          const si = srcRow + x * 3;
+          const di = dstRow + x * 3;
+          rgb[di]     = pixels[si + 2]; // R
+          rgb[di + 1] = pixels[si + 1]; // G
+          rgb[di + 2] = pixels[si];     // B
+        }
+      }
+
+      console.log(`Manual ICO parse: ${bmpWidth}x${actualHeight} @ ${bpp}bpp`);
+      return await sharp(rgb, {
+        raw: { width: bmpWidth, height: actualHeight, channels: 3 }
+      })
+        .png()
+        .resize(128, 128, { fit: 'inside', withoutEnlargement: true })
+        .toBuffer();
+    }
+
+    throw new Error(`Unsupported ICO bit depth: ${bpp}`);
+  } catch (e: any) {
+    console.warn('Manual ICO parsing failed:', e.message);
+  }
+
   return null;
 }
 
