@@ -52,7 +52,7 @@ export async function GET(
     const ext = filename.split('.').pop()?.toLowerCase();
 
     if (ext === 'svg') {
-      return new NextResponse(fileBuffer, {
+      return new NextResponse(new Uint8Array(fileBuffer), {
         status: 200,
         headers: {
           'Content-Type': 'image/svg+xml',
@@ -69,7 +69,7 @@ export async function GET(
     }
 
     // Filenames include a timestamp so immutable caching is safe
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(new Uint8Array(fileBuffer), {
       status: 200,
       headers: {
         'Content-Type': contentType,
