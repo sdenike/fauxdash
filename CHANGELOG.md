@@ -5,6 +5,18 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.9] - 2026-04-27
+
+### Fixed
+- **Gradient site title rendering as a solid bar** — when the homepage site title was configured to use a gradient, intermittently (during hydration, re-renders, or service-worker-cached loads) the text would disappear and a full-width gradient bar would render where the title should be; selecting all text would briefly reveal the glyphs. Root cause: the `background:` shorthand resets `background-clip` to `border-box`, racing against the `background-clip: text` declaration. Fixed by switching to `background-image:`, adding `display: inline-block` so any fallback fills text-width only, and adding `color: transparent` as a defensive fallback to `-webkit-text-fill-color`. Applied to both the homepage (`src/app/page.tsx`) and the settings preview (`src/components/settings/site-title-settings.tsx`)
+
+### Security
+- **Resolved 14 of 21 known npm vulnerabilities** — `npm audit fix` plus a `next` minor bump address 7 high-severity advisories (8 → 1) and 7 moderate (13 → 6)
+  - **Next.js 16.1.6 → 16.2.4** — closes 6 high-severity advisories: DoS in Server Components, HTTP request smuggling in rewrites, unbounded `next/image` disk cache, null-origin CSRF bypass on Server Actions, null-origin CSRF on dev HMR websocket, postponed-resume DoS
+  - **eslint-config-next** bumped to match
+  - Transitive bumps: `hono` 4.12.5 → 4.12.15, `lodash` 4.17.23 → 4.18.1, `tar` 7.5.10 → 7.5.13, `nodemailer` 7.0.12 → 7.0.13, plus `flatted`, `picomatch`, `brace-expansion`, `path-to-regexp`, `postcss`, `file-type`, `express-rate-limit`, `@hono/node-server`
+- **Remaining vulnerabilities deferred** to a future major-bump release (each requires a breaking-change upgrade): `drizzle-orm` 0.29 → 0.45 (SQL injection via improperly escaped identifiers), `nodemailer` 7 → 8 (SMTP CRLF injection), `next-auth` uuid transitive
+
 ## [0.12.8] - 2026-03-26
 
 ### Fixed
