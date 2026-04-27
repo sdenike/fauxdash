@@ -167,10 +167,12 @@ export function SiteTitleSettings({ settings, onSettingsChange }: SiteTitleSetti
                 style={
                   settings.siteTitleUseGradient
                     ? {
-                        background: `linear-gradient(to right, ${settings.siteTitleGradientFrom}, ${settings.siteTitleGradientTo})`,
+                        backgroundImage: `linear-gradient(to right, ${settings.siteTitleGradientFrom}, ${settings.siteTitleGradientTo})`,
                         WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        color: 'transparent',
+                        display: 'inline-block',
                       }
                     : {
                         color: settings.siteTitleColor,

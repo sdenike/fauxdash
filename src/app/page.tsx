@@ -439,10 +439,12 @@ export default function HomePage() {
                     style={
                       siteTitleUseGradient
                         ? {
-                            background: `linear-gradient(to right, ${siteTitleGradientFrom}, ${siteTitleGradientTo})`,
+                            backgroundImage: `linear-gradient(to right, ${siteTitleGradientFrom}, ${siteTitleGradientTo})`,
                             WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            color: 'transparent',
+                            display: 'inline-block',
                           }
                         : {
                             color: siteTitleColor,
