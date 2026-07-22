@@ -326,6 +326,20 @@ try {
     console.log('Created analytics_daily table');
   }
 
+  // 16. Performance indexes on hot query paths (idempotent — safe to re-run).
+  //     Targets: /api/stats (public homepage widget) range-scans clicked_at 8x;
+  //     analytics/clicks groups by date(clicked_at); analytics/stats groups by
+  //     country_name and orders pageviews by timestamp; OIDC login looks up
+  //     users by oidc_subject; every auth read selects settings where user_id
+  //     is null. These tables grow with traffic, so the scans worsen over time.
+  db.exec('CREATE INDEX IF NOT EXISTS idx_pageviews_timestamp ON pageviews(timestamp)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_pageviews_country_name ON pageviews(country_name)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_bookmark_clicks_clicked_at ON bookmark_clicks(clicked_at)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_service_clicks_clicked_at ON service_clicks(clicked_at)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_users_oidc_subject ON users(oidc_subject)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_settings_user_id ON settings(user_id)');
+  console.log('Ensured performance indexes');
+
   console.log('All migrations completed successfully');
 } catch (error) {
   console.error('Migration failed:', error);
