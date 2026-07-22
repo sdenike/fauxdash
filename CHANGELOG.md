@@ -5,6 +5,12 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2026-07-22
+
+### Fixed
+- **Container crash-loop (SIGSEGV) on 0.13.0** — `argon2` 0.45.1's prebuilt binary segfaults on `require()` under Alpine/musl (the production base image), crashing the server on the first request that loads the auth module. Reverted `argon2` to 0.44.0 (0.45.1 was an opportunistic bump, not a security fix — argon2 was never in the audit findings). Other native modules (`better-sqlite3`, `sharp` 0.35.3) verified loading and operating correctly on Alpine. Deploy verification now includes a local Alpine image build + health check before publishing.
+- **Dockerfile healthcheck used `localhost`** — which resolves to IPv6 `::1` on Alpine while the server binds IPv4 `0.0.0.0`, so a container run outside compose reported unhealthy despite a working app. Switched to `127.0.0.1` (matching the compose healthcheck).
+
 ## [0.13.0] - 2026-07-22
 
 ### Fixed
