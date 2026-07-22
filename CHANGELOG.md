@@ -5,6 +5,21 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **"Remember me" never actually remembered you** — every login expired after ~2 days of inactivity regardless of the duration chosen (1 week / 1 month / 3 months / 1 year). Root cause: the `jwt` callback set `token.exp`, but NextAuth v4's default `encode()` unconditionally overwrites `exp` with `now + session.maxAge` (2 days), and the session-cookie expiry is derived from `session.maxAge` independently — so the per-login value was discarded. Fixed with a custom `jwt.encode` (`src/lib/session-duration.ts`) that derives the JWT lifetime from a whitelisted `rememberDays` claim; `session.maxAge` is raised to a 365-day cookie ceiling while the JWT `exp` is what actually ends the session. Added `scripts/test-session-duration.ts` regression coverage.
+
+### Added
+- **"Remember me" now works with OIDC (PocketID) logins** — previously the duration control only appeared for password login and was ignored by the OAuth flow. The login page now stashes the choice in a short-lived cookie before the provider redirect; the `jwt` callback reads it server-side after the round-trip. The remember-me control is also shown in OIDC-only mode.
+
+### Changed
+- **Dependency refresh** — security majors: `drizzle-orm` 0.29 → 0.45.2 (closes the SQL-identifier-injection advisory), `nodemailer` 7 → 9, `sharp` 0.33 → 0.35.3 (libvips CVEs), `argon2` 0.44 → 0.45.1; plus in-range bumps to `next` 16.2.11, `react` 19.2.8, the Radix UI suite, `ioredis`, `recharts`, `date-fns`, and others. Production build, favicon (sharp) operations, and drizzle 0.45 reads/writes verified against a copy of the production database.
+- **ESLint toolchain repaired** — Next 16 removed `next lint`, leaving linting broken; migrated to flat config (`eslint.config.mjs`) and fixed a global `ajv` override that was starving ESLint of the `ajv@6` it requires. `npm run lint` works again (and surfaces pre-existing issues for a later cleanup).
+
+### Performance
+- **Indexes on hot analytics query paths** — added indexes covering the public homepage stats widget (`clicked_at` range scans on both click tables, previously full scans 8× per load), the analytics country breakdown (`country_name`, eliminating a temp B-tree sort), and the OIDC-login / settings lookups. Verified via `EXPLAIN QUERY PLAN` against production data; applied idempotently in `migrate-all.js` on container start.
+
 ## [0.12.9] - 2026-04-27
 
 ### Fixed
