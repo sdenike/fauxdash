@@ -1,10 +1,18 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { cookies } from 'next/headers';
 import { getDb } from '@/db';
 import { users, settings } from '@/db/schema';
 import { eq, isNull } from 'drizzle-orm';
 import * as argon2 from 'argon2';
 import { logAuth, logSecurity } from '@/lib/logger';
+import {
+  clampRememberDays,
+  DEFAULT_REMEMBER_DAYS,
+  REMEMBER_COOKIE_NAME,
+  SESSION_ABSOLUTE_MAX_SECONDS,
+  sessionEncode,
+} from '@/lib/session-duration';
 
 function ts() {
   return new Date().toLocaleString('en-US', {
@@ -454,14 +462,23 @@ export const authOptions: NextAuthOptions = {
             token.firstname = dbUser[0].firstname;
             token.lastname = dbUser[0].lastname;
 
-            // Set token expiration for OIDC logins (same as credentials default: 2 days)
-            const maxAgeSeconds = 2 * 24 * 60 * 60; // 2 days
-            token.exp = Math.floor(Date.now() / 1000) + maxAgeSeconds;
+            // Remember-me for OIDC: the login page stashes the chosen duration
+            // in a short-lived cookie before redirecting to the provider, since
+            // nothing else survives the OAuth round-trip. sessionEncode() turns
+            // this claim into the real JWT lifetime.
+            let rememberDays = DEFAULT_REMEMBER_DAYS;
+            try {
+              const cookieStore = await cookies();
+              rememberDays = clampRememberDays(cookieStore.get(REMEMBER_COOKIE_NAME)?.value);
+            } catch {
+              // No request scope (build/prerender) — keep the default
+            }
+            token.rememberDays = rememberDays;
 
             console.log(`[${ts()}] [OIDC] Token created:`, {
               userId: token.id,
               email: token.email,
-              expiresIn: `${maxAgeSeconds / 3600} hours`,
+              expiresIn: `${rememberDays} days`,
             });
           } else {
             console.error(`[${ts()}] [OIDC] ERROR: Failed to create or find user after processing`);
@@ -489,10 +506,10 @@ export const authOptions: NextAuthOptions = {
         token.firstname = (user as any).firstname;
         token.lastname = (user as any).lastname;
 
-        // Handle remember me duration
-        const days = parseInt((user as any).rememberDuration || '2', 10);
-        const maxAgeSeconds = days * 24 * 60 * 60;
-        token.exp = Math.floor(Date.now() / 1000) + maxAgeSeconds;
+        // Remember-me duration: stored as a claim; sessionEncode() derives the
+        // JWT lifetime from it. (Setting token.exp here does nothing — default
+        // encode overwrites it with session.maxAge.)
+        token.rememberDays = clampRememberDays((user as any).rememberDuration);
       }
 
       // Refresh user data from database on update trigger
@@ -533,7 +550,12 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 2 * 24 * 60 * 60, // 2 days
+    // Cookie ceiling only — real per-login expiry is the JWT exp set by
+    // sessionEncode from token.rememberDays. Must cover the longest choice.
+    maxAge: SESSION_ABSOLUTE_MAX_SECONDS,
+  },
+  jwt: {
+    encode: sessionEncode,
   },
   events: {
     async signIn({ user, account, isNewUser }) {

@@ -19,5 +19,7 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     isAdmin: boolean
+    /** Remember-me duration (days); sessionEncode derives the JWT lifetime from it */
+    rememberDays?: number
   }
 }
