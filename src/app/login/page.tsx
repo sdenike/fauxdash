@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertMessage } from '@/components/ui/alert-message'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Loader2, Mail } from 'lucide-react'
+import { REMEMBER_COOKIE_NAME } from '@/lib/session-constants'
 
 function LoginContent() {
   const router = useRouter()
@@ -151,12 +152,16 @@ function LoginContent() {
     setError('')
     setLoading(true)
     try {
+      // The OAuth redirect round-trip loses all form state, so the remember
+      // choice rides along in a short-lived cookie read by the jwt callback.
+      const days = rememberMe ? rememberDuration : '2'
+      document.cookie = `${REMEMBER_COOKIE_NAME}=${days}; path=/; max-age=600; SameSite=Lax`
       await signIn('oidc', { callbackUrl: '/' })
     } catch {
       setError('OIDC login failed. Please try again.')
       setLoading(false)
     }
-  }, [])
+  }, [rememberMe, rememberDuration])
 
   const handleForgotPassword = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -215,6 +220,31 @@ function LoginContent() {
                 </p>
               </div>
             )}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="rememberMeOidc"
+                  checked={rememberMe}
+                  onCheckedChange={handleRememberMeChange}
+                />
+                <Label htmlFor="rememberMeOidc" className="text-sm font-normal cursor-pointer">
+                  Remember me
+                </Label>
+              </div>
+              {rememberMe && (
+                <Select value={rememberDuration} onValueChange={handleRememberDurationChange}>
+                  <SelectTrigger className="w-[130px] h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">1 week</SelectItem>
+                    <SelectItem value="30">1 month</SelectItem>
+                    <SelectItem value="90">3 months</SelectItem>
+                    <SelectItem value="365">1 year</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
             <Button
               type="button"
               className="w-full"
