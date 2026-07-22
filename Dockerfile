@@ -55,8 +55,10 @@ EXPOSE 8080
 ENV PORT=8080
 ENV HOSTNAME="0.0.0.0"
 
+# Use 127.0.0.1, not localhost: on Alpine `localhost` resolves to IPv6 ::1 but
+# the Next.js server binds IPv4 0.0.0.0, so `localhost` gets connection-refused.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD wget -qO- http://localhost:8080/api/health || exit 1
+  CMD wget -qO- http://127.0.0.1:8080/api/health || exit 1
 
 # Default PUID/PGID (can be overridden at runtime)
 ENV PUID=1000
