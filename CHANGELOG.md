@@ -5,7 +5,7 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.13.0] - 2026-07-22
 
 ### Fixed
 - **"Remember me" never actually remembered you** — every login expired after ~2 days of inactivity regardless of the duration chosen (1 week / 1 month / 3 months / 1 year). Root cause: the `jwt` callback set `token.exp`, but NextAuth v4's default `encode()` unconditionally overwrites `exp` with `now + session.maxAge` (2 days), and the session-cookie expiry is derived from `session.maxAge` independently — so the per-login value was discarded. Fixed with a custom `jwt.encode` (`src/lib/session-duration.ts`) that derives the JWT lifetime from a whitelisted `rememberDays` claim; `session.maxAge` is raised to a 365-day cookie ceiling while the JWT `exp` is what actually ends the session. Added `scripts/test-session-duration.ts` regression coverage.
