@@ -5,6 +5,11 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Dropped the `shadcn` devDependency** — it was never consumed by the build or runtime. Nothing imports the `shadcn` package (the `@/components/ui/*` files are its *generated output*, which stays untouched), no npm script or CI step invokes it, and `.mcp.json` runs it as `npx shadcn@latest mcp`, which fetches from the registry and ignores `node_modules` — so the shadcn MCP server and `npx shadcn@latest add` both keep working. Removes **250 packages** from the lockfile (1252 → 1002) and clears the `@hono/node-server` path-traversal advisory it pulled in via `@modelcontextprotocol/sdk`: `npm audit` goes 23 → 21, moderate 3 → 1. No change to the shipped image — `shadcn` was never traced into `.next/standalone`
+
 ## [0.13.2] - 2026-07-28
 
 ### Security

@@ -5,6 +5,47 @@ Running work log, newest first. One entry per change: timestamp · what · why �
 
 ---
 
+## 2026-07-28 09:15 EDT — Drop the unused `shadcn` devDependency
+
+**What:** Removed `shadcn` (^3.7.0) from devDependencies. `package.json` + `package-lock.json` only.
+
+**Why:** Traced during an `npm audit` review. It was pure install bloat — **250 lockfile packages** (1252 → 1002)
+— and the sole source of the moderate `@hono/node-server` path-traversal advisory, pulled in via
+`@modelcontextprotocol/sdk`. Audit goes 23 → 21 findings, moderate 3 → 1.
+
+**Verified unused before removing:**
+- No source imports the `shadcn` package. The `src/components/ui/*` files (19 of them) are its *generated
+  output* and are unaffected — they import `class-variance-authority` / `tailwind-merge`, not `shadcn`.
+- No npm script, Dockerfile step, or GitHub workflow invokes it.
+- `.mcp.json` runs `npx shadcn@latest mcp`. The `@latest` specifier makes npx fetch from the registry and
+  ignore `node_modules`, so the shadcn MCP server still works — as does `npx shadcn@latest add <component>`
+  for generating new UI components. `components.json` is retained for exactly that.
+- `npm run build` clean, `tsc --noEmit` clean.
+- `npm run lint` reports 47 problems (41 errors, 6 warnings) — **identical with and without this change**
+  (confirmed by stashing and re-running). Pre-existing, as noted in the 0.13.0 entry.
+
+**Zero production impact:** `shadcn` was never traced into `.next/standalone`, so the shipped image is
+unchanged. This is a dev-install-size and audit-noise change only.
+
+**Also:** added a note under README "Tech Stack" recording that shadcn/ui components are generated into
+`src/components/ui/` and committed, that `shadcn` is deliberately not a dependency, and that new components
+come from `npx shadcn@latest add <component>` — so the retained `components.json` isn't mistaken for an
+oversight and nobody re-adds the package.
+
+**If interrupted here:** Committed and pushed to `master`. **No version bump was taken** — a devDependency
+removal doesn't alter the runtime image, so it sits under CHANGELOG `[Unreleased]` to be folded into the
+next release. Nothing to deploy: the running container is unaffected.
+
+**Audit state after this change** (all dev/build-time; none reach the container — verified by inspecting the
+19 packages Next traces into `.next/standalone`, which contains sharp 0.35.3 and no postcss):
+- `sharp` <0.35.0 (high) — next pins `optionalDependency ^0.34.5`, so npm keeps a nested vulnerable 0.34.5
+  that is NOT traced into the image. Clears when Next moves its pin.
+- `postcss` <=8.5.17 (high) — nested 8.4.31 under next, build-time CSS only.
+- `brace-expansion` <=5.0.7 (high, DoS) — eslint toolchain; drives ~15 cascade entries via `minimatch`.
+- Do **not** run `npm audit fix --force` — it wants to install `next@9.3.3`.
+
+---
+
 ## 2026-07-28 08:02 EDT — Release v0.13.2
 
 **What:** Bumped `package.json` + `package-lock.json` to 0.13.2 and added the CHANGELOG `[0.13.2]` Security

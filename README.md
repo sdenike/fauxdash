@@ -101,6 +101,14 @@ Set `NEXTAUTH_URL` to your external URL. See [Deployment Guide](docs/DEPLOY.md) 
 - **Tailwind CSS** with shadcn/ui
 - **NextAuth.js** for authentication
 
+> **Note on shadcn/ui:** its components are *generated* into `src/components/ui/` and committed to the repo,
+> so `shadcn` itself is intentionally **not** a dependency. `components.json` is retained as the CLI's config.
+> To add a component, run the CLI ad-hoc — it does not need to be installed:
+>
+> ```bash
+> npx shadcn@latest add <component>
+> ```
+
 ---
 
 ## License
