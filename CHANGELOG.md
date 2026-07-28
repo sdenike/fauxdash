@@ -5,6 +5,11 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.2] - 2026-07-28
+
+### Security
+- **Integer overflow in the manual ICO BMP parser** — the 24bpp row-padding calculation `(bmpWidth * 3 + 3) & ~3` is a bitwise op, so it coerces via ToInt32. A DIB header declaring a width around 7.2e8 wrapped past 2^31 and produced a *negative* `srcRowBytes`, making `pixelDataSize` negative so it slipped past the "Pixel data overflows entry" bounds check; the subsequent `Buffer.alloc` then used the unwrapped positive `dstRowBytes`. A 70-byte crafted `.ico` reproducibly drove allocation requests of 4 GB (`width=715827882`), 8 GB (`1431655764`), and 12.9 GB (`INT32_MAX`) — memory exhaustion from a trivially small input. Fixed by bounding both DIB dimensions to positive integers ≤ 1024 before any row/size arithmetic, which also rejects the fractional height an odd `biHeight` produces. Reachable only via the admin-gated favicon fetch, and `Buffer.alloc` zero-fills, so there was no information disclosure (`src/lib/favicon-utils.ts`)
+
 ## [0.13.1] - 2026-07-22
 
 ### Fixed
