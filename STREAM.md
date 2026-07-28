@@ -22,14 +22,24 @@ the fix was re-verified end-to-end against 0.35.3 (not just the 0.33.5 it was or
 That is pre-existing and not a break: `Dockerfile:10` already runs `npm ci --legacy-peer-deps`. Use that flag
 locally too.
 
-**Release mechanics:** Pushing `master` triggers `.github/workflows/docker-publish.yml`, publishing
-`ghcr.io/sdenike/fauxdash:latest`. A `v*.*.*` tag would additionally publish a version-tagged image —
-**no tag was created for 0.13.2** (0.12.8 and 0.12.6 also went untagged). To tag retroactively:
-`git tag v0.13.2 && git push origin v0.13.2`.
+**Release mechanics:** Both CI builds green — the `master` push published `ghcr.io/sdenike/fauxdash:latest`,
+and tag `v0.13.2` published `:v0.13.2` + `:latest`.
 
-**If interrupted here:** Release complete and pushed; `master` and `origin/master` level. The
-`fix/ico-bmp-integer-overflow` branch is merged and can be deleted locally and on origin. Its stale
-`origin` copy still points at the pre-rebase commit.
+**Deployed and verified** on the Ubuntu host at `/docker/fauxdash` via `docker compose pull` +
+`down`/`up -d`. Container start log confirms `Version: 0.13.2`, build `2026-07-28T11:50:07.626Z`, Node
+v20.20.2, Next.js 16.2.11; consolidated migrations and performance indexes applied cleanly; OIDC provider
+(`id.denike.io`) configured.
+
+**If interrupted here:** Done — released, deployed, verified. `master` and `origin/master` level at
+`355aa32`; `fix/ico-bmp-integer-overflow` deleted local and remote.
+
+**Open, not blocking:**
+- `npm ci` fails on this tree (`nodemailer` 9 vs `next-auth`'s `peerOptional nodemailer@^7`). Pre-existing
+  from the 0.13.0 dep refresh; `Dockerfile:10` already uses `--legacy-peer-deps`, so the image build is
+  fine, but plain `npm ci` locally will fail for anyone on master.
+- The server's compose pins `:latest`. Pinning `:v0.13.2` would make the running version explicit and
+  rollback a one-line edit.
+- Still no test runner in this repo; the ICO parser harness lives only in a session scratchpad.
 
 ---
 
