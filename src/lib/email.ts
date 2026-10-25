@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer'
+import nodemailer, { type SMTPTransportOptions } from 'nodemailer'
 import { getDb } from '@/db'
 import { users } from '@/db/schema'
 import { eq } from 'drizzle-orm'
@@ -90,7 +90,7 @@ export async function sendEmail(userId: number | undefined, options: EmailOption
   }
 
   try {
-    const transportOptions: nodemailer.TransportOptions = {
+    const transportOptions: SMTPTransportOptions = {
       host: config.host,
       port: config.port,
       secure: config.encryption === 'ssl',
@@ -134,7 +134,7 @@ export async function testSmtpConnection(userId?: number): Promise<{ success: bo
   }
 
   try {
-    const transportOptions: nodemailer.TransportOptions = {
+    const transportOptions: SMTPTransportOptions = {
       host: config.host,
       port: config.port,
       secure: config.encryption === 'ssl',

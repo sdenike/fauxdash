@@ -1,3 +1,4 @@
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { cookies } from 'next/headers';
@@ -144,9 +145,21 @@ function buildProviders(config: ReturnType<typeof getOidcSettingsSync>): any[] {
       rememberMe: { label: "Remember Me", type: "text" },
       rememberDuration: { label: "Remember Duration", type: "text" },
     },
-    async authorize(credentials) {
+    async authorize(credentials, req) {
       if (!credentials?.email || !credentials?.password) {
         logAuth('warn', 'Login attempt with missing credentials');
+        return null;
+      }
+
+      // Brute-force throttle: per target email and per client IP (5/min per email, 20/min per IP).
+      const loginEmail = credentials.email.toLowerCase().trim();
+      const forwarded = req?.headers?.['x-forwarded-for'];
+      const loginIp = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(',')[0].trim()
+        || (req?.headers?.['x-real-ip'] as string | undefined) || 'unknown';
+      const byEmail = checkRateLimit(loginEmail, { ...RATE_LIMITS.login, keyPrefix: 'login-email' });
+      const byIp = checkRateLimit(loginIp, { ...RATE_LIMITS.login, keyPrefix: 'login-ip', maxRequests: 20 });
+      if (!byEmail.success || !byIp.success) {
+        logSecurity('warn', 'Login rate limited', { email: loginEmail, ip: loginIp });
         return null;
       }
 

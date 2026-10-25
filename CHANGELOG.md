@@ -5,6 +5,17 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+- **next 16.2.11 → 16.4.3** — fixes multiple critical/high advisories (unauthenticated RCE via Image Optimization with SVG, `use cache` typed arrays, `next/og`; SSRF in Image Optimization; Server Actions DoS; cache poisoning).
+- **sharp → 0.35.5** (libvips/libheif/librsvg CVEs), **nodemailer 9 → 10.2.1** (addressparser DoS/recipient-bypass, DNS-cache TLS servername leak), **zod 3 → 4.6.7** (memory-exhaustion DoS), plus transitive fixes (postcss, nanoid, fast-uri, brace-expansion, source-map-js). Production `npm audit` is now clean.
+- **Login brute-force throttling** — credentials `authorize()` now rate-limits per email (5/min) and per client IP (20/min); the existing `RATE_LIMITS.login` preset was defined but unused.
+- **Security response headers** — `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy`; `X-Powered-By` removed.
+
+### Changed
+- react/react-dom 19.3.1, drizzle-orm 0.45.4; nodemailer 10 ships its own types so `@types/nodemailer` was removed.
+
 ## [0.13.1] - 2026-07-22
 
 ### Fixed
