@@ -6,7 +6,7 @@ import { users } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import * as argon2 from 'argon2'
 import { validatePassword } from '@/lib/validation/password'
-import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
+import { checkRateLimitShared, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
   // Rate limiting by user ID
   const userId = (session.user as any).id
-  const rateLimitResult = checkRateLimit(userId, RATE_LIMITS.passwordChange)
+  const rateLimitResult = await checkRateLimitShared(userId, RATE_LIMITS.passwordChange)
 
   if (!rateLimitResult.success) {
     return rateLimitResponse(rateLimitResult)

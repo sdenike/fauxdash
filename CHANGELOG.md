@@ -5,6 +5,11 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.6] - 2026-10-25
+
+### Security
+- **Password-reset request, password-reset confirm and password-change rate limits are now Redis-backed** (same `checkRateLimitShared` as the login throttle): limits survive restarts, are shared across instances, and fall back to in-memory when Redis is unavailable.
+
 ## [0.13.5] - 2026-10-25
 
 ### Security
