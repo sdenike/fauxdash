@@ -5,7 +5,7 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.13.5] - 2026-10-25
 
 ### Security
 - **Login throttle is now Redis-backed** (when Redis is enabled in settings): `checkRateLimitShared` uses an atomic Lua INCR+PEXPIRE window, so limits survive app restarts and are shared across instances. Keys are SHA-256 hashed (`fauxdash:rl:<prefix>:<hash>`) so email addresses are never stored in Redis in clear text. Falls back to the in-memory limiter if Redis is disabled, down or slower than 500 ms — it never fails open.
@@ -1354,7 +1354,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Inline code comments
 - Environment variable documentation
 
-## [Unreleased]
+## [0.13.5] - 2026-10-25
 
 ### Planned Features
 - Custom SVG icon upload
