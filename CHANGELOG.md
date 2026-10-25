@@ -5,7 +5,7 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.13.3] - 2026-10-25
 
 ### Security
 - **next 16.2.11 → 16.4.3** — fixes multiple critical/high advisories (unauthenticated RCE via Image Optimization with SVG, `use cache` typed arrays, `next/og`; SSRF in Image Optimization; Server Actions DoS; cache poisoning).
@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - react/react-dom 19.3.1, drizzle-orm 0.45.4; nodemailer 10 ships its own types so `@types/nodemailer` was removed.
+- **Dropped the `shadcn` devDependency** — it was never consumed by the build or runtime. Nothing imports the `shadcn` package (the `@/components/ui/*` files are its *generated output*, which stays untouched), no npm script or CI step invokes it, and `.mcp.json` runs it as `npx shadcn@latest mcp`, which fetches from the registry and ignores `node_modules` — so the shadcn MCP server and `npx shadcn@latest add` both keep working. Removes **250 packages** from the lockfile (1252 → 1002) and clears the `@hono/node-server` path-traversal advisory it pulled in via `@modelcontextprotocol/sdk`: `npm audit` goes 23 → 21, moderate 3 → 1. No change to the shipped image — `shadcn` was never traced into `.next/standalone`
+
+## [0.13.2] - 2026-07-28
+
+### Security
+- **Integer overflow in the manual ICO BMP parser** — the 24bpp row-padding calculation `(bmpWidth * 3 + 3) & ~3` is a bitwise op, so it coerces via ToInt32. A DIB header declaring a width around 7.2e8 wrapped past 2^31 and produced a *negative* `srcRowBytes`, making `pixelDataSize` negative so it slipped past the "Pixel data overflows entry" bounds check; the subsequent `Buffer.alloc` then used the unwrapped positive `dstRowBytes`. A 70-byte crafted `.ico` reproducibly drove allocation requests of 4 GB (`width=715827882`), 8 GB (`1431655764`), and 12.9 GB (`INT32_MAX`) — memory exhaustion from a trivially small input. Fixed by bounding both DIB dimensions to positive integers ≤ 1024 before any row/size arithmetic, which also rejects the fractional height an odd `biHeight` produces. Reachable only via the admin-gated favicon fetch, and `Buffer.alloc` zero-fills, so there was no information disclosure (`src/lib/favicon-utils.ts`)
 
 ## [0.13.1] - 2026-07-22
 

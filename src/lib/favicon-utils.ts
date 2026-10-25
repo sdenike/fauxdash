@@ -336,6 +336,9 @@ async function icoToPng(buffer: Buffer): Promise<Buffer | null> {
       }
     }
 
+    // Load-bearing: confines imageData to the fetched buffer. Both offset and
+    // size come straight off the wire, so without this a crafted directory
+    // entry would point the pixel reads past the end of the response body.
     if (!bestEntry.size || bestEntry.offset + bestEntry.size > buffer.length) {
       throw new Error('Invalid ICO entry bounds');
     }
@@ -361,6 +364,22 @@ async function icoToPng(buffer: Buffer): Promise<Buffer | null> {
     const actualHeight = Math.abs(bmpHeightRaw) / 2; // ICO doubles height for AND mask
 
     if (compression !== 0) throw new Error(`Compressed ICO BMP (${compression})`);
+
+    // Bound the DIB dimensions before any row/size arithmetic below.
+    // The 24bpp row padding `(bmpWidth * 3 + 3) & ~3` is a bitwise op, so it
+    // coerces via ToInt32: a width around 7.2e8 wraps past 2^31 and yields a
+    // NEGATIVE srcRowBytes, which makes pixelDataSize negative and slips past
+    // the "overflows entry" bounds check — then the unwrapped positive
+    // dstRowBytes drives a multi-gigabyte Buffer.alloc from a few dozen input
+    // bytes. Also rejects the fractional height an odd bmpHeightRaw produces.
+    // ICO directory entries cap a frame at 256x256; 1024 is generous headroom.
+    const MAX_ICO_DIMENSION = 1024;
+    if (!Number.isInteger(bmpWidth) || bmpWidth <= 0 || bmpWidth > MAX_ICO_DIMENSION) {
+      throw new Error(`Invalid ICO width: ${bmpWidth}`);
+    }
+    if (!Number.isInteger(actualHeight) || actualHeight <= 0 || actualHeight > MAX_ICO_DIMENSION) {
+      throw new Error(`Invalid ICO height: ${actualHeight}`);
+    }
 
     if (bpp === 32) {
       const rowBytes = bmpWidth * 4;
