@@ -1,7 +1,8 @@
-import sharp from 'sharp';
+import sharp from '@/lib/sharp-safe';
 import { join, resolve, sep } from 'path';
 import { mkdirSync } from 'fs';
 import { parseICO } from 'icojs';
+import { safeFetch } from '@/lib/ssrf';
 
 // ── Security constants ─────────────────────────────────────────────────────
 
@@ -154,7 +155,7 @@ export async function fetchAndSaveFavicon(
       try {
         console.log(`Trying favicon source: ${safeLogUrl}`);
 
-        const response = await fetch(faviconUrl, {
+        const response = await safeFetch(faviconUrl, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           },

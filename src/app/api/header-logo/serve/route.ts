@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
+import { readFile, access } from 'fs/promises'
 import path from 'path'
 
 const isDev = process.env.NODE_ENV === 'development'
@@ -13,17 +13,17 @@ export async function GET() {
   try {
     const logoPath = path.join(assetDir, LOGO_FILENAME)
 
-    if (!fs.existsSync(logoPath)) {
+    if (!(await access(logoPath).then(() => true, () => false))) {
       return new NextResponse('Logo not found', { status: 404 })
     }
 
-    const logoBuffer = fs.readFileSync(logoPath)
+    const logoBuffer = await readFile(logoPath)
 
     return new NextResponse(logoBuffer, {
       status: 200,
       headers: {
         'Content-Type': 'image/webp',
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': 'public, max-age=3600',
       },
     })
   } catch (error) {

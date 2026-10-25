@@ -5,6 +5,17 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.4] - 2026-10-25
+
+### Security
+- **SSRF hardening for server-side fetches** — favicon fetching now resolves each hostname and refuses loopback/private/link-local/CGNAT/multicast results (so a public DNS name pointing at an internal IP is blocked, not just literal IPs), and follows redirects manually (max 3) re-validating every hop. The OIDC test endpoint requires http(s), rejects link-local/metadata addresses and no longer follows redirects (private issuers remain allowed). Residual: DNS rebinding with a sub-second TTL.
+- **Image decode ceiling** — all `sharp` usage goes through `src/lib/sharp-safe.ts` (40 MP input limit instead of the 268 MP default, concurrency 2).
+- **Content-Security-Policy (partial)** — `object-src 'none'; base-uri 'self'; frame-ancestors 'self'`. `script-src` is intentionally not restricted (Next inline bootstrap) and `form-action` is omitted because it breaks OIDC redirects.
+
+### Changed
+- Asset-serving routes (background image, header logo, homepage graphic, site favicon, PWA icons) use async file I/O instead of blocking the event loop, and close their SQLite handle in `finally`. Header logo cache lowered from 1 year `immutable` to 1 hour so a new upload is picked up.
+- Added `scripts/test-ssrf.ts`.
+
 ## [0.13.3] - 2026-10-25
 
 ### Security

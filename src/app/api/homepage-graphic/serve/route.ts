@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readFileSync, existsSync } from 'fs';
+import { readFile, access } from 'fs/promises';
 import { join } from 'path';
 
 // Force dynamic to prevent caching
@@ -15,11 +15,11 @@ export async function GET() {
   try {
     const filepath = join(GRAPHIC_DIR, GRAPHIC_FILE);
 
-    if (!existsSync(filepath)) {
+    if (!(await access(filepath).then(() => true, () => false))) {
       return NextResponse.json({ error: 'No homepage graphic' }, { status: 404 });
     }
 
-    const fileBuffer = readFileSync(filepath);
+    const fileBuffer = await readFile(filepath);
 
     return new NextResponse(fileBuffer, {
       status: 200,

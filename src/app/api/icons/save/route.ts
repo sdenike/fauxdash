@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { readFile } from 'fs/promises';
-import sharp from 'sharp';
+import sharp from '@/lib/sharp-safe';
 import { getOriginalPath } from '@/lib/media-library';
 
 export async function POST(request: NextRequest) {

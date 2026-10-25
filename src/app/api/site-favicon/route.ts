@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
-import sharp from 'sharp';
+import sharp from '@/lib/sharp-safe';
 import { logSystem } from '@/lib/logger';
 import { fetchAndSaveFavicon } from '@/lib/favicon-utils';
 import { saveOriginal } from '@/lib/media-library';
