@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import fs from 'fs'
 import path from 'path'
-import sharp from 'sharp'
+import sharp from '@/lib/sharp-safe'
 import { saveOriginal } from '@/lib/media-library'
 
 const isDev = process.env.NODE_ENV === 'development'

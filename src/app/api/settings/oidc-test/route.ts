@@ -34,6 +34,19 @@ export async function POST(request: NextRequest) {
       ? testIssuerUrl
       : testIssuerUrl + '/';
 
+    // Admin-supplied issuer may legitimately be on a private network (e.g. a
+    // self-hosted IdP), so only enforce scheme and block link-local/metadata.
+    let issuerParsed: URL;
+    try {
+      issuerParsed = new URL(normalizedIssuerUrl);
+    } catch {
+      return NextResponse.json({ success: false, error: 'Issuer URL is not a valid URL' }, { status: 400 });
+    }
+    if ((issuerParsed.protocol !== 'http:' && issuerParsed.protocol !== 'https:') ||
+        /^169\.254\./.test(issuerParsed.hostname) || /^\[?fe80:/i.test(issuerParsed.hostname)) {
+      return NextResponse.json({ success: false, error: 'Issuer URL must be http(s) and not link-local' }, { status: 400 });
+    }
+
     // Test 1: Fetch the well-known configuration
     const wellKnownUrl = `${normalizedIssuerUrl}.well-known/openid-configuration`;
 
@@ -45,6 +58,8 @@ export async function POST(request: NextRequest) {
         },
         // Set a reasonable timeout
         signal: AbortSignal.timeout(10000),
+        // Never follow redirects to places the validation above did not see
+        redirect: 'manual',
       });
     } catch (fetchError: any) {
       return NextResponse.json({

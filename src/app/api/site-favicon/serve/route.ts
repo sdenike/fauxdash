@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readFileSync, existsSync } from 'fs';
+import { readFile, access } from 'fs/promises';
 import { join } from 'path';
 import Database from 'better-sqlite3';
 
@@ -21,13 +21,16 @@ export async function GET() {
     let favicon = '';
     let faviconType = 'default';
 
-    if (existsSync(dbPath)) {
+    if (await access(dbPath).then(() => true, () => false)) {
       const db = new Database(dbPath, { readonly: true });
+      try {
       const faviconSetting = db.prepare('SELECT value FROM settings WHERE key = ?').get('siteFavicon') as { value: string } | undefined;
       const faviconTypeSetting = db.prepare('SELECT value FROM settings WHERE key = ?').get('siteFaviconType') as { value: string } | undefined;
       favicon = faviconSetting?.value || '';
       faviconType = faviconTypeSetting?.value || 'default';
-      db.close();
+      } finally {
+        db.close();
+      }
     }
 
     const noCacheHeaders = {
@@ -39,8 +42,8 @@ export async function GET() {
     // If using uploaded favicon, serve from site-assets
     if (faviconType === 'upload' || faviconType === 'url') {
       const customPath = join(SITE_FAVICON_DIR, SITE_FAVICON_FILE);
-      if (existsSync(customPath)) {
-        const fileBuffer = readFileSync(customPath);
+      if (await access(customPath).then(() => true, () => false)) {
+        const fileBuffer = await readFile(customPath);
         return new NextResponse(fileBuffer, {
           status: 200,
           headers: {
@@ -64,8 +67,8 @@ export async function GET() {
       const filename = iconPath.replace('/api/favicons/serve/', '');
       const faviconPath = join(process.cwd(), 'public', 'favicons', filename);
 
-      if (existsSync(faviconPath)) {
-        const fileBuffer = readFileSync(faviconPath);
+      if (await access(faviconPath).then(() => true, () => false)) {
+        const fileBuffer = await readFile(faviconPath);
         const ext = filename.split('.').pop()?.toLowerCase();
         const contentType = ext === 'svg' ? 'image/svg+xml' : ext === 'ico' ? 'image/x-icon' : 'image/png';
 

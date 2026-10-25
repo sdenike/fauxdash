@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readFileSync, existsSync } from 'fs';
+import { readFile, access } from 'fs/promises';
 import { join } from 'path';
 import Database from 'better-sqlite3';
 
@@ -29,18 +29,21 @@ export async function GET(
 
     let pwaIconType = 'none';
 
-    if (existsSync(dbPath)) {
+    if (await access(dbPath).then(() => true, () => false)) {
       const db = new Database(dbPath, { readonly: true });
+      try {
       const typeSetting = db.prepare('SELECT value FROM settings WHERE key = ?').get('pwaIconType') as { value: string } | undefined;
       pwaIconType = typeSetting?.value || 'none';
-      db.close();
+      } finally {
+        db.close();
+      }
     }
 
     // Try serving custom icon
     if (pwaIconType !== 'none') {
       const customPath = join(PWA_ICONS_DIR, `icon-${size}x${size}.png`);
-      if (existsSync(customPath)) {
-        const fileBuffer = readFileSync(customPath);
+      if (await access(customPath).then(() => true, () => false)) {
+        const fileBuffer = await readFile(customPath);
         return new NextResponse(fileBuffer, {
           status: 200,
           headers: {
@@ -53,8 +56,8 @@ export async function GET(
 
     // Fallback to default icons in public/icons/
     const defaultPath = join(process.cwd(), 'public', 'icons', `icon-${size}x${size}.png`);
-    if (existsSync(defaultPath)) {
-      const fileBuffer = readFileSync(defaultPath);
+    if (await access(defaultPath).then(() => true, () => false)) {
+      const fileBuffer = await readFile(defaultPath);
       return new NextResponse(fileBuffer, {
         status: 200,
         headers: {

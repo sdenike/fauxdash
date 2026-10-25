@@ -6,7 +6,7 @@ import { bookmarks, services } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import sharp from 'sharp';
+import sharp from '@/lib/sharp-safe';
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);

@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { join } from 'path';
 import { existsSync, readdirSync } from 'fs';
-import sharp from 'sharp';
+import sharp from '@/lib/sharp-safe';
 import { getDb } from '@/db';
 import { bookmarks, services } from '@/db/schema';
 import { fetchAndSaveFavicon, getFaviconDir, validateFaviconFile } from '@/lib/favicon-utils';

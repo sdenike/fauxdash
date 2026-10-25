@@ -70,6 +70,11 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
+          // Partial CSP: Next.js inline bootstrap scripts need 'unsafe-inline', so
+          // script-src/default-src are left open. These directives block plugin
+          // content, <base> hijacking and framing. form-action is deliberately
+          // omitted: browsers apply it to redirects and it breaks OIDC sign-in.
+          { key: 'Content-Security-Policy', value: "object-src 'none'; base-uri 'self'; frame-ancestors 'self'" },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },

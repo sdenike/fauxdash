@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { writeFile, mkdir, unlink } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
-import sharp from 'sharp';
+import sharp from '@/lib/sharp-safe';
 import { logSystem } from '@/lib/logger';
 
 // Use /data for persistence in Docker, fallback to public for dev
