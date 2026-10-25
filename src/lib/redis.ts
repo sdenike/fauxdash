@@ -77,11 +77,10 @@ export const getRedis = () => {
       const redisUrl = buildRedisUrl(config);
       redis = new Redis(redisUrl, {
         maxRetriesPerRequest: 3,
+        // Keep reconnecting in the background (capped backoff). Giving up would leave the
+        // client dead after a Redis restart and silently downgrade rate limiting to in-memory.
         retryStrategy(times) {
-          if (times > 3) {
-            return null;
-          }
-          return Math.min(times * 50, 2000);
+          return Math.min(times * 200, 5000);
         },
         lazyConnect: true,
       });
@@ -104,11 +103,9 @@ export const getRedis = () => {
     const redisUrl = buildRedisUrl(config);
     redis = new Redis(redisUrl, {
       maxRetriesPerRequest: 3,
+      // Keep reconnecting in the background (capped backoff); see note above.
       retryStrategy(times) {
-        if (times > 3) {
-          return null;
-        }
-        return Math.min(times * 50, 2000);
+        return Math.min(times * 200, 5000);
       },
       lazyConnect: true,
     });

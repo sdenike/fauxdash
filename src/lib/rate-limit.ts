@@ -1,7 +1,12 @@
 /**
- * Simple in-memory rate limiting for API routes
- * For production with multiple instances, use Redis-based rate limiting
+ * Rate limiting for API routes.
+ * checkRateLimit: in-memory, per process (resets on restart).
+ * checkRateLimitShared: Redis-backed when Redis is enabled so limits survive
+ * restarts and are shared across instances; falls back to the in-memory
+ * limiter when Redis is disabled, down or slow (never fails open).
  */
+import { createHash } from 'crypto'
+import { getRedis } from '@/lib/redis'
 
 interface RateLimitEntry {
   count: number
@@ -83,6 +88,48 @@ export function checkRateLimit(key: string, options: RateLimitOptions): RateLimi
     success: true,
     remaining: options.maxRequests - entry.count,
     resetAt: entry.resetAt,
+  }
+}
+
+const REDIS_TIMEOUT_MS = 500
+
+// Atomic fixed-window counter: INCR, set expiry on first hit, return count and remaining TTL.
+export const REDIS_WINDOW_SCRIPT = `
+local c = redis.call('INCR', KEYS[1])
+if c == 1 then redis.call('PEXPIRE', KEYS[1], ARGV[1]) end
+local ttl = redis.call('PTTL', KEYS[1])
+if ttl < 0 then redis.call('PEXPIRE', KEYS[1], ARGV[1]); ttl = tonumber(ARGV[1]) end
+return {c, ttl}
+`
+
+/**
+ * Like checkRateLimit, but backed by Redis when available. The key is hashed so
+ * identifiers such as email addresses are not stored in Redis in clear text.
+ */
+export async function checkRateLimitShared(
+  key: string,
+  options: RateLimitOptions
+): Promise<RateLimitResult> {
+  const redis = getRedis()
+  if (!redis) return checkRateLimit(key, options)
+
+  const fullKey = `fauxdash:rl:${options.keyPrefix ?? 'default'}:${createHash('sha256').update(key).digest('hex')}`
+  try {
+    const reply = await Promise.race([
+      redis.eval(REDIS_WINDOW_SCRIPT, 1, fullKey, String(options.windowMs)) as Promise<[number, number]>,
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('redis rate-limit timeout')), REDIS_TIMEOUT_MS)
+      ),
+    ])
+    const [count, ttlMs] = reply
+    const resetAt = Date.now() + ttlMs
+    if (count > options.maxRequests) {
+      return { success: false, remaining: 0, resetAt, retryAfter: Math.max(1, Math.ceil(ttlMs / 1000)) }
+    }
+    return { success: true, remaining: options.maxRequests - count, resetAt }
+  } catch (error) {
+    console.error('Redis rate limit unavailable, using in-memory limiter:', (error as Error).message)
+    return checkRateLimit(key, options)
   }
 }
 

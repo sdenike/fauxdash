@@ -1,4 +1,4 @@
-import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { checkRateLimitShared, RATE_LIMITS } from '@/lib/rate-limit'
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { cookies } from 'next/headers';
@@ -156,8 +156,8 @@ function buildProviders(config: ReturnType<typeof getOidcSettingsSync>): any[] {
       const forwarded = req?.headers?.['x-forwarded-for'];
       const loginIp = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(',')[0].trim()
         || (req?.headers?.['x-real-ip'] as string | undefined) || 'unknown';
-      const byEmail = checkRateLimit(loginEmail, { ...RATE_LIMITS.login, keyPrefix: 'login-email' });
-      const byIp = checkRateLimit(loginIp, { ...RATE_LIMITS.login, keyPrefix: 'login-ip', maxRequests: 20 });
+      const byEmail = await checkRateLimitShared(loginEmail, { ...RATE_LIMITS.login, keyPrefix: 'login-email' });
+      const byIp = await checkRateLimitShared(loginIp, { ...RATE_LIMITS.login, keyPrefix: 'login-ip', maxRequests: 20 });
       if (!byEmail.success || !byIp.success) {
         logSecurity('warn', 'Login rate limited', { email: loginEmail, ip: loginIp });
         return null;
