@@ -64,6 +64,20 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 const nextConfig = {
   output: 'standalone',
   turbopack: {},
+  poweredByHeader: false,
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+    ]
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',
