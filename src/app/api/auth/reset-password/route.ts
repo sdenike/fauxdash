@@ -4,12 +4,12 @@ import { users, passwordResetTokens } from '@/db/schema'
 import { eq, and, gt } from 'drizzle-orm'
 import * as argon2 from 'argon2'
 import { validatePassword } from '@/lib/validation/password'
-import { checkRateLimit, getClientIp, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
+import { checkRateLimitShared, getClientIp, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   // Rate limiting
   const clientIp = getClientIp(request)
-  const rateLimitResult = checkRateLimit(clientIp, RATE_LIMITS.passwordReset)
+  const rateLimitResult = await checkRateLimitShared(clientIp, RATE_LIMITS.passwordReset)
 
   if (!rateLimitResult.success) {
     return rateLimitResponse(rateLimitResult)

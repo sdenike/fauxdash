@@ -6,12 +6,12 @@ import { randomBytes } from 'crypto'
 import { sendEmail, isSmtpConfigured } from '@/lib/email'
 import { buildEmailHtml } from '@/lib/email-template'
 import { getGlobalSettings } from '@/lib/settings-cache'
-import { checkRateLimit, getClientIp, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
+import { checkRateLimitShared, getClientIp, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   // Rate limiting
   const clientIp = getClientIp(request)
-  const rateLimitResult = checkRateLimit(clientIp, RATE_LIMITS.passwordReset)
+  const rateLimitResult = await checkRateLimitShared(clientIp, RATE_LIMITS.passwordReset)
 
   if (!rateLimitResult.success) {
     return rateLimitResponse(rateLimitResult)
