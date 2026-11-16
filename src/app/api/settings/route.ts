@@ -109,6 +109,11 @@ export async function GET(request: NextRequest) {
     servicesColumns: parseInt(settingsObj.servicesColumns || '4'),
     bookmarksColumns: parseInt(settingsObj.bookmarksColumns || settingsObj.mainColumns || '4'),
     sectionOrder: settingsObj.sectionOrder || 'services-first',
+    // Start-page layout (v0.14). Older installs fall back to their icon size and column settings.
+    density: settingsObj.density === 'compact' || settingsObj.density === 'comfortable'
+      ? settingsObj.density
+      : parseInt(settingsObj.bookmarksIconSize || '32') <= 24 ? 'compact' : 'comfortable',
+    columns: Math.min(Math.max(parseInt(settingsObj.columns || settingsObj.bookmarksColumns || settingsObj.mainColumns || '4') || 4, 1), 6),
     weatherEnabled: settingsObj.weatherEnabled === 'true' || false,
     weatherDisplayMode: settingsObj.weatherDisplayMode || 'both',
     weatherShowPopup: settingsObj.weatherShowPopup !== 'false',
@@ -219,6 +224,8 @@ export async function POST(request: NextRequest) {
   if (body.customSearchName !== undefined) settingsToSave.push({ key: 'customSearchName', value: body.customSearchName || '' });
   if (body.customSearchUrl !== undefined) settingsToSave.push({ key: 'customSearchUrl', value: body.customSearchUrl || '' });
   if (body.defaultTheme !== undefined) settingsToSave.push({ key: 'defaultTheme', value: body.defaultTheme });
+  if (body.density === 'compact' || body.density === 'comfortable') settingsToSave.push({ key: 'density', value: body.density });
+  if (body.columns !== undefined) settingsToSave.push({ key: 'columns', value: String(Math.min(Math.max(parseInt(body.columns) || 4, 1), 6)) });
   if (body.themeColor !== undefined) settingsToSave.push({ key: 'themeColor', value: body.themeColor || 'Slate' });
   if (body.siteTitle !== undefined) settingsToSave.push({ key: 'siteTitle', value: body.siteTitle || 'Faux|Dash' });
   if (body.siteTitleEnabled !== undefined) settingsToSave.push({ key: 'siteTitleEnabled', value: body.siteTitleEnabled.toString() });

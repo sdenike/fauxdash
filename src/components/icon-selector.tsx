@@ -7,7 +7,7 @@ import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
 import { AVAILABLE_ICONS, ICON_CATEGORIES, getIconByName } from '@/lib/icons'
-import { MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
+import { Search, ChevronLeft, ChevronRight, Upload } from 'lucide-react'
 import { useToast } from './ui/use-toast'
 
 interface IconSelectorProps {
@@ -408,7 +408,7 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
           <Button type="button" variant="outline" className="w-full justify-start">
             {IconComponent ? (
               <>
-                <IconComponent className="h-5 w-5 mr-2" />
+                <IconComponent className="h-5 w-5 mr-2" aria-hidden="true" />
                 {value}
               </>
             ) : isSelfhstIcon && selfhstPath ? (
@@ -432,40 +432,43 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
                 Favicon
               </>
             ) : (
-              'Select Icon'
+              'Select icon'
             )}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-6xl max-h-[85vh] overflow-hidden flex flex-col !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2">
         {savingIcon && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-2">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <span className="text-sm font-medium">Saving icon locally...</span>
+          <div className="absolute inset-0 bg-background/80 z-50 flex items-center justify-center">
+            <div role="status" className="flex flex-col items-center gap-2">
+              <div aria-hidden="true" className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              <span className="text-sm font-medium">Saving icon locally…</span>
             </div>
           </div>
         )}
         <DialogHeader>
-          <DialogTitle>Select Icon</DialogTitle>
+          <DialogTitle>Select icon</DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-2 mb-4">
           <Button
+            type="button"
             variant={selectedTab === 'heroicons' ? 'default' : 'outline'}
             onClick={() => setSelectedTab('heroicons')}
             size="sm"
           >
-            HeroIcons
+            Built-in icons
           </Button>
           <Button
+            type="button"
             variant={selectedTab === 'selfhst' ? 'default' : 'outline'}
             onClick={() => setSelectedTab('selfhst')}
             size="sm"
           >
-            Selfh.st Icons
+            Selfh.st icons
           </Button>
           <Button
+            type="button"
             variant={selectedTab === 'url' ? 'default' : 'outline'}
             onClick={() => setSelectedTab('url')}
             size="sm"
@@ -473,6 +476,7 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
             URL
           </Button>
           <Button
+            type="button"
             variant={selectedTab === 'uploads' ? 'default' : 'outline'}
             onClick={() => setSelectedTab('uploads')}
             size="sm"
@@ -483,9 +487,10 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
 
         {selectedTab !== 'url' && selectedTab !== 'uploads' && (
           <div className="relative mb-4">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <Input
-              placeholder="Search icons..."
+              placeholder="Search icons…"
+              aria-label="Search icons"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -505,10 +510,11 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
                 className="hidden"
               />
               <div className="relative flex-1">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <input
                   type="text"
-                  placeholder="Search uploads..."
+                  placeholder="Search uploads…"
+                  aria-label="Search uploads"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
@@ -521,8 +527,8 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
                 onClick={() => mediaFileInputRef.current?.click()}
                 disabled={uploadingMedia}
               >
-                <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
-                {uploadingMedia ? 'Uploading...' : 'Upload'}
+                <Upload className="h-4 w-4 mr-2" aria-hidden="true" />
+                {uploadingMedia ? 'Uploading…' : 'Upload'}
               </Button>
             </div>
 
@@ -540,7 +546,7 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
                   <div className="flex flex-col items-center justify-center h-32 gap-1 text-muted-foreground">
                     <p className="text-sm">{mediaItems.length === 0 ? 'No images uploaded yet.' : 'No results.'}</p>
                     {mediaItems.length === 0 && (
-                      <p className="text-xs">Use the Upload button above to add images.</p>
+                      <p className="text-xs">Use the upload button above to add images.</p>
                     )}
                   </div>
                 ) : (
@@ -594,11 +600,12 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
                 />
               </div>
               <Button
+                type="button"
                 onClick={handleFetchFavicon}
                 disabled={!faviconUrl || fetchingFavicon}
                 className="w-full"
               >
-                {fetchingFavicon ? 'Fetching...' : 'Fetch Favicon'}
+                {fetchingFavicon ? 'Fetching…' : 'Fetch favicon'}
               </Button>
             </div>
           </div>
@@ -611,29 +618,31 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
             <div className="relative">
               {showLeftArrow && (
                 <button
+                  type="button"
                   onClick={scrollLeft}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-background/95 hover:bg-accent border border-border rounded-full p-1 shadow-md transition-colors"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-background/95 hover:bg-accent border border-border rounded-full p-1 transition-colors"
                   aria-label="Scroll left"
                 >
-                  <ChevronLeftIcon className="h-4 w-4" />
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                 </button>
               )}
               {showRightArrow && (
                 <button
+                  type="button"
                   onClick={scrollRight}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-background/95 hover:bg-accent border border-border rounded-full p-1 shadow-md transition-colors"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-background/95 hover:bg-accent border border-border rounded-full p-1 transition-colors"
                   aria-label="Scroll right"
                 >
-                  <ChevronRightIcon className="h-4 w-4" />
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </button>
               )}
               <div ref={scrollContainerRef} className="overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                <TabsList className="inline-flex w-auto gap-1 h-auto p-1 bg-muted/50 rounded-lg min-w-full">
+                <TabsList>
                   {allCategories.map(category => (
                     <TabsTrigger
                       key={category}
                       value={category}
-                      className="text-sm px-4 py-2 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium whitespace-nowrap transition-all hover:bg-muted"
+                      className="text-sm px-4 py-2 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium whitespace-nowrap transition-all hover:bg-muted"
                     >
                       {category}
                     </TabsTrigger>
@@ -664,7 +673,7 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
                     title={icon.name}
                   >
                     <div className="flex items-center justify-center h-6 w-6">
-                      <Icon className="h-6 w-6 shrink-0" />
+                      <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
                     </div>
                     <span className="text-xs text-muted-foreground group-hover:text-foreground truncate w-full text-center leading-tight">
                       {icon.name}
@@ -679,7 +688,7 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
           <div className="flex-1 overflow-y-auto">
             {loadingSelfhst ? (
               <div className="flex items-center justify-center h-32">
-                <div className="text-muted-foreground">Loading selfh.st icons...</div>
+                <div className="text-muted-foreground">Loading selfh.st icons…</div>
               </div>
             ) : (
               <>

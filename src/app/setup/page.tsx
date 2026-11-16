@@ -2,21 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  SparklesIcon,
-  UserIcon,
-  KeyIcon,
-  CheckCircleIcon,
-  ArrowRightIcon,
-  BookmarkIcon,
-  Cog6ToothIcon,
-  ChartBarIcon,
-  BeakerIcon,
-  DocumentPlusIcon
-} from '@heroicons/react/24/outline'
+import { Sparkles, User, KeyRound, CheckCircle2, ArrowRight, Bookmark, Settings, BarChart3, FlaskConical, FilePlus } from 'lucide-react'
 
-const STRENGTH_COLORS = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e']
-const STRENGTH_LABELS = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong']
+const STRENGTH_COLORS = ['bg-destructive', 'bg-warning', 'bg-warning', 'bg-success', 'bg-success']
+const STRENGTH_TEXT = ['text-destructive', 'text-warning', 'text-warning', 'text-success', 'text-success']
+const STRENGTH_LABELS = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong']
 
 function getPasswordStrength(password: string): number {
   if (!password) return -1
@@ -117,363 +107,287 @@ export default function SetupPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
-        <div style={{ color: '#64748b' }}>Loading...</div>
+      <div className="flex min-h-dvh items-center justify-center bg-background">
+        <div role="status" className="text-muted-foreground">Loading…</div>
       </div>
     )
   }
 
+  const cardCls = 'rounded-lg border border-border bg-card p-6'
+  const errorBox = error && (
+    <div role="alert" className="rounded-md border border-destructive/30 bg-destructive-soft p-3 text-sm text-destructive">
+      {error}
+    </div>
+  )
+
+  const loadDemo = async () => {
+    setError('')
+    setLoadingDemo(true)
+    try {
+      await fetch('/api/auth/callback/credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          redirect: false
+        })
+      })
+
+      const response = await fetch('/api/demo/load', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to load demo content')
+      }
+
+      router.push('/login?demo=loaded')
+    } catch (err: any) {
+      setError(err.message || 'Failed to load demo content')
+    } finally {
+      setLoadingDemo(false)
+    }
+  }
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', padding: '1rem' }}>
-      <div style={{ width: '100%', maxWidth: '672px' }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <SparklesIcon style={{ height: '2.5rem', width: '2.5rem', color: '#334155' }} />
-            <h1 style={{ fontSize: '2.25rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Faux|Dash</h1>
+    <div className="flex min-h-dvh items-center justify-center bg-background p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="w-full max-w-sm">
+        <div className="mb-6 text-center">
+          <div className="mb-2 flex items-center justify-center gap-2">
+            <Sparkles className="h-6 w-6 text-brand" aria-hidden="true" />
+            <p className="text-xl font-semibold text-foreground">Faux|Dash</p>
           </div>
-          <p style={{ color: '#64748b', margin: 0 }}>Welcome! Let&apos;s get you set up.</p>
+          <p className="text-sm text-muted-foreground">Welcome. Let&apos;s get you set up.</p>
         </div>
 
-        {/* Progress Steps */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '2rem' }}>
+        <ol className="mb-6 flex items-center justify-center gap-2" aria-label="Setup progress">
           {[1, 2, 3].map((s) => (
-            <div key={s} style={{ display: 'flex', alignItems: 'center' }}>
-              <div style={{
-                width: '2.5rem',
-                height: '2.5rem',
-                borderRadius: '9999px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                background: step >= s ? '#0f172a' : '#e2e8f0',
-                color: step >= s ? '#fff' : '#94a3b8',
-              }}>
-                {step > s ? <CheckCircleIcon style={{ height: '1.25rem', width: '1.25rem' }} /> : s}
-              </div>
-              {s < 3 && (
-                <div style={{ width: '4rem', height: '0.25rem', margin: '0 0.5rem', borderRadius: '0.25rem', background: step > s ? '#0f172a' : '#e2e8f0' }} />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Step 1: Welcome */}
-        {step === 1 && (
-          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '0.75rem', overflow: 'hidden' }}>
-            <div style={{ padding: '1.5rem 1.5rem 0' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', margin: '0 0 0.25rem' }}>Welcome to Faux|Dash</h2>
-              <p style={{ color: '#64748b', fontSize: '0.875rem', margin: 0 }}>
-                Your self-hosted bookmark dashboard is almost ready. Let&apos;s create your admin account.
-              </p>
-            </div>
-            <div style={{ padding: '1.5rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '0.5rem', textAlign: 'center', border: '1px solid #f1f5f9' }}>
-                  <BookmarkIcon style={{ height: '2rem', width: '2rem', color: '#2563eb', margin: '0 auto 0.5rem' }} />
-                  <h3 style={{ color: '#0f172a', fontWeight: 500, margin: '0 0 0.25rem', fontSize: '0.875rem' }}>Organize</h3>
-                  <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>Manage bookmarks and services in categories</p>
-                </div>
-                <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '0.5rem', textAlign: 'center', border: '1px solid #f1f5f9' }}>
-                  <Cog6ToothIcon style={{ height: '2rem', width: '2rem', color: '#16a34a', margin: '0 auto 0.5rem' }} />
-                  <h3 style={{ color: '#0f172a', fontWeight: 500, margin: '0 0 0.25rem', fontSize: '0.875rem' }}>Customize</h3>
-                  <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>Theme colors, icons, and layouts</p>
-                </div>
-                <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '0.5rem', textAlign: 'center', border: '1px solid #f1f5f9' }}>
-                  <ChartBarIcon style={{ height: '2rem', width: '2rem', color: '#7c3aed', margin: '0 auto 0.5rem' }} />
-                  <h3 style={{ color: '#0f172a', fontWeight: 500, margin: '0 0 0.25rem', fontSize: '0.875rem' }}>Analyze</h3>
-                  <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>Track usage with built-in analytics</p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setStep(2)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 1.5rem',
-                  background: '#0f172a',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  fontSize: '0.9375rem',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                }}
+            <li key={s} className="flex items-center" aria-current={step === s ? 'step' : undefined}>
+              <span
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
+                  step >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                }`}
               >
-                Get Started
-                <ArrowRightIcon style={{ height: '1rem', width: '1rem' }} />
-              </button>
-            </div>
+                {step > s ? <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> : s}
+                <span className="sr-only">Step {s} of 3</span>
+              </span>
+              {s < 3 && <span aria-hidden="true" className={`mx-2 h-0.5 w-10 rounded ${step > s ? 'bg-primary' : 'bg-muted'}`} />}
+            </li>
+          ))}
+        </ol>
+
+        {step === 1 && (
+          <div className={cardCls}>
+            <h1 className="text-xl font-semibold text-foreground">Welcome to Faux|Dash</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your self-hosted bookmark dashboard is almost ready. Create your admin account to begin.
+            </p>
+            <ul className="my-5 space-y-3">
+              <li className="flex items-start gap-3">
+                <Bookmark className="mt-0.5 h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Organize</p>
+                  <p className="text-sm text-muted-foreground">Manage bookmarks and services in categories</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <Settings className="mt-0.5 h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Customize</p>
+                  <p className="text-sm text-muted-foreground">Theme colors, icons, and layouts</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <BarChart3 className="mt-0.5 h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Analyze</p>
+                  <p className="text-sm text-muted-foreground">Track usage with built-in analytics</p>
+                </div>
+              </li>
+            </ul>
+            <button type="button" onClick={() => setStep(2)} className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+              Get started
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </button>
           </div>
         )}
 
-        {/* Step 2: Create Admin Account */}
         {step === 2 && (
-          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '0.75rem', overflow: 'hidden' }}>
-            <div style={{ padding: '1.5rem 1.5rem 0' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <UserIcon style={{ height: '1.25rem', width: '1.25rem' }} />
-                Create Admin Account
-              </h2>
-              <p style={{ color: '#64748b', fontSize: '0.875rem', margin: 0 }}>
-                This will be your administrator account for managing Faux|Dash.
-              </p>
-            </div>
-            <div style={{ padding: '1.5rem' }}>
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {error && (
-                  <div style={{ padding: '0.75rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.5rem', color: '#dc2626', fontSize: '0.875rem' }}>
-                    {error}
+          <div className={cardCls}>
+            <h1 className="flex items-center gap-2 text-xl font-semibold text-foreground">
+              <User className="h-5 w-5" aria-hidden="true" />
+              Create admin account
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              This account manages Faux|Dash.
+            </p>
+            <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
+              {errorBox}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="firstname" className="mb-1.5 block text-sm font-medium text-foreground">First name</label>
+                  <input
+                    id="firstname"
+                    autoComplete="given-name"
+                    value={formData.firstname}
+                    onChange={(e) => setFormData({...formData, firstname: e.target.value})}
+                    placeholder="John"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="lastname" className="mb-1.5 block text-sm font-medium text-foreground">Last name</label>
+                  <input
+                    id="lastname"
+                    autoComplete="family-name"
+                    value={formData.lastname}
+                    onChange={(e) => setFormData({...formData, lastname: e.target.value})}
+                    placeholder="Doe"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-foreground">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  placeholder="admin@example.com"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="username" className="mb-1.5 block text-sm font-medium text-foreground">Username</label>
+                <input
+                  id="username"
+                  autoComplete="username"
+                  aria-describedby="username-hint"
+                  value={formData.username}
+                  onChange={(e) => setFormData({...formData, username: e.target.value})}
+                  placeholder="admin"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                <p id="username-hint" className="mt-1 text-xs text-muted-foreground">Optional. Defaults to the part of your email before the @.</p>
+              </div>
+
+              <div>
+                <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-foreground">Password</label>
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  placeholder="At least 8 characters"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                {formData.password && (
+                  <div className="mt-2" role="status">
+                    <div className="flex gap-1" aria-hidden="true">
+                      {[0, 1, 2, 3, 4].map((level) => (
+                        <div
+                          key={level}
+                          className={`h-1 flex-1 rounded-full transition-colors ${
+                            level <= passwordStrength ? STRENGTH_COLORS[passwordStrength] : 'bg-muted'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className={`mt-1 text-xs font-medium ${STRENGTH_TEXT[passwordStrength]}`}>
+                      Password strength: {STRENGTH_LABELS[passwordStrength]}
+                    </p>
                   </div>
                 )}
+              </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label htmlFor="firstname" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#0f172a', marginBottom: '0.375rem' }}>First Name</label>
-                    <input
-                      id="firstname"
-                      value={formData.firstname}
-                      onChange={(e) => setFormData({...formData, firstname: e.target.value})}
-                      placeholder="John"
-                      style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.375rem', fontSize: '0.875rem', color: '#0f172a', background: '#fff', outline: 'none', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="lastname" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#0f172a', marginBottom: '0.375rem' }}>Last Name</label>
-                    <input
-                      id="lastname"
-                      value={formData.lastname}
-                      onChange={(e) => setFormData({...formData, lastname: e.target.value})}
-                      placeholder="Doe"
-                      style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.375rem', fontSize: '0.875rem', color: '#0f172a', background: '#fff', outline: 'none', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                </div>
+              <div>
+                <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-medium text-foreground">Confirm password</label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                  placeholder="Re-enter your password"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                {formData.confirmPassword && (
+                  <p role="status" className={`mt-1 text-xs font-medium ${passwordsMatch ? 'text-success' : 'text-destructive'}`}>
+                    {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                  </p>
+                )}
+              </div>
 
-                <div>
-                  <label htmlFor="email" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#0f172a', marginBottom: '0.375rem' }}>Email *</label>
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    placeholder="admin@example.com"
-                    style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.375rem', fontSize: '0.875rem', color: '#0f172a', background: '#fff', outline: 'none', boxSizing: 'border-box' }}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="username" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#0f172a', marginBottom: '0.375rem' }}>Username</label>
-                  <input
-                    id="username"
-                    value={formData.username}
-                    onChange={(e) => setFormData({...formData, username: e.target.value})}
-                    placeholder="admin"
-                    style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.375rem', fontSize: '0.875rem', color: '#0f172a', background: '#fff', outline: 'none', boxSizing: 'border-box' }}
-                  />
-                  <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>Optional - defaults to email prefix</p>
-                </div>
-
-                <div>
-                  <label htmlFor="password" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#0f172a', marginBottom: '0.375rem' }}>Password *</label>
-                  <input
-                    id="password"
-                    type="password"
-                    required
-                    minLength={8}
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    placeholder="Minimum 8 characters"
-                    style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.375rem', fontSize: '0.875rem', color: '#0f172a', background: '#fff', outline: 'none', boxSizing: 'border-box' }}
-                  />
-                  {formData.password && (
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <div style={{ display: 'flex', gap: '0.25rem' }}>
-                        {[0, 1, 2, 3, 4].map((level) => (
-                          <div
-                            key={level}
-                            style={{
-                              height: '4px',
-                              flex: 1,
-                              borderRadius: '9999px',
-                              background: level <= passwordStrength ? STRENGTH_COLORS[passwordStrength] : '#e2e8f0',
-                              transition: 'background 0.3s',
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <p style={{ fontSize: '0.75rem', fontWeight: 500, color: STRENGTH_COLORS[passwordStrength], marginTop: '0.25rem' }}>
-                        {STRENGTH_LABELS[passwordStrength]}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="confirmPassword" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#0f172a', marginBottom: '0.375rem' }}>Confirm Password *</label>
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    required
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                    placeholder="Re-enter your password"
-                    style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.375rem', fontSize: '0.875rem', color: '#0f172a', background: '#fff', outline: 'none', boxSizing: 'border-box' }}
-                  />
-                  {formData.confirmPassword && (
-                    <p style={{ fontSize: '0.75rem', fontWeight: 500, marginTop: '0.25rem', color: passwordsMatch ? '#22c55e' : '#ef4444' }}>
-                      {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
-                    </p>
-                  )}
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '0.5rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      background: '#fff',
-                      color: '#334155',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    style={{
-                      flex: 1,
-                      padding: '0.5rem 1rem',
-                      background: submitting ? '#64748b' : '#0f172a',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      cursor: submitting ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                    }}
-                  >
-                    {submitting ? 'Creating Account...' : 'Create Account'}
-                    <KeyIcon style={{ height: '1rem', width: '1rem' }} />
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  Back
+                </button>
+                <button type="submit" disabled={submitting} className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+                  {submitting ? 'Creating account…' : 'Create account'}
+                  <KeyRound className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
-        {/* Step 3: Demo Choice */}
         {step === 3 && success && (
-          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '0.75rem', overflow: 'hidden' }}>
-            <div style={{ padding: '1.5rem', textAlign: 'center' }}>
-              <CheckCircleIcon style={{ height: '4rem', width: '4rem', color: '#22c55e', margin: '0 auto 1rem' }} />
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', margin: '0 0 0.25rem' }}>Account Created!</h2>
-              <p style={{ color: '#64748b', fontSize: '0.875rem', margin: 0 }}>
-                How would you like to get started?
-              </p>
+          <div className={cardCls}>
+            <div className="text-center">
+              <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-success" aria-hidden="true" />
+              <h1 className="text-xl font-semibold text-foreground">Account created</h1>
+              <p className="mt-1 text-sm text-muted-foreground">How would you like to get started?</p>
             </div>
-            <div style={{ padding: '0 1.5rem 1.5rem' }}>
-              {error && (
-                <div style={{ padding: '0.75rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.5rem', color: '#dc2626', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                  {error}
-                </div>
-              )}
+            <div className="mt-5 space-y-3">
+              {errorBox}
+              <button
+                type="button"
+                onClick={loadDemo}
+                disabled={loadingDemo}
+                className="w-full rounded-md border border-border bg-card p-4 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <FlaskConical className="mb-2 h-6 w-6 text-brand" aria-hidden="true" />
+                <span className="block text-sm font-semibold text-foreground">
+                  {loadingDemo ? 'Loading demo data…' : 'Load demo data'}
+                </span>
+                <span className="block text-sm text-muted-foreground">
+                  Explore with sample bookmarks, services, and analytics
+                </span>
+              </button>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                <button
-                  onClick={async () => {
-                    setError('')
-                    setLoadingDemo(true)
-                    try {
-                      await fetch('/api/auth/callback/credentials', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          email: formData.email,
-                          password: formData.password,
-                          redirect: false
-                        })
-                      })
-
-                      const response = await fetch('/api/demo/load', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' }
-                      })
-
-                      if (!response.ok) {
-                        const data = await response.json()
-                        throw new Error(data.error || 'Failed to load demo content')
-                      }
-
-                      router.push('/login?demo=loaded')
-                    } catch (err: any) {
-                      setError(err.message || 'Failed to load demo content')
-                    } finally {
-                      setLoadingDemo(false)
-                    }
-                  }}
-                  disabled={loadingDemo}
-                  style={{
-                    padding: '1.5rem',
-                    background: '#f5f3ff',
-                    border: '1px solid #ddd6fe',
-                    borderRadius: '0.5rem',
-                    textAlign: 'left',
-                    cursor: loadingDemo ? 'not-allowed' : 'pointer',
-                    opacity: loadingDemo ? 0.5 : 1,
-                  }}
-                >
-                  <BeakerIcon style={{ height: '2.5rem', width: '2.5rem', color: '#7c3aed', marginBottom: '0.75rem' }} />
-                  <h3 style={{ color: '#0f172a', fontWeight: 600, fontSize: '1.125rem', margin: '0 0 0.25rem' }}>
-                    {loadingDemo ? 'Loading Demo...' : 'Load Demo Data'}
-                  </h3>
-                  <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
-                    Explore with sample bookmarks, services, and analytics data
-                  </p>
-                </button>
-
-                <button
-                  onClick={() => router.push('/login')}
-                  disabled={loadingDemo}
-                  style={{
-                    padding: '1.5rem',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '0.5rem',
-                    textAlign: 'left',
-                    cursor: loadingDemo ? 'not-allowed' : 'pointer',
-                    opacity: loadingDemo ? 0.5 : 1,
-                  }}
-                >
-                  <DocumentPlusIcon style={{ height: '2.5rem', width: '2.5rem', color: '#94a3b8', marginBottom: '0.75rem' }} />
-                  <h3 style={{ color: '#0f172a', fontWeight: 600, fontSize: '1.125rem', margin: '0 0 0.25rem' }}>Start Fresh</h3>
-                  <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
-                    Begin with an empty dashboard and add your own content
-                  </p>
-                </button>
-              </div>
-
-              <p style={{ fontSize: '0.75rem', color: '#94a3b8', textAlign: 'center', margin: 0 }}>
-                Demo content can be cleared at any time from Admin &gt; Tools
-              </p>
+              <button
+                type="button"
+                onClick={() => router.push('/login')}
+                disabled={loadingDemo}
+                className="w-full rounded-md border border-border bg-card p-4 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <FilePlus className="mb-2 h-6 w-6 text-muted-foreground" aria-hidden="true" />
+                <span className="block text-sm font-semibold text-foreground">Start fresh</span>
+                <span className="block text-sm text-muted-foreground">
+                  Begin with an empty dashboard and add your own content
+                </span>
+              </button>
             </div>
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              You can clear demo content any time from Admin &gt; Tools.
+            </p>
           </div>
         )}
       </div>

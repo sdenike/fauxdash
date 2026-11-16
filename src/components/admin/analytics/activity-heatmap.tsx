@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useMemo } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Skeleton } from '@/components/ui/skeleton'
 
 interface HeatmapData {
@@ -52,14 +52,10 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-        </CardHeader>
-        <CardContent>
+      <AdminSection>
+        <Skeleton className="h-6 w-32" />
           <Skeleton className="h-[200px] w-full" />
-        </CardContent>
-      </Card>
+        </AdminSection>
     )
   }
 
@@ -67,28 +63,16 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({
 
   if (!hasData) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Activity Heatmap</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <AdminSection title="Activity heatmap">
           <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-            No activity data available for this period
+            No activity recorded for this period
           </div>
-        </CardContent>
-      </Card>
+        </AdminSection>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Activity Heatmap</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Activity by hour and day of week
-        </p>
-      </CardHeader>
-      <CardContent>
+    <AdminSection title="Activity heatmap" description="Activity by hour and day of week">
         <div className="overflow-x-auto">
           <div className="min-w-[600px]">
             {/* Hour labels */}
@@ -127,7 +111,7 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({
                         >
                           {/* Tooltip */}
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 pointer-events-none">
-                            <div className="bg-popover border rounded px-2 py-1 text-xs whitespace-nowrap shadow-lg">
+                            <div className="bg-popover border rounded px-2 py-1 text-xs whitespace-nowrap shadow-sm">
                               <div className="font-medium">{day} {formatHour(hour)}</div>
                               <div className="text-muted-foreground">{value.toLocaleString()} actions</div>
                             </div>
@@ -154,7 +138,6 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </AdminSection>
   )
 })

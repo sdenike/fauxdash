@@ -13,19 +13,19 @@ interface AlertMessageProps {
 
 const variantStyles: Record<AlertVariant, { container: string; icon: typeof AlertCircle }> = {
   error: {
-    container: 'text-destructive-foreground bg-destructive',
+    container: 'text-destructive bg-destructive-soft border border-destructive/30',
     icon: AlertCircle,
   },
   success: {
-    container: 'text-green-800 bg-green-100 dark:text-green-200 dark:bg-green-900/50 border border-green-200 dark:border-green-800',
+    container: 'text-success bg-success-soft border border-success/30',
     icon: CheckCircle2,
   },
   warning: {
-    container: 'text-yellow-800 bg-yellow-100 dark:text-yellow-200 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-800',
+    container: 'text-warning bg-warning-soft border border-warning/30',
     icon: AlertTriangle,
   },
   info: {
-    container: 'text-blue-800 bg-blue-100 dark:text-blue-200 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800',
+    container: 'text-info bg-info-soft border border-info/30',
     icon: Info,
   },
 }

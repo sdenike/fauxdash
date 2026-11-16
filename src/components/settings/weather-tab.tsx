@@ -1,7 +1,8 @@
 'use client'
 
+import { useToast } from '@/components/ui/use-toast'
 import { useCallback, useState, useMemo } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,6 +13,7 @@ import { SettingsTabProps } from './types'
 import { WeatherLocationManager } from './weather-location-manager'
 
 export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
+  const { toast } = useToast()
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
 
@@ -82,29 +84,23 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
         },
         (error) => {
           if (error.code === error.PERMISSION_DENIED && window.location.protocol === 'http:') {
-            alert('Geolocation requires HTTPS. Please access the site via HTTPS or manually enter coordinates using latlong.net')
+            toast({ variant: 'destructive', title: 'Location needs HTTPS', description: 'Open the site over HTTPS, or enter the coordinates by hand (latlong.net finds them).' })
           } else {
-            alert('Unable to get location: ' + error.message)
+            toast({ variant: 'destructive', title: 'Could not get your location', description: error.message })
           }
         }
       )
     } else {
-      alert('Geolocation is not supported by your browser')
+      toast({ variant: 'destructive', title: 'This browser cannot share its location', description: 'Enter the coordinates by hand.' })
     }
-  }, [settings, onSettingsChange])
+  }, [settings, onSettingsChange, toast])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Weather Widget</CardTitle>
-        <CardDescription>
-          Configure weather display on your homepage
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
+    <AdminSection title="Weather Widget" description="Configure weather display on your homepage">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+        <div className="flex items-center justify-between sm:col-span-2">
           <div>
-            <Label htmlFor="weatherEnabled">Enable Weather Widget</Label>
+            <Label htmlFor="weatherEnabled">Enable weather widget</Label>
             <p className="text-sm text-muted-foreground">
               Show weather information on your homepage
             </p>
@@ -119,7 +115,7 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
         {settings.weatherEnabled && (
           <>
             <div>
-              <Label htmlFor="weatherDisplayMode">Header Display</Label>
+              <Label htmlFor="weatherDisplayMode">Header display</Label>
               <Select
                 value={settings.weatherDisplayMode}
                 onValueChange={(value: 'icon' | 'temp' | 'both') => updateSetting('weatherDisplayMode', value)}
@@ -129,15 +125,15 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="both">Icon & Temperature</SelectItem>
-                  <SelectItem value="icon">Icon Only</SelectItem>
-                  <SelectItem value="temp">Temperature Only</SelectItem>
+                  <SelectItem value="icon">Icon only</SelectItem>
+                  <SelectItem value="temp">Temperature only</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between sm:col-span-2">
               <div>
-                <Label htmlFor="weatherShowPopup">Show Details on Hover</Label>
+                <Label htmlFor="weatherShowPopup">Show details on hover</Label>
                 <p className="text-sm text-muted-foreground">
                   Display detailed weather info when hovering
                 </p>
@@ -150,7 +146,7 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
             </div>
 
             <div>
-              <Label htmlFor="weatherProvider">Weather Provider</Label>
+              <Label htmlFor="weatherProvider">Weather provider</Label>
               <Select
                 value={settings.weatherProvider}
                 onValueChange={(value) => updateSetting('weatherProvider', value)}
@@ -169,7 +165,7 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
             {settings.weatherProvider === 'tempest' && (
               <>
                 <div>
-                  <Label htmlFor="tempestApiKey">Tempest API Key</Label>
+                  <Label htmlFor="tempestApiKey">Tempest API key</Label>
                   <Input
                     id="tempestApiKey"
                     type="password"
@@ -195,7 +191,7 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
 
             {settings.weatherProvider === 'weatherapi' && (
               <div>
-                <Label htmlFor="weatherapiKey">WeatherAPI Key</Label>
+                <Label htmlFor="weatherapiKey">WeatherAPI key</Label>
                 <Input
                   id="weatherapiKey"
                   type="password"
@@ -211,7 +207,7 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
 
             {settings.weatherProvider === 'openweather' && (
               <div>
-                <Label htmlFor="openweatherKey">OpenWeather API Key</Label>
+                <Label htmlFor="openweatherKey">OpenWeather API key</Label>
                 <Input
                   id="openweatherKey"
                   type="password"
@@ -225,14 +221,14 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
               </div>
             )}
 
-            <div>
+            <div className="sm:col-span-2">
               <WeatherLocationManager
                 locations={locations}
                 onChange={handleLocationsChange}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:col-span-2 sm:grid-cols-2">
               <div>
                 <Label htmlFor="weatherLatitude">Latitude (Optional)</Label>
                 <Input
@@ -252,7 +248,7 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
                 />
               </div>
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground sm:col-span-2">
               <Button
                 type="button"
                 variant="link"
@@ -272,7 +268,7 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
               </a>
             </div>
 
-            <div className="pt-4 border-t">
+            <div className="border-t border-border pt-5 sm:col-span-2">
               <Button
                 onClick={handleTestConnection}
                 disabled={testing}
@@ -289,7 +285,7 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
                 )}
               </Button>
               {testResult && (
-                <div className={`mt-3 p-3 rounded-md flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200 ${testResult.success ? 'bg-green-50 dark:bg-green-950 text-green-900 dark:text-green-100 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950 text-red-900 dark:text-red-100 border border-red-200 dark:border-red-800'}`}>
+                <div className={`mt-3 p-3 rounded-md flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200 ${testResult.success ? 'bg-success-soft text-success border border-success/30' : 'bg-destructive-soft text-destructive border border-destructive/30'}`}>
                   {testResult.success ? (
                     <CheckCircle2 className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                   ) : (
@@ -303,7 +299,7 @@ export function WeatherTab({ settings, onSettingsChange }: SettingsTabProps) {
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
   )
 }

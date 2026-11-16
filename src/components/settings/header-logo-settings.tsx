@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -97,18 +97,12 @@ export function HeaderLogoSettings({ settings, onSettingsChange }: SettingsTabPr
   ]
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Header Logo</CardTitle>
-        <CardDescription>
-          Add a logo next to your site title in the header
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <AdminSection title="Header Logo" description="Add a logo next to your site title in the header">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
         {/* Enable/Disable Toggle */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between sm:col-span-2">
           <div className="space-y-0.5">
-            <Label htmlFor="header-logo-enabled">Display Logo</Label>
+            <Label htmlFor="header-logo-enabled">Display logo</Label>
             <div className="text-sm text-muted-foreground">
               Show logo in the header
             </div>
@@ -121,6 +115,7 @@ export function HeaderLogoSettings({ settings, onSettingsChange }: SettingsTabPr
         </div>
 
         {/* Image/Icon Picker */}
+        <div className="sm:col-span-2">
         <ImageIconPicker
           value={settings.headerLogoPath}
           valueType={settings.headerLogoType}
@@ -132,10 +127,11 @@ export function HeaderLogoSettings({ settings, onSettingsChange }: SettingsTabPr
           description="Upload an image, pick from icon libraries, or enter a URL"
           previewHeight={settings.headerLogoHeight}
         />
+        </div>
 
         {/* Position */}
         <div className="space-y-2">
-          <Label htmlFor="header-logo-position">Logo Position</Label>
+          <Label htmlFor="header-logo-position">Logo position</Label>
           <Select
             value={settings.headerLogoPosition}
             onValueChange={(value: 'left' | 'right') => updateSetting('headerLogoPosition', value)}
@@ -155,7 +151,7 @@ export function HeaderLogoSettings({ settings, onSettingsChange }: SettingsTabPr
 
         {/* Height */}
         <div className="space-y-2">
-          <Label htmlFor="header-logo-height">Logo Height</Label>
+          <Label htmlFor="header-logo-height">Logo height</Label>
           <Select
             value={settings.headerLogoHeight.toString()}
             onValueChange={(value) => updateSetting('headerLogoHeight', parseInt(value))}
@@ -178,7 +174,7 @@ export function HeaderLogoSettings({ settings, onSettingsChange }: SettingsTabPr
 
         {/* Preview in Context */}
         {previewSrc && (
-          <div className="space-y-2 pt-4 border-t">
+          <div className="space-y-2 border-t border-border pt-5 sm:col-span-2">
             <Label>Preview</Label>
             <div className="border rounded-lg p-4 bg-background">
               <div className={`flex items-center gap-3 ${settings.headerLogoPosition === 'right' ? 'flex-row-reverse justify-end' : ''}`}>
@@ -199,7 +195,7 @@ export function HeaderLogoSettings({ settings, onSettingsChange }: SettingsTabPr
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
   )
 }

@@ -4,8 +4,8 @@
   "description": "Self-hosted bookmark dashboard",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#0a0a0a",
+  "background_color": "#171a1c",
+  "theme_color": "#171a1c",
   "orientation": "any",
   "icons": [
     {

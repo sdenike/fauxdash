@@ -1,14 +1,14 @@
 'use client'
 
 import { useCallback, useState, useRef } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SettingsTabProps } from './types'
-import { ArrowUpTrayIcon, CheckCircleIcon, ExclamationCircleIcon, ArrowPathIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+import { Upload, CheckCircle2, AlertCircle, RefreshCw, Download } from 'lucide-react'
 
 interface TestResult {
   provider: string
@@ -164,17 +164,12 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>GeoIP Configuration</CardTitle>
-          <CardDescription>
-            Configure geographic location lookup for visitor analytics
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="divide-y divide-border [&>section]:py-8 [&>section:first-child]:pt-0 [&>section:last-child]:pb-0">
+      <AdminSection title="GeoIP Configuration" description="Configure geographic location lookup for visitor analytics">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+        <div className="flex items-center justify-between sm:col-span-2">
           <div>
-            <Label htmlFor="geoipEnabled">Enable GeoIP Lookup</Label>
+            <Label htmlFor="geoipEnabled">Enable GeoIP lookup</Label>
             <p className="text-sm text-muted-foreground">
               Enrich pageview analytics with geographic location data
             </p>
@@ -189,7 +184,7 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
         {settings.geoipEnabled && (
           <>
             <div>
-              <Label htmlFor="geoipProvider">GeoIP Provider</Label>
+              <Label htmlFor="geoipProvider">GeoIP provider</Label>
               <Select
                 value={settings.geoipProvider}
                 onValueChange={(value: 'maxmind' | 'ipinfo' | 'chain') => updateSetting('geoipProvider', value)}
@@ -210,15 +205,14 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
 
             {(settings.geoipProvider === 'maxmind' || settings.geoipProvider === 'chain') && (
               <>
-                <div className="pt-4 border-t">
+                <div className="border-t border-border pt-5 sm:col-span-2">
                   <div className="flex items-center gap-2 pb-2">
-                    <div className="w-1 h-5 bg-primary rounded-full" />
-                    <h3 className="text-base font-semibold text-foreground">MaxMind Settings</h3>
+                    <h3 className="text-base font-semibold text-foreground">MaxMind settings</h3>
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="geoipMaxmindPath">Database File Path</Label>
+                  <Label htmlFor="geoipMaxmindPath">Database file path</Label>
                   <Input
                     id="geoipMaxmindPath"
                     value={settings.geoipMaxmindPath}
@@ -230,8 +224,8 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                   </p>
                 </div>
 
-                <div>
-                  <Label>Upload Database File</Label>
+                <div className="sm:col-span-2">
+                  <Label>Upload database file</Label>
                   <div className="mt-2 flex items-center gap-3">
                     <input
                       ref={fileInputRef}
@@ -247,18 +241,18 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                       disabled={uploading}
                       className="gap-2"
                     >
-                      <ArrowUpTrayIcon className="h-4 w-4" />
+                      <Upload aria-hidden="true" className="h-4 w-4" />
                       {uploading ? 'Uploading...' : 'Upload .mmdb File'}
                     </Button>
                     {uploadStatus === 'success' && (
-                      <div className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
-                        <CheckCircleIcon className="h-4 w-4" />
+                      <div className="flex items-center gap-1 text-sm text-success">
+                        <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
                         <span>{uploadMessage}</span>
                       </div>
                     )}
                     {uploadStatus === 'error' && (
-                      <div className="flex items-center gap-1 text-sm text-red-600 dark:text-red-400">
-                        <ExclamationCircleIcon className="h-4 w-4" />
+                      <div className="flex items-center gap-1 text-sm text-destructive">
+                        <AlertCircle aria-hidden="true" className="h-4 w-4" />
                         <span>{uploadMessage}</span>
                       </div>
                     )}
@@ -270,7 +264,7 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
 
                 {/* MaxMind Test Connection */}
                 {settings.geoipProvider === 'maxmind' && (
-                  <div className="pt-4 border-t">
+                  <div className="border-t border-border pt-5 sm:col-span-2">
                     <div className="flex items-center gap-3">
                       <Button
                         variant="outline"
@@ -278,19 +272,19 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                         disabled={testing !== null}
                         className="gap-2"
                       >
-                        <ArrowPathIcon className={`h-4 w-4 ${testing === 'maxmind' ? 'animate-spin' : ''}`} />
+                        <RefreshCw aria-hidden="true" className={`h-4 w-4 ${testing === 'maxmind' ? 'animate-spin' : ''}`} />
                         {testing === 'maxmind' ? 'Testing...' : 'Test MaxMind Connection'}
                       </Button>
                     </div>
                     {testResult && testResult.provider === 'maxmind' && (
-                      <div className={`mt-3 p-3 rounded-lg ${testResult.success ? 'bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800'}`}>
+                      <div className={`mt-3 p-3 rounded-lg ${testResult.success ? 'bg-success-soft border border-success/30' : 'bg-destructive-soft border border-destructive/30'}`}>
                         <div className="flex items-center gap-2">
                           {testResult.success ? (
-                            <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            <CheckCircle2 aria-hidden="true" className="h-5 w-5 text-success" />
                           ) : (
-                            <ExclamationCircleIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                            <AlertCircle aria-hidden="true" className="h-5 w-5 text-destructive" />
                           )}
-                          <span className={`font-medium ${testResult.success ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                          <span className={`font-medium ${testResult.success ? 'text-success' : 'text-destructive'}`}>
                             {testResult.message}
                           </span>
                         </div>
@@ -309,13 +303,13 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                               <div>Test Lookup (8.8.8.8): {testResult.details.testLookup.city}, {testResult.details.testLookup.country}</div>
                             )}
                             {testResult.details.hint && (
-                              <div className="text-amber-600 dark:text-amber-400">{testResult.details.hint}</div>
+                              <div className="text-warning">{testResult.details.hint}</div>
                             )}
                           </div>
                         )}
                         {/* Download button when database not found or outdated */}
                         {(!testResult.success && testResult.message.toLowerCase().includes('not found')) || testResult.details?.isOutdated ? (
-                          <div className={`mt-3 pt-3 border-t ${testResult.success ? 'border-green-200 dark:border-green-800' : 'border-red-200 dark:border-red-800'}`}>
+                          <div className={`mt-3 pt-3 border-t ${testResult.success ? 'border-success/30' : 'border-destructive/30'}`}>
                             <p className="text-sm text-muted-foreground mb-2">
                               {settings.geoipMaxmindAccountId && settings.geoipMaxmindLicenseKey
                                 ? testResult.details?.isOutdated
@@ -329,7 +323,7 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                               disabled={downloading || !settings.geoipMaxmindAccountId || !settings.geoipMaxmindLicenseKey}
                               className="gap-2"
                             >
-                              <ArrowDownTrayIcon className={`h-4 w-4 ${downloading ? 'animate-bounce' : ''}`} />
+                              <Download aria-hidden="true" className="h-4 w-4" />
                               {downloading ? 'Downloading...' : testResult.details?.isOutdated ? 'Update Database' : 'Download GeoLite2-City Database'}
                             </Button>
                           </div>
@@ -338,14 +332,14 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                     )}
                     {/* Download result */}
                     {downloadResult && (
-                      <div className={`mt-3 p-3 rounded-lg ${downloadResult.success ? 'bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800'}`}>
+                      <div className={`mt-3 p-3 rounded-lg ${downloadResult.success ? 'bg-success-soft border border-success/30' : 'bg-destructive-soft border border-destructive/30'}`}>
                         <div className="flex items-center gap-2">
                           {downloadResult.success ? (
-                            <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            <CheckCircle2 aria-hidden="true" className="h-5 w-5 text-success" />
                           ) : (
-                            <ExclamationCircleIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                            <AlertCircle aria-hidden="true" className="h-5 w-5 text-destructive" />
                           )}
-                          <span className={`font-medium ${downloadResult.success ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                          <span className={`font-medium ${downloadResult.success ? 'text-success' : 'text-destructive'}`}>
                             {downloadResult.message}
                           </span>
                         </div>
@@ -359,10 +353,9 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                   </div>
                 )}
 
-                <div className="pt-4 border-t">
+                <div className="border-t border-border pt-5 sm:col-span-2">
                   <div className="flex items-center gap-2 pb-2">
-                    <div className="w-1 h-5 bg-muted-foreground/30 rounded-full" />
-                    <h4 className="text-sm font-medium text-muted-foreground">Auto-Update Configuration (Optional)</h4>
+                    <h4 className="text-sm font-medium text-muted-foreground">Auto-Update configuration (Optional)</h4>
                   </div>
                   <p className="text-xs text-muted-foreground mb-4">
                     Enter your MaxMind account credentials to enable automatic database updates.
@@ -380,7 +373,7 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                 </div>
 
                 <div>
-                  <Label htmlFor="geoipMaxmindLicenseKey">License Key</Label>
+                  <Label htmlFor="geoipMaxmindLicenseKey">License key</Label>
                   <Input
                     id="geoipMaxmindLicenseKey"
                     type="password"
@@ -415,15 +408,14 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
 
             {(settings.geoipProvider === 'ipinfo' || settings.geoipProvider === 'chain') && (
               <>
-                <div className="pt-4 border-t">
+                <div className="border-t border-border pt-5 sm:col-span-2">
                   <div className="flex items-center gap-2 pb-2">
-                    <div className="w-1 h-5 bg-primary rounded-full" />
                     <h3 className="text-base font-semibold text-foreground">ipinfo.io Settings</h3>
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="geoipIpinfoToken">API Token</Label>
+                  <Label htmlFor="geoipIpinfoToken">API token</Label>
                   <Input
                     id="geoipIpinfoToken"
                     type="password"
@@ -447,7 +439,7 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
 
                 {/* ipinfo Test Connection */}
                 {settings.geoipProvider === 'ipinfo' && (
-                  <div className="pt-4 border-t">
+                  <div className="border-t border-border pt-5 sm:col-span-2">
                     <div className="flex items-center gap-3">
                       <Button
                         variant="outline"
@@ -455,19 +447,19 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                         disabled={testing !== null || !settings.geoipIpinfoToken}
                         className="gap-2"
                       >
-                        <ArrowPathIcon className={`h-4 w-4 ${testing === 'ipinfo' ? 'animate-spin' : ''}`} />
+                        <RefreshCw aria-hidden="true" className={`h-4 w-4 ${testing === 'ipinfo' ? 'animate-spin' : ''}`} />
                         {testing === 'ipinfo' ? 'Testing...' : 'Test ipinfo.io Connection'}
                       </Button>
                     </div>
                     {testResult && testResult.provider === 'ipinfo' && (
-                      <div className={`mt-3 p-3 rounded-lg ${testResult.success ? 'bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800'}`}>
+                      <div className={`mt-3 p-3 rounded-lg ${testResult.success ? 'bg-success-soft border border-success/30' : 'bg-destructive-soft border border-destructive/30'}`}>
                         <div className="flex items-center gap-2">
                           {testResult.success ? (
-                            <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            <CheckCircle2 aria-hidden="true" className="h-5 w-5 text-success" />
                           ) : (
-                            <ExclamationCircleIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                            <AlertCircle aria-hidden="true" className="h-5 w-5 text-destructive" />
                           )}
-                          <span className={`font-medium ${testResult.success ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                          <span className={`font-medium ${testResult.success ? 'text-success' : 'text-destructive'}`}>
                             {testResult.message}
                           </span>
                         </div>
@@ -486,10 +478,10 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                                         <div
                                           className={`h-full rounded-full ${
                                             (testResult.details.usage.used / testResult.details.usage.limit) > 0.9
-                                              ? 'bg-red-500'
+                                              ? 'bg-destructive'
                                               : (testResult.details.usage.used / testResult.details.usage.limit) > 0.7
-                                              ? 'bg-amber-500'
-                                              : 'bg-green-500'
+                                              ? 'bg-warning'
+                                              : 'bg-success'
                                           }`}
                                           style={{ width: `${Math.min(100, (testResult.details.usage.used / testResult.details.usage.limit) * 100)}%` }}
                                         />
@@ -501,7 +493,7 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                                     <div className="text-xs mt-1">
                                       {testResult.details.usage.used.toLocaleString()} used / {testResult.details.usage.limit.toLocaleString()} limit
                                       {testResult.details.usage.remaining && (
-                                        <span className="text-green-600 dark:text-green-400"> ({testResult.details.usage.remaining.toLocaleString()} remaining)</span>
+                                        <span className="text-success"> ({testResult.details.usage.remaining.toLocaleString()} remaining)</span>
                                       )}
                                     </div>
                                   </>
@@ -511,7 +503,7 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                               </div>
                             )}
                             {testResult.details.hint && (
-                              <div className="text-amber-600 dark:text-amber-400">{testResult.details.hint}</div>
+                              <div className="text-warning">{testResult.details.hint}</div>
                             )}
                           </div>
                         )}
@@ -524,10 +516,9 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
 
             {/* Chain Mode Test */}
             {settings.geoipProvider === 'chain' && (
-              <div className="pt-4 border-t">
+              <div className="border-t border-border pt-5 sm:col-span-2">
                 <div className="flex items-center gap-2 pb-2">
-                  <div className="w-1 h-5 bg-primary rounded-full" />
-                  <h3 className="text-base font-semibold text-foreground">Test Both Providers</h3>
+                  <h3 className="text-base font-semibold text-foreground">Test both providers</h3>
                 </div>
                 <div className="flex items-center gap-3">
                   <Button
@@ -536,21 +527,21 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                     disabled={testing !== null}
                     className="gap-2"
                   >
-                    <ArrowPathIcon className={`h-4 w-4 ${testing === 'chain' ? 'animate-spin' : ''}`} />
+                    <RefreshCw aria-hidden="true" className={`h-4 w-4 ${testing === 'chain' ? 'animate-spin' : ''}`} />
                     {testing === 'chain' ? 'Testing...' : 'Test Both Providers'}
                   </Button>
                 </div>
                 {testResult && testResult.provider === 'chain' && testResult.results && (
                   <div className="mt-3 space-y-3">
                     {/* MaxMind Result */}
-                    <div className={`p-3 rounded-lg ${testResult.results.maxmind.success ? 'bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800'}`}>
+                    <div className={`p-3 rounded-lg ${testResult.results.maxmind.success ? 'bg-success-soft border border-success/30' : 'bg-destructive-soft border border-destructive/30'}`}>
                       <div className="flex items-center gap-2">
                         {testResult.results.maxmind.success ? (
-                          <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                          <CheckCircle2 aria-hidden="true" className="h-5 w-5 text-success" />
                         ) : (
-                          <ExclamationCircleIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                          <AlertCircle aria-hidden="true" className="h-5 w-5 text-destructive" />
                         )}
-                        <span className={`font-medium ${testResult.results.maxmind.success ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                        <span className={`font-medium ${testResult.results.maxmind.success ? 'text-success' : 'text-destructive'}`}>
                           MaxMind: {testResult.results.maxmind.message}
                         </span>
                       </div>
@@ -561,7 +552,7 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                       )}
                       {/* Download button when MaxMind database not found or outdated in chain mode */}
                       {(!testResult.results.maxmind.success && testResult.results.maxmind.message.toLowerCase().includes('not found')) || testResult.results.maxmind.details?.isOutdated ? (
-                        <div className={`mt-3 pt-3 border-t ${testResult.results.maxmind.success ? 'border-green-200 dark:border-green-800' : 'border-red-200 dark:border-red-800'}`}>
+                        <div className={`mt-3 pt-3 border-t ${testResult.results.maxmind.success ? 'border-success/30' : 'border-destructive/30'}`}>
                           <p className="text-sm text-muted-foreground mb-2">
                             {settings.geoipMaxmindAccountId && settings.geoipMaxmindLicenseKey
                               ? testResult.results.maxmind.details?.isOutdated
@@ -575,21 +566,21 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                             disabled={downloading || !settings.geoipMaxmindAccountId || !settings.geoipMaxmindLicenseKey}
                             className="gap-2"
                           >
-                            <ArrowDownTrayIcon className={`h-4 w-4 ${downloading ? 'animate-bounce' : ''}`} />
+                            <Download aria-hidden="true" className="h-4 w-4" />
                             {downloading ? 'Downloading...' : testResult.results.maxmind.details?.isOutdated ? 'Update Database' : 'Download GeoLite2-City Database'}
                           </Button>
                         </div>
                       ) : null}
                     </div>
                     {/* ipinfo Result */}
-                    <div className={`p-3 rounded-lg ${testResult.results.ipinfo.success ? 'bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800'}`}>
+                    <div className={`p-3 rounded-lg ${testResult.results.ipinfo.success ? 'bg-success-soft border border-success/30' : 'bg-destructive-soft border border-destructive/30'}`}>
                       <div className="flex items-center gap-2">
                         {testResult.results.ipinfo.success ? (
-                          <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                          <CheckCircle2 aria-hidden="true" className="h-5 w-5 text-success" />
                         ) : (
-                          <ExclamationCircleIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                          <AlertCircle aria-hidden="true" className="h-5 w-5 text-destructive" />
                         )}
-                        <span className={`font-medium ${testResult.results.ipinfo.success ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                        <span className={`font-medium ${testResult.results.ipinfo.success ? 'text-success' : 'text-destructive'}`}>
                           ipinfo.io: {testResult.results.ipinfo.message}
                         </span>
                       </div>
@@ -603,14 +594,14 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
                 )}
                 {/* Download result for chain mode */}
                 {downloadResult && (
-                  <div className={`mt-3 p-3 rounded-lg ${downloadResult.success ? 'bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800'}`}>
+                  <div className={`mt-3 p-3 rounded-lg ${downloadResult.success ? 'bg-success-soft border border-success/30' : 'bg-destructive-soft border border-destructive/30'}`}>
                     <div className="flex items-center gap-2">
                       {downloadResult.success ? (
-                        <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        <CheckCircle2 aria-hidden="true" className="h-5 w-5 text-success" />
                       ) : (
-                        <ExclamationCircleIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                        <AlertCircle aria-hidden="true" className="h-5 w-5 text-destructive" />
                       )}
-                      <span className={`font-medium ${downloadResult.success ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                      <span className={`font-medium ${downloadResult.success ? 'text-success' : 'text-destructive'}`}>
                         {downloadResult.message}
                       </span>
                     </div>
@@ -625,7 +616,7 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
             )}
 
             <div>
-              <Label htmlFor="geoipCacheDuration">Cache Duration (seconds)</Label>
+              <Label htmlFor="geoipCacheDuration">Cache duration (seconds)</Label>
               <Input
                 id="geoipCacheDuration"
                 type="number"
@@ -639,20 +630,14 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+        </div>
+      </AdminSection>
 
     {/* Application Logging */}
-    <Card className="mt-6">
-      <CardHeader>
-        <CardTitle>Application Logging</CardTitle>
-        <CardDescription>
-          Control what gets logged to the Application Log
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <AdminSection title="Application Logging" description="Control what gets logged to the Application Log">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
         <div>
-          <Label htmlFor="logLevel">Log Level</Label>
+          <Label htmlFor="logLevel">Log level</Label>
           <Select
             value={settings.logLevel}
             onValueChange={(value: 'error' | 'warn' | 'info' | 'debug') => updateSetting('logLevel', value)}
@@ -661,7 +646,7 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="error">Error - Only errors</SelectItem>
+              <SelectItem value="error">Error - only errors</SelectItem>
               <SelectItem value="warn">Warn - Warnings and errors</SelectItem>
               <SelectItem value="info">Info - General info, warnings, and errors (recommended)</SelectItem>
               <SelectItem value="debug">Debug - Everything including debug messages</SelectItem>
@@ -671,7 +656,9 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
             <strong>Info</strong> is recommended for comprehensive logging of authentication, GeoIP lookups, and API operations.
             Change takes effect immediately without restart.
           </p>
-          <div className="mt-3 p-3 bg-muted rounded-lg">
+        </div>
+        <div className="sm:col-span-2">
+          <div className="rounded-lg border border-border bg-muted p-3">
             <p className="text-sm font-medium mb-2">What gets logged at each level:</p>
             <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
               <li><strong>Debug:</strong> All activity including detailed diagnostics</li>
@@ -681,8 +668,9 @@ export function GeoIPTab({ settings, onSettingsChange }: SettingsTabProps) {
             </ul>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
+      </div>
     </>
   )
 }

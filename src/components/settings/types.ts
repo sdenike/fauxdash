@@ -48,6 +48,8 @@ export interface Settings {
   timeFormat: '12' | '24'
   showSeconds: boolean
   servicesPosition: string
+  density: 'compact' | 'comfortable'
+  columns: number
   sectionOrder: string
   servicesIconSize: number
   servicesFontSize: number
@@ -160,9 +162,9 @@ export const defaultSettings: Settings = {
   siteTitle: 'Faux|Dash',
   siteTitleEnabled: true,
   siteTitleUseGradient: true,
-  siteTitleGradientFrom: '#0f172a', // slate-900
-  siteTitleGradientTo: '#475569', // slate-600
-  siteTitleColor: '#0f172a', // slate-900
+  siteTitleGradientFrom: '#0f172a', // slate-900 palette-ok: legacy, unused since 0.14
+  siteTitleGradientTo: '#475569', // slate-600 palette-ok: legacy, unused since 0.14
+  siteTitleColor: '#0f172a', // slate-900 palette-ok: legacy, unused since 0.14
   // Header Logo
   headerLogoEnabled: false,
   headerLogoPath: '',
@@ -189,6 +191,8 @@ export const defaultSettings: Settings = {
   timeFormat: '12',
   showSeconds: false,
   servicesPosition: 'above',
+  density: 'comfortable',
+  columns: 4,
   sectionOrder: 'services-first',
   servicesIconSize: 32,
   servicesFontSize: 16,

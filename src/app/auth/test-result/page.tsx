@@ -40,12 +40,12 @@ export default function AuthTestResultPage() {
   }, [session, status, sent])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-background p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
       <div className="max-w-md w-full space-y-6 text-center">
         {status === 'loading' && (
           <>
-            <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-            <h1 className="text-2xl font-bold">Verifying authentication...</h1>
+            <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" aria-hidden="true" />
+            <h1 className="text-xl font-semibold">Verifying authentication…</h1>
             <p className="text-muted-foreground">
               Please wait while we verify your OIDC authentication.
             </p>
@@ -54,9 +54,9 @@ export default function AuthTestResultPage() {
 
         {status === 'authenticated' && (
           <>
-            <CheckCircle2 className="h-16 w-16 mx-auto text-green-500" />
-            <h1 className="text-2xl font-bold text-green-700 dark:text-green-300">
-              Authentication Successful!
+            <CheckCircle2 className="h-16 w-16 mx-auto text-success" aria-hidden="true" />
+            <h1 className="text-xl font-semibold text-success">
+              Authentication successful
             </h1>
             <div className="space-y-2">
               <p className="text-muted-foreground">
@@ -76,9 +76,9 @@ export default function AuthTestResultPage() {
 
         {status === 'unauthenticated' && (
           <>
-            <XCircle className="h-16 w-16 mx-auto text-red-500" />
-            <h1 className="text-2xl font-bold text-red-700 dark:text-red-300">
-              Authentication Failed
+            <XCircle className="h-16 w-16 mx-auto text-destructive" aria-hidden="true" />
+            <h1 className="text-xl font-semibold text-destructive">
+              Authentication failed
             </h1>
             <div className="space-y-2">
               <p className="text-muted-foreground">

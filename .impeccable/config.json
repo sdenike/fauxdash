@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "geist",
+        "createdAt": "2026-11-16T03:46:38.850Z",
+        "reason": "Owner asked for the Bear Red Graphite CSS used in Wausau Billing; that system's font is Geist (copied from /docker/wausau-bills)"
+      }
+    ]
+  }
+}

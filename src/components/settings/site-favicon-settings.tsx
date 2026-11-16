@@ -6,16 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/use-toast'
 import { IconSelector } from '@/components/icon-selector'
-import {
-  PhotoIcon,
-  ArrowUpTrayIcon,
-  LinkIcon,
-  Squares2X2Icon,
-  FolderIcon,
-  TrashIcon,
-  SparklesIcon,
-  ArrowUturnLeftIcon,
-} from '@heroicons/react/24/outline'
+import { Image as ImageIcon, Upload, Link2, LayoutGrid, Folder, Trash2, Sparkles, Undo2 } from 'lucide-react'
 import { triggerFaviconRefresh } from '@/components/dynamic-favicon'
 import { MediaLibraryPicker } from '@/components/media-library-picker'
 
@@ -577,7 +568,7 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
   return (
     <div className="space-y-4">
       <div>
-        <Label>Current Favicon</Label>
+        <Label>Current favicon</Label>
         <div className="flex items-center gap-4 mt-2 p-3 rounded-md border bg-muted/50">
           {previewUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
@@ -588,7 +579,7 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
             />
           ) : (
             <div className="w-8 h-8 flex items-center justify-center bg-background rounded border">
-              <PhotoIcon className="w-5 h-5 text-muted-foreground" />
+              <ImageIcon aria-hidden="true" className="w-5 h-5 text-muted-foreground" />
             </div>
           )}
           <div className="flex-1">
@@ -605,9 +596,10 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
               variant="ghost"
               size="sm"
               onClick={handleClear}
+              aria-label="Clear favicon"
               className="text-destructive hover:text-destructive hover:bg-destructive/10"
             >
-              <TrashIcon className="h-4 w-4" />
+              <Trash2 aria-hidden="true" className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -622,7 +614,7 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
               onClick={handleConvertColor}
               disabled={convertingColor}
             >
-              <SparklesIcon className="h-4 w-4 mr-2" />
+              <Sparkles aria-hidden="true" className="h-4 w-4 mr-2" />
               {convertingColor ? 'Converting...' : 'Theme Color'}
             </Button>
             <Button
@@ -632,7 +624,7 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
               onClick={handleConvertGrayscale}
               disabled={convertingGrayscale}
             >
-              <SparklesIcon className="h-4 w-4 mr-2" />
+              <Sparkles aria-hidden="true" className="h-4 w-4 mr-2" />
               {convertingGrayscale ? 'Converting...' : 'Grayscale'}
             </Button>
             <Button
@@ -642,7 +634,7 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
               onClick={handleInvertColors}
               disabled={invertingColors}
             >
-              <SparklesIcon className="h-4 w-4 mr-2" />
+              <Sparkles aria-hidden="true" className="h-4 w-4 mr-2" />
               {invertingColors ? 'Inverting...' : 'Invert Colors'}
             </Button>
             {originalFavicon && (
@@ -652,7 +644,7 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
                 size="sm"
                 onClick={handleRevertFavicon}
               >
-                <ArrowUturnLeftIcon className="h-4 w-4 mr-2" />
+                <Undo2 aria-hidden="true" className="h-4 w-4 mr-2" />
                 Revert
               </Button>
             )}
@@ -664,7 +656,7 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
         {/* Upload option */}
         <div className="p-4 rounded-md border bg-card">
           <div className="flex items-center gap-2 mb-3">
-            <ArrowUpTrayIcon className="h-5 w-5 text-muted-foreground" />
+            <Upload aria-hidden="true" className="h-5 w-5 text-muted-foreground" />
             <span className="font-medium text-sm">Upload</span>
           </div>
           <input
@@ -693,7 +685,7 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
         {/* Icon library option */}
         <div className="p-4 rounded-md border bg-card">
           <div className="flex items-center gap-2 mb-3">
-            <Squares2X2Icon className="h-5 w-5 text-muted-foreground" />
+            <LayoutGrid aria-hidden="true" className="h-5 w-5 text-muted-foreground" />
             <span className="font-medium text-sm">Library</span>
           </div>
           <IconSelector
@@ -713,7 +705,7 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
         {/* URL option */}
         <div className="p-4 rounded-md border bg-card">
           <div className="flex items-center gap-2 mb-3">
-            <LinkIcon className="h-5 w-5 text-muted-foreground" />
+            <Link2 aria-hidden="true" className="h-5 w-5 text-muted-foreground" />
             <span className="font-medium text-sm">From URL</span>
           </div>
           <div className="flex gap-2">
@@ -743,8 +735,8 @@ export function SiteFaviconSettings({ favicon, faviconType, onChange }: SiteFavi
         {/* Your Uploads option */}
         <div className="p-4 rounded-md border bg-card">
           <div className="flex items-center gap-2 mb-3">
-            <FolderIcon className="h-5 w-5 text-muted-foreground" />
-            <span className="font-medium text-sm">Your Uploads</span>
+            <Folder aria-hidden="true" className="h-5 w-5 text-muted-foreground" />
+            <span className="font-medium text-sm">Your uploads</span>
           </div>
           <MediaLibraryPicker onSelect={handleMediaSelect} />
           <p className="text-xs text-muted-foreground mt-2">

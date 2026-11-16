@@ -7,7 +7,7 @@ import { VisitorMap } from '@/components/admin/analytics/visitor-map'
 import { TopItemsTable } from '@/components/admin/analytics/top-items-table'
 import { ActivityHeatmap } from '@/components/admin/analytics/activity-heatmap'
 import { TimeFilter, Period, DataType } from '@/components/admin/analytics/time-filter'
-import { ChartBarIcon } from '@heroicons/react/24/outline'
+import { AdminPage } from '@/components/admin/admin-page'
 
 interface StatsData {
   pageviews: { value: number; trend: number }
@@ -179,18 +179,10 @@ export default function AnalyticsPage() {
   }, [fetchStats, fetchClicks, fetchGeo, fetchTopItems, fetchHeatmap])
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <ChartBarIcon className="h-6 w-6" />
-            Analytics
-          </h1>
-          <p className="text-muted-foreground">
-            Track your dashboard performance and visitor insights
-          </p>
-        </div>
+    <AdminPage
+      title="Analytics"
+      description="Dashboard performance and visitor insights."
+      actions={
         <TimeFilter
           period={period}
           onPeriodChange={setPeriod}
@@ -200,27 +192,29 @@ export default function AnalyticsPage() {
           customEndDate={customEndDate}
           onCustomDateChange={handleCustomDateChange}
         />
-      </div>
-
+      }
+    >
       {/* Stats cards */}
       <StatsCards data={stats} isLoading={loading.stats} />
 
       {/* Clicks chart */}
-      <ClicksChart
-        labels={clicks?.labels || []}
-        datasets={clicks?.datasets || []}
-        chartType={chartType}
-        onChartTypeChange={setChartType}
-        isLoading={loading.clicks}
-      />
+      <div className="border-t border-border pt-8">
+        <ClicksChart
+          labels={clicks?.labels || []}
+          datasets={clicks?.datasets || []}
+          chartType={chartType}
+          onChartTypeChange={setChartType}
+          isLoading={loading.clicks}
+        />
+      </div>
 
       {/* Two column layout for map and top items */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-8 border-t border-border pt-8 lg:grid-cols-2">
         <VisitorMap
           locations={geo?.locations || []}
           isLoading={loading.geo}
         />
-        <div className="space-y-6">
+        <div className="space-y-8">
           {(dataType === 'all' || dataType === 'bookmarks') && (
             <TopItemsTable
               items={topBookmarks?.items || []}
@@ -239,11 +233,13 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Heatmap */}
-      <ActivityHeatmap
-        data={heatmap?.data || []}
-        maxValue={heatmap?.maxValue || 1}
-        isLoading={loading.heatmap}
-      />
-    </div>
+      <div className="border-t border-border pt-8">
+        <ActivityHeatmap
+          data={heatmap?.data || []}
+          maxValue={heatmap?.maxValue || 1}
+          isLoading={loading.heatmap}
+        />
+      </div>
+    </AdminPage>
   )
 }

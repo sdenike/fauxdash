@@ -6,11 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/components/ui/use-toast'
-import {
-  PhotoIcon,
-  ArrowUpTrayIcon,
-  TrashIcon,
-} from '@heroicons/react/24/outline'
+import { Image as ImageIcon, Upload, Trash2 } from 'lucide-react'
 
 interface BackgroundImageSettingsProps {
   backgroundImage: string
@@ -148,14 +144,14 @@ export function BackgroundImageSettings({
     <div className="space-y-6">
       {/* Preview and Upload */}
       <div>
-        <Label>Background Image</Label>
+        <Label>Background image</Label>
         <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Preview */}
           <div
             className="relative h-40 rounded-md border overflow-hidden"
             style={{
               backgroundImage: backgroundImage ? `url(/api/background-image/serve)` : 'none',
-              backgroundColor: backgroundImage ? 'transparent' : 'hsl(var(--muted))',
+              backgroundColor: backgroundImage ? 'transparent' : 'var(--muted)',
               backgroundSize: displayMode === 'tile' ? 'auto' : displayMode,
               backgroundRepeat: displayMode === 'tile' ? 'repeat' : 'no-repeat',
               backgroundPosition: 'center',
@@ -169,7 +165,7 @@ export function BackgroundImageSettings({
             {!backgroundImage && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center text-muted-foreground">
-                  <PhotoIcon className="h-10 w-10 mx-auto mb-2" />
+                  <ImageIcon aria-hidden="true" className="h-10 w-10 mx-auto mb-2" />
                   <p className="text-sm">No background image</p>
                 </div>
               </div>
@@ -183,7 +179,7 @@ export function BackgroundImageSettings({
                   onClick={handleRemove}
                   className="h-8"
                 >
-                  <TrashIcon className="h-4 w-4 mr-1" />
+                  <Trash2 aria-hidden="true" className="h-4 w-4 mr-1" />
                   Remove
                 </Button>
               </div>
@@ -200,7 +196,7 @@ export function BackgroundImageSettings({
               className="hidden"
               id="background-upload"
             />
-            <ArrowUpTrayIcon className="h-8 w-8 text-muted-foreground mb-2" />
+            <Upload aria-hidden="true" className="h-8 w-8 text-muted-foreground mb-2" />
             <Button
               type="button"
               variant="outline"
@@ -222,7 +218,7 @@ export function BackgroundImageSettings({
         <>
           {/* Display Mode */}
           <div>
-            <Label htmlFor="displayMode">Display Mode</Label>
+            <Label htmlFor="displayMode">Display mode</Label>
             <Select
               value={displayMode}
               onValueChange={(value: 'cover' | 'contain' | 'center' | 'tile') =>
@@ -264,7 +260,7 @@ export function BackgroundImageSettings({
           {/* Opacity */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <Label htmlFor="backgroundOpacity">Content Overlay Transparency</Label>
+              <Label htmlFor="backgroundOpacity">Content overlay transparency</Label>
               <span className="text-sm text-muted-foreground">{localOpacity}%</span>
             </div>
             <input
@@ -287,7 +283,7 @@ export function BackgroundImageSettings({
           {/* Show when logged out */}
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="showLoggedOut">Show When Logged Out</Label>
+              <Label htmlFor="showLoggedOut">Show when logged out</Label>
               <p className="text-sm text-muted-foreground">
                 Display background image on the login page
               </p>

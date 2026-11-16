@@ -113,8 +113,8 @@ function ResetPasswordContent() {
 
   if (validatingToken) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-dvh flex items-center justify-center bg-background p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <Card className="w-full max-w-sm">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center gap-3 py-4" role="status" aria-live="polite">
               <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
@@ -128,13 +128,13 @@ function ResetPasswordContent() {
 
   if (!tokenValid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-dvh flex items-center justify-center bg-background p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <Card className="w-full max-w-sm">
           <CardHeader>
             <div className="flex items-center gap-2 text-destructive mb-2">
               <ShieldAlert className="h-6 w-6" aria-hidden="true" />
             </div>
-            <CardTitle>Reset Link Invalid</CardTitle>
+            <CardTitle>Reset link invalid</CardTitle>
             <CardDescription>
               {tokenError}
             </CardDescription>
@@ -148,7 +148,7 @@ function ResetPasswordContent() {
           <CardFooter>
             <Link href="/login" className="w-full">
               <Button variant="outline" className="w-full">
-                Back to Login
+                Back to login
               </Button>
             </Link>
           </CardFooter>
@@ -159,15 +159,15 @@ function ResetPasswordContent() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-dvh flex items-center justify-center bg-background p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <Card className="w-full max-w-sm">
           <CardHeader>
             <div className="flex items-center justify-center mb-4">
-              <div className="rounded-full bg-green-100 dark:bg-green-900/50 p-3 animate-in zoom-in duration-300">
-                <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" aria-hidden="true" />
+              <div className="rounded-full bg-success-soft p-3 animate-in zoom-in duration-300">
+                <CheckCircle2 className="h-8 w-8 text-success" aria-hidden="true" />
               </div>
             </div>
-            <CardTitle className="text-center">Password Reset Successful</CardTitle>
+            <CardTitle className="text-center">Password reset successful</CardTitle>
             <CardDescription className="text-center">
               Your password has been updated successfully.
             </CardDescription>
@@ -181,7 +181,7 @@ function ResetPasswordContent() {
           <CardFooter>
             <Link href="/login" className="w-full">
               <Button className="w-full">
-                Go to Login
+                Go to login
               </Button>
             </Link>
           </CardFooter>
@@ -191,13 +191,13 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-dvh flex items-center justify-center bg-background p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <Card className="w-full max-w-sm">
         <CardHeader>
           <div className="flex items-center gap-2 mb-2">
             <KeyRound className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
           </div>
-          <CardTitle>Reset Password</CardTitle>
+          <CardTitle>Reset password</CardTitle>
           <CardDescription>
             Enter your new password below.
           </CardDescription>
@@ -242,15 +242,15 @@ function ResetPasswordContent() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                  Resetting...
+                  Resetting…
                 </>
               ) : (
-                'Reset Password'
+                'Reset password'
               )}
             </Button>
             <Link href="/login" className="w-full">
               <Button variant="outline" className="w-full">
-                Back to Login
+                Back to login
               </Button>
             </Link>
           </CardFooter>
@@ -262,8 +262,8 @@ function ResetPasswordContent() {
 
 function LoadingFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-dvh flex items-center justify-center bg-background p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <Card className="w-full max-w-sm">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center gap-3 py-4" role="status" aria-live="polite">
             <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />

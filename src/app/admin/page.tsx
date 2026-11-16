@@ -1,133 +1,49 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { BookmarkIcon, FolderIcon, ServerIcon } from '@heroicons/react/24/outline'
+import Link from 'next/link'
+import { getSession, loadBookmarkCategories, loadServiceCategories } from '@/lib/server/start-page'
+import { AdminPage, AdminSection } from '@/components/admin/admin-page'
 import { StatsWidget } from '@/components/stats-widget'
 import { FaviconStatsWidget } from '@/components/admin/favicon-stats-widget'
-import { ChangelogDialog } from '@/components/changelog-dialog'
-import { UpdateChecker } from '@/components/admin/update-checker'
+import { DashboardVersion } from '@/components/admin/dashboard-version'
 
-export default function AdminDashboard() {
-  const [stats, setStats] = useState({
-    categories: 0,
-    bookmarks: 0,
-    serviceCategories: 0,
-    services: 0,
-  })
-  const [changelogOpen, setChangelogOpen] = useState(false)
+export const dynamic = 'force-dynamic'
 
-  useEffect(() => {
-    fetchStats()
-  }, [])
+export default async function AdminDashboard() {
+  const session = await getSession()
+  const [bookmarkGroups, serviceGroups] = await Promise.all([
+    loadBookmarkCategories(session),
+    loadServiceCategories(session),
+  ])
 
-  const fetchStats = async () => {
-    try {
-      const [categoriesRes, serviceCategoriesRes] = await Promise.all([
-        fetch('/api/categories'),
-        fetch('/api/service-categories')
-      ])
-
-      const categories = await categoriesRes.json()
-      const serviceCategories = await serviceCategoriesRes.json()
-
-      const categoryCount = categories.length
-      const bookmarkCount = categories.reduce((sum: number, cat: any) => sum + (cat.bookmarks?.length || 0), 0)
-      const serviceCategoryCount = serviceCategories.length
-      const serviceCount = serviceCategories.reduce((sum: number, cat: any) => sum + (cat.services?.length || 0), 0)
-
-      setStats({
-        categories: categoryCount,
-        bookmarks: bookmarkCount,
-        serviceCategories: serviceCategoryCount,
-        services: serviceCount
-      })
-    } catch (error) {
-      console.error('Failed to fetch stats:', error)
-    }
-  }
+  const counts = [
+    { label: 'Bookmark categories', value: bookmarkGroups.length },
+    { label: 'Bookmarks', value: bookmarkGroups.reduce((n: number, g: any) => n + (g.bookmarks?.length || 0), 0) },
+    { label: 'Service categories', value: serviceGroups.length },
+    { label: 'Services', value: serviceGroups.reduce((n: number, g: any) => n + (g.services?.length || 0), 0) },
+  ]
 
   return (
-    <div className="space-y-8">
-      <div>
-        <div className="flex items-baseline gap-3 mb-2">
-          <h1 className="text-3xl font-bold text-foreground">
-            Admin Dashboard
-          </h1>
-          <UpdateChecker onChangelogClick={() => setChangelogOpen(true)} />
-        </div>
-        <p className="text-muted-foreground">
-          Welcome to your Faux|Dash admin panel
-        </p>
-      </div>
+    <AdminPage title="Dashboard" actions={<DashboardVersion />}>
+      <AdminSection
+        title="Content"
+        actions={
+          <Link href="/admin/content" className="link text-sm">
+            Manage content
+          </Link>
+        }
+      >
+        <dl className="grid grid-cols-2 divide-border overflow-hidden rounded-lg border border-border lg:grid-cols-4 lg:divide-x [&>div:nth-child(-n+2)]:border-b [&>div:nth-child(-n+2)]:border-border lg:[&>div:nth-child(-n+2)]:border-b-0 [&>div:nth-child(odd)]:border-r [&>div:nth-child(odd)]:border-border lg:[&>div:nth-child(odd)]:border-r-0">
+          {counts.map((c) => (
+            <div key={c.label} className="px-4 py-3">
+              <dt className="text-xs text-muted-foreground">{c.label}</dt>
+              <dd className="tabular mt-1 text-2xl font-semibold text-foreground">{c.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </AdminSection>
 
-      {/* Pageview Statistics */}
       <StatsWidget />
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20">
-                <FolderIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Bookmark Categories</p>
-                <p className="text-3xl font-bold text-foreground">{stats.categories}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 dark:from-purple-500/20 dark:to-pink-500/20">
-                <BookmarkIcon className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Bookmarks</p>
-                <p className="text-3xl font-bold text-foreground">{stats.bookmarks}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 dark:from-green-500/20 dark:to-emerald-500/20">
-                <FolderIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Service Categories</p>
-                <p className="text-3xl font-bold text-foreground">{stats.serviceCategories}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-red-500/10 dark:from-orange-500/20 dark:to-red-500/20">
-                <ServerIcon className="h-8 w-8 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Services</p>
-                <p className="text-3xl font-bold text-foreground">{stats.services}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Favicon Storage Stats */}
       <FaviconStatsWidget />
-
-      {/* Changelog Dialog */}
-      <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
-    </div>
+    </AdminPage>
   )
 }

@@ -56,7 +56,7 @@ export function DynamicFavicon() {
         if (ctx) {
           // For SVG, we need to handle it specially
           if (contentType.includes('svg')) {
-            ctx.fillStyle = '#3b82f6'
+            ctx.fillStyle = '#2b2f33' // palette-ok: canvas needs a literal (graphite)
             ctx.fillRect(0, 0, 32, 32)
             ctx.drawImage(img, 0, 0, 32, 32)
           } else {

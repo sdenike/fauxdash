@@ -53,8 +53,8 @@ export function PasswordConfirmInput({
           className={
             confirmPassword
               ? passwordsMatch
-                ? 'pr-10 border-green-500 focus-visible:ring-green-500'
-                : 'pr-10 border-red-500 focus-visible:ring-red-500'
+                ? 'pr-10 border-success focus-visible:ring-success'
+                : 'pr-10 border-destructive focus-visible:ring-destructive'
               : ''
           }
         />
@@ -62,12 +62,12 @@ export function PasswordConfirmInput({
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
             {passwordsMatch ? (
               <CheckCircle2
-                className="h-4 w-4 text-green-500 animate-in zoom-in duration-200"
+                className="h-4 w-4 text-success animate-in zoom-in duration-200"
                 aria-hidden="true"
               />
             ) : (
               <XCircle
-                className="h-4 w-4 text-red-500 animate-in zoom-in duration-200"
+                className="h-4 w-4 text-destructive animate-in zoom-in duration-200"
                 aria-hidden="true"
               />
             )}
@@ -80,7 +80,7 @@ export function PasswordConfirmInput({
           role="status"
           aria-live="polite"
           className={`text-xs animate-in fade-in slide-in-from-top-1 duration-200 ${
-            passwordsMatch ? 'text-green-500' : 'text-red-500'
+            passwordsMatch ? 'text-success' : 'text-destructive'
           }`}
         >
           {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}

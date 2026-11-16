@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -14,17 +14,12 @@ export function GeneralTab({ settings, onSettingsChange }: SettingsTabProps) {
   }, [settings, onSettingsChange])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Search</CardTitle>
-        <CardDescription>
-          Configure your search preferences
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="divide-y divide-border [&>section]:py-8 [&>section:first-child]:pt-0 [&>section:last-child]:pb-0">
+    <AdminSection title="Search" description="Configure your search preferences">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+        <div className="flex items-center justify-between sm:col-span-2">
           <div>
-            <Label htmlFor="searchEnabled">Enable Search Box</Label>
+            <Label htmlFor="searchEnabled">Enable search box</Label>
             <p className="text-sm text-muted-foreground">
               Show search box on your homepage
             </p>
@@ -39,7 +34,7 @@ export function GeneralTab({ settings, onSettingsChange }: SettingsTabProps) {
         {settings.searchEnabled && (
           <>
             <div>
-              <Label htmlFor="searchEngine">Search Engine</Label>
+              <Label htmlFor="searchEngine">Search engine</Label>
               <Select
                 value={settings.searchEngine}
                 onValueChange={(value) => updateSetting('searchEngine', value)}
@@ -61,7 +56,7 @@ export function GeneralTab({ settings, onSettingsChange }: SettingsTabProps) {
             {settings.searchEngine === 'custom' && (
               <>
                 <div>
-                  <Label htmlFor="customSearchName">Custom Search Engine Name</Label>
+                  <Label htmlFor="customSearchName">Custom search engine name</Label>
                   <Input
                     id="customSearchName"
                     value={settings.customSearchName}
@@ -70,7 +65,7 @@ export function GeneralTab({ settings, onSettingsChange }: SettingsTabProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="customSearchUrl">Custom Search URL</Label>
+                  <Label htmlFor="customSearchUrl">Custom search URL</Label>
                   <Input
                     id="customSearchUrl"
                     value={settings.customSearchUrl}
@@ -86,9 +81,9 @@ export function GeneralTab({ settings, onSettingsChange }: SettingsTabProps) {
           </>
         )}
 
-        <div className="flex items-center justify-between pt-4 border-t">
+        <div className="flex items-center justify-between border-t border-border pt-5 sm:col-span-2">
           <div>
-            <Label htmlFor="searchInHeader">Show Search in Header</Label>
+            <Label htmlFor="searchInHeader">Show search in header</Label>
             <p className="text-sm text-muted-foreground">
               Display search bar in page header instead of main content
             </p>
@@ -99,17 +94,13 @@ export function GeneralTab({ settings, onSettingsChange }: SettingsTabProps) {
             onCheckedChange={(checked) => updateSetting('searchInHeader', checked)}
           />
         </div>
-      </CardContent>
+      </div>
+    </AdminSection>
 
-      <CardHeader className="border-t">
-        <CardTitle>Logging</CardTitle>
-        <CardDescription>
-          Configure application logging verbosity
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <AdminSection title="Logging" description="Configure application logging verbosity">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
         <div>
-          <Label htmlFor="logLevel">Log Level</Label>
+          <Label htmlFor="logLevel">Log level</Label>
           <Select
             value={settings.logLevel}
             onValueChange={(value: 'error' | 'warn' | 'info' | 'debug') => updateSetting('logLevel', value)}
@@ -118,7 +109,7 @@ export function GeneralTab({ settings, onSettingsChange }: SettingsTabProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="error">Errors Only</SelectItem>
+              <SelectItem value="error">Errors only</SelectItem>
               <SelectItem value="warn">Warnings & Errors</SelectItem>
               <SelectItem value="info">Info, Warnings & Errors</SelectItem>
               <SelectItem value="debug">Debug (All Messages)</SelectItem>
@@ -128,7 +119,8 @@ export function GeneralTab({ settings, onSettingsChange }: SettingsTabProps) {
             Controls which messages are written to the application log file. More verbose levels include all less verbose levels.
           </p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
+    </div>
   )
 }

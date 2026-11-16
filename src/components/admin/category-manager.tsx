@@ -1,14 +1,15 @@
 'use client'
 
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useState, useEffect } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card'
+import { AdminSection } from './admin-page'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Switch } from '../ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../ui/dialog'
-import { PlusIcon, PencilIcon, TrashIcon, CheckIcon } from '@heroicons/react/24/outline'
+import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react'
 import { Checkbox } from '../ui/checkbox'
 import { IconSelector } from '../icon-selector'
 import { getIconByName } from '@/lib/icons'
@@ -71,36 +72,35 @@ function SortableCategoryItem({ category, onEdit, onDelete, isSelected, onToggle
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center justify-between p-4 bg-card border rounded-lg hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-primary' : ''}`}
+      className={`flex items-center justify-between p-4 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors ${isSelected ? 'ring-2 ring-primary' : ''}`}
     >
       <div className="flex items-center gap-3 flex-1">
         <Checkbox
+          aria-label={`Select ${category.name}`}
           checked={isSelected}
           onCheckedChange={() => onToggleSelect(category.id)}
           onClick={(e) => e.stopPropagation()}
         />
-        <div className="cursor-move text-muted-foreground hover:text-foreground" {...attributes} {...listeners}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-          </svg>
+        <div className="cursor-move text-muted-foreground hover:text-foreground" aria-label={`Reorder ${category.name}`} {...attributes} {...listeners}>
+          <GripVertical className="w-5 h-5" aria-hidden="true" />
         </div>
-        {IconComponent && <IconComponent className="h-5 w-5 text-primary" />}
+        {IconComponent && <IconComponent className="h-5 w-5 text-primary" aria-hidden="true" />}
         <span className="font-medium">{category.name}</span>
         <div className="flex gap-2">
           {!category.isVisible && (
             <span className="text-xs bg-muted px-2 py-1 rounded">Hidden</span>
           )}
           {category.requiresAuth && (
-            <span className="text-xs bg-primary/20 px-2 py-1 rounded">Auth Required</span>
+            <span className="text-xs bg-muted px-2 py-1 rounded">Auth required</span>
           )}
         </div>
       </div>
       <div className="flex gap-2">
-        <Button variant="ghost" size="icon" onClick={() => onEdit(category)}>
-          <PencilIcon className="h-4 w-4" />
+        <Button type="button" variant="ghost" size="icon" aria-label={`Edit ${category.name}`} onClick={() => onEdit(category)}>
+          <Pencil className="h-4 w-4" aria-hidden="true" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => onDelete(category.id)}>
-          <TrashIcon className="h-4 w-4 text-destructive" />
+        <Button type="button" variant="ghost" size="icon" aria-label={`Delete ${category.name}`} onClick={() => onDelete(category.id)}>
+          <Trash2 className="h-4 w-4 text-destructive" aria-hidden="true" />
         </Button>
       </div>
     </div>
@@ -118,6 +118,7 @@ interface Defaults {
 }
 
 export function CategoryManager({ categories, onCategoriesChange }: CategoryManagerProps) {
+  const confirm = useConfirm()
   const [isOpen, setIsOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [selectedCategories, setSelectedCategories] = useState<Set<number>>(new Set())
@@ -237,7 +238,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this category?')) return
+    if (!(await confirm({ title: 'Delete this category?', description: 'Its bookmarks move to Uncategorized.', confirmLabel: 'Delete category', destructive: true }))) return
 
     await fetch(`/api/categories/${id}`, { method: 'DELETE' })
     onCategoriesChange()
@@ -276,27 +277,24 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Bookmark Categories</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">Organize your website bookmarks into categories</p>
-          </div>
+    <AdminSection
+      title="Bookmark categories"
+      description="Organize your website bookmarks into categories"
+      actions={
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => {
                 setEditingCategory(null)
                 setFormData({ name: '', icon: '', columns: 1, showDescriptions: null, ...defaults })
               }}>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Add Category
+                <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
+                Add category
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {editingCategory ? 'Edit Category' : 'Add Category'}
+                  {editingCategory ? 'Edit category' : 'Add category'}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit}>
@@ -326,7 +324,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="requiresAuth">Requires Authentication</Label>
+                    <Label htmlFor="requiresAuth">Requires authentication</Label>
                     <Switch
                       id="requiresAuth"
                       checked={formData.requiresAuth}
@@ -349,7 +347,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="showItemCount">Show Item Count</Label>
+                      <Label htmlFor="showItemCount">Show item count</Label>
                       <p className="text-xs text-muted-foreground">Display total count on category header</p>
                     </div>
                     <Switch
@@ -360,7 +358,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="autoExpanded">Auto Expanded</Label>
+                      <Label htmlFor="autoExpanded">Auto expanded</Label>
                       <p className="text-xs text-muted-foreground">Category starts expanded by default</p>
                     </div>
                     <Switch
@@ -371,7 +369,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="showOpenAll">Show Open All</Label>
+                      <Label htmlFor="showOpenAll">Show open all</Label>
                       <p className="text-xs text-muted-foreground">Display button to open all items in new tabs</p>
                     </div>
                     <Switch
@@ -381,7 +379,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
                     />
                   </div>
                   <div>
-                    <Label htmlFor="sortBy">Sort Items By</Label>
+                    <Label htmlFor="sortBy">Sort items by</Label>
                     <Select
                       value={formData.sortBy}
                       onValueChange={(value) => setFormData({ ...formData, sortBy: value })}
@@ -390,11 +388,11 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="order">Manual Order (Drag & Drop)</SelectItem>
-                        <SelectItem value="name_asc">Name (A-Z)</SelectItem>
-                        <SelectItem value="name_desc">Name (Z-A)</SelectItem>
-                        <SelectItem value="clicks_asc">Click Count (Low to High)</SelectItem>
-                        <SelectItem value="clicks_desc">Click Count (High to Low)</SelectItem>
+                        <SelectItem value="order">Manual order (drag and drop)</SelectItem>
+                        <SelectItem value="name_asc">Name (A to Z)</SelectItem>
+                        <SelectItem value="name_desc">Name (Z to A)</SelectItem>
+                        <SelectItem value="clicks_asc">Click count (low to high)</SelectItem>
+                        <SelectItem value="clicks_desc">Click count (high to low)</SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -402,7 +400,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
                     </p>
                   </div>
                   <div>
-                    <Label htmlFor="showDescriptions">Show Descriptions</Label>
+                    <Label htmlFor="showDescriptions">Show descriptions</Label>
                     <Select
                       value={formData.showDescriptions === null ? 'inherit' : formData.showDescriptions.toString()}
                       onValueChange={(value) => setFormData({ ...formData, showDescriptions: value === 'inherit' ? null : parseInt(value) })}
@@ -411,7 +409,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="inherit">Inherit (Use Global Setting)</SelectItem>
+                        <SelectItem value="inherit">Inherit global setting</SelectItem>
                         <SelectItem value="1">Show</SelectItem>
                         <SelectItem value="0">Hide</SelectItem>
                       </SelectContent>
@@ -429,33 +427,33 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
               </form>
             </DialogContent>
           </Dialog>
-        </div>
-      </CardHeader>
-      <CardContent>
+      }
+    >
+      <div>
         {/* Bulk Action Toolbar */}
         {selectedCategories.size > 0 && (
           <div className="flex flex-wrap items-center gap-2 p-3 bg-muted rounded-lg mb-4">
             <span className="text-sm font-medium">{selectedCategories.size} selected</span>
             <Button size="sm" variant="outline" onClick={() => bulkUpdate({ isVisible: true })}>Enable</Button>
             <Button size="sm" variant="outline" onClick={() => bulkUpdate({ isVisible: false })}>Disable</Button>
-            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ requiresAuth: true })}>Require Auth</Button>
-            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ requiresAuth: false })}>No Auth</Button>
-            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ showItemCount: true })}>Show Count</Button>
-            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ showItemCount: false })}>Hide Count</Button>
-            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ autoExpanded: true })}>Auto Expand</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ requiresAuth: true })}>Require auth</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ requiresAuth: false })}>No auth</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ showItemCount: true })}>Show count</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ showItemCount: false })}>Hide count</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ autoExpanded: true })}>Auto expand</Button>
             <Button size="sm" variant="outline" onClick={() => bulkUpdate({ autoExpanded: false })}>Collapse</Button>
-            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ showOpenAll: true })}>Show Open All</Button>
-            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ showOpenAll: false })}>Hide Open All</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ showOpenAll: true })}>Show open all</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkUpdate({ showOpenAll: false })}>Hide open all</Button>
             <Select onValueChange={(v) => bulkUpdate({ sortBy: v })}>
               <SelectTrigger className="w-32 h-8">
-                <SelectValue placeholder="Sort by..." />
+                <SelectValue placeholder="Sort by…" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="order">Manual Order</SelectItem>
-                <SelectItem value="name_asc">Name (A-Z)</SelectItem>
-                <SelectItem value="name_desc">Name (Z-A)</SelectItem>
-                <SelectItem value="clicks_asc">Clicks (Low)</SelectItem>
-                <SelectItem value="clicks_desc">Clicks (High)</SelectItem>
+                <SelectItem value="order">Manual order</SelectItem>
+                <SelectItem value="name_asc">Name (A to Z)</SelectItem>
+                <SelectItem value="name_desc">Name (Z to A)</SelectItem>
+                <SelectItem value="clicks_asc">Clicks (low)</SelectItem>
+                <SelectItem value="clicks_desc">Clicks (high)</SelectItem>
               </SelectContent>
             </Select>
             <Input
@@ -480,7 +478,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
           <>
             <div className="flex items-center gap-2 mb-3">
               <Button size="sm" variant="outline" onClick={handleSelectAll}>
-                {selectedCategories.size === categories.length ? 'Deselect All' : 'Select All'}
+                {selectedCategories.size === categories.length ? 'Deselect all' : 'Select all'}
               </Button>
             </div>
             <DndContext
@@ -512,7 +510,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
             No bookmark categories yet. Create your first category to organize bookmarks!
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
   )
 }

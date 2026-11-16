@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { XMarkIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+import { X, Download } from 'lucide-react'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -89,10 +89,10 @@ export function PWAInstallPrompt() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 animate-in slide-in-from-bottom-4 duration-300">
-      <div className="bg-card border border-border rounded-lg shadow-lg p-4">
+      <div className="bg-card border border-border rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-            <ArrowDownTrayIcon className="w-5 h-5 text-primary" />
+          <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+            <Download className="w-5 h-5 text-primary" aria-hidden="true" />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -112,13 +112,15 @@ export function PWAInstallPrompt() {
             <div className="mt-3 flex gap-2">
               {!isIOS && deferredPrompt && (
                 <button
+                  type="button"
                   onClick={handleInstall}
                   className="flex-1 py-2 px-3 bg-primary text-primary-foreground text-xs font-medium rounded-md hover:bg-primary/90 transition-colors touch-target"
                 >
-                  Install App
+                  Install app
                 </button>
               )}
               <button
+                type="button"
                 onClick={handlePermanentDismiss}
                 className="flex-1 py-2 px-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
                 title="Don't show this again"
@@ -129,11 +131,13 @@ export function PWAInstallPrompt() {
           </div>
 
           <button
+            type="button"
+            aria-label="Dismiss for 30 days"
             onClick={handleDismiss}
             className="flex-shrink-0 p-1 rounded-md hover:bg-muted transition-colors"
             title="Dismiss for 30 days"
           >
-            <XMarkIcon className="w-5 h-5 text-muted-foreground" />
+            <X className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
           </button>
         </div>
       </div>

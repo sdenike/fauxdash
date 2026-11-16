@@ -1,13 +1,12 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Loader2 } from 'lucide-react'
+import { AdminPage, AdminLoading } from '@/components/admin/admin-page'
 import {
   GeneralTab,
   GreetingTab,
@@ -23,19 +22,11 @@ import {
 } from '@/components/settings'
 
 function SettingsContent() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
   const { toast } = useToast()
   const [settings, setSettings] = useState<Settings>(defaultSettings)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const hasFetchedRef = useRef(false)
-
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
-    }
-  }, [status, router])
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -49,14 +40,13 @@ function SettingsContent() {
     }
   }, [])
 
-  // Only fetch settings ONCE when session is first available
-  // Do NOT re-fetch on session refresh (which happens on window focus)
+  // Fetch once. The admin layout has already checked the session on the server.
   useEffect(() => {
-    if (session && !hasFetchedRef.current) {
+    if (!hasFetchedRef.current) {
       hasFetchedRef.current = true
       fetchSettings()
     }
-  }, [session, fetchSettings])
+  }, [fetchSettings])
 
   const handleSettingsChange = useCallback((newSettings: Settings) => {
     setSettings(newSettings)
@@ -78,111 +68,60 @@ function SettingsContent() {
       toast({
         variant: 'success',
         title: 'Settings saved',
-        description: 'Your settings have been updated successfully.',
+        description: 'The start page uses them on its next load.',
       })
     } catch (error) {
       console.error('Failed to save settings:', error)
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to save settings. Please try again.',
+        title: 'Settings not saved',
+        description: 'The server did not accept them. Try again, or check Admin, Logs.',
       })
     } finally {
       setSaving(false)
     }
   }, [settings, toast])
 
-  if (status === 'loading' || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" role="status" aria-live="polite">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-          <span>Loading...</span>
-        </div>
-      </div>
-    )
-  }
+  const tabs = [
+    { value: 'general', label: 'General', Tab: GeneralTab },
+    { value: 'appearance', label: 'Appearance', Tab: AppearanceTab },
+    { value: 'greeting', label: 'Greeting', Tab: GreetingTab },
+    { value: 'datetime', label: 'Date and time', Tab: DateTimeTab },
+    { value: 'weather', label: 'Weather', Tab: WeatherTab },
+    { value: 'authentication', label: 'Sign-in', Tab: AuthenticationTab },
+    { value: 'email', label: 'Email', Tab: EmailTab },
+    { value: 'geoip', label: 'GeoIP', Tab: GeoIPTab },
+    { value: 'redis', label: 'Cache', Tab: RedisTab },
+  ]
 
-  if (!session) {
-    return null
-  }
+  const saveButton = (
+    <Button onClick={handleSave} disabled={saving || loading} aria-busy={saving}>
+      {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+      {saving ? 'Saving' : 'Save changes'}
+    </Button>
+  )
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">
-          Settings
-        </h1>
-        <p className="text-muted-foreground">
-          Configure your dashboard preferences
-        </p>
-      </div>
-
-      <div className="max-w-4xl">
+    <AdminPage title="Settings" description="Site-wide settings for the start page and the services behind it." actions={saveButton}>
+      {loading ? (
+        <AdminLoading rows={6} label="Loading settings" />
+      ) : (
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="flex flex-wrap h-auto gap-1 sm:grid sm:grid-cols-3 lg:grid-cols-9">
-            <TabsTrigger value="general" className="flex-1 sm:flex-none">General</TabsTrigger>
-            <TabsTrigger value="greeting" className="flex-1 sm:flex-none">Greeting</TabsTrigger>
-            <TabsTrigger value="datetime" className="flex-1 sm:flex-none">Date & Time</TabsTrigger>
-            <TabsTrigger value="weather" className="flex-1 sm:flex-none">Weather</TabsTrigger>
-            <TabsTrigger value="geoip" className="flex-1 sm:flex-none">GeoIP</TabsTrigger>
-            <TabsTrigger value="email" className="flex-1 sm:flex-none">Email</TabsTrigger>
-            <TabsTrigger value="appearance" className="flex-1 sm:flex-none">Appearance</TabsTrigger>
-            <TabsTrigger value="authentication" className="flex-1 sm:flex-none">Auth</TabsTrigger>
-            <TabsTrigger value="redis" className="flex-1 sm:flex-none">Cache</TabsTrigger>
+          <TabsList>
+            {tabs.map((t) => (
+              <TabsTrigger key={t.value} value={t.value}>
+                {t.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
-
-          <TabsContent value="general" className="space-y-4 mt-4">
-            <GeneralTab settings={settings} onSettingsChange={handleSettingsChange} />
-          </TabsContent>
-
-          <TabsContent value="greeting" className="space-y-4 mt-4">
-            <GreetingTab settings={settings} onSettingsChange={handleSettingsChange} />
-          </TabsContent>
-
-          <TabsContent value="datetime" className="space-y-4 mt-4">
-            <DateTimeTab settings={settings} onSettingsChange={handleSettingsChange} />
-          </TabsContent>
-
-          <TabsContent value="weather" className="space-y-4 mt-4">
-            <WeatherTab settings={settings} onSettingsChange={handleSettingsChange} />
-          </TabsContent>
-
-          <TabsContent value="geoip" className="space-y-4 mt-4">
-            <GeoIPTab settings={settings} onSettingsChange={handleSettingsChange} />
-          </TabsContent>
-
-          <TabsContent value="email" className="space-y-4 mt-4">
-            <EmailTab settings={settings} onSettingsChange={handleSettingsChange} />
-          </TabsContent>
-
-          <TabsContent value="appearance" className="space-y-4 mt-4">
-            <AppearanceTab settings={settings} onSettingsChange={handleSettingsChange} />
-          </TabsContent>
-
-          <TabsContent value="authentication" className="space-y-4 mt-4">
-            <AuthenticationTab settings={settings} onSettingsChange={handleSettingsChange} />
-          </TabsContent>
-
-          <TabsContent value="redis" className="space-y-4 mt-4">
-            <RedisTab settings={settings} onSettingsChange={handleSettingsChange} />
-          </TabsContent>
+          {tabs.map(({ value, Tab }) => (
+            <TabsContent key={value} value={value} className="space-y-6">
+              <Tab settings={settings} onSettingsChange={handleSettingsChange} />
+            </TabsContent>
+          ))}
         </Tabs>
-
-        <div className="mt-6 flex justify-end">
-          <Button onClick={handleSave} disabled={saving} aria-busy={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                Saving...
-              </>
-            ) : (
-              'Save Settings'
-            )}
-          </Button>
-        </div>
-      </div>
-    </div>
+      )}
+    </AdminPage>
   )
 }
 

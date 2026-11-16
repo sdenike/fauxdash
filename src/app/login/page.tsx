@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertMessage } from '@/components/ui/alert-message'
 import { ErrorBoundary } from '@/components/error-boundary'
-import { Loader2, Mail } from 'lucide-react'
+import { Loader2, Mail, KeyRound } from 'lucide-react'
 import { REMEMBER_COOKIE_NAME } from '@/lib/session-constants'
 
 function LoginContent() {
@@ -32,6 +32,24 @@ function LoginContent() {
   const [forgotError, setForgotError] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
   const [rememberDuration, setRememberDuration] = useState('7')
+
+  // Keep the visitor's last remember-me choice, so a re-login does not silently drop to 2 days.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('fauxdash-remember')
+      if (saved && ['7', '30', '90', '365'].includes(saved)) {
+        setRememberMe(true)
+        setRememberDuration(saved)
+      } else if (saved === 'off') {
+        setRememberMe(false)
+      }
+    } catch {}
+  }, [])
+  useEffect(() => {
+    try {
+      localStorage.setItem('fauxdash-remember', rememberMe ? rememberDuration : 'off')
+    } catch {}
+  }, [rememberMe, rememberDuration])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -197,10 +215,10 @@ function LoginContent() {
   }, [resetForgotPasswordState])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-dvh flex items-center justify-center bg-background p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Sign In</CardTitle>
+          <CardTitle className="text-xl font-semibold">Sign in</CardTitle>
           <CardDescription>
             {oidcEnabled && disablePasswordLogin
               ? `Sign in with ${oidcProviderName} to access Faux|Dash`
@@ -254,24 +272,11 @@ function LoginContent() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                  Signing in...
+                  Signing in…
                 </>
               ) : (
                 <>
-                  <svg
-                    className="mr-2 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                    />
-                  </svg>
+                  <KeyRound className="mr-2 h-4 w-4" aria-hidden="true" />
                   Sign in with {oidcProviderName}
                 </>
               )}
@@ -356,10 +361,10 @@ function LoginContent() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                    Signing in...
+                    Signing in…
                   </>
                 ) : (
-                  'Sign In'
+                  'Sign in'
                 )}
               </Button>
 
@@ -367,10 +372,10 @@ function LoginContent() {
                 <>
                   <div className="relative w-full">
                     <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
+                      <span className="w-full border-t border-border" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                    <span className="bg-background px-2 text-muted-foreground">or continue with</span>
                   </div>
                 </div>
 
@@ -381,20 +386,7 @@ function LoginContent() {
                   onClick={handleOidcLogin}
                   disabled={loading}
                 >
-                  <svg
-                    className="mr-2 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                    />
-                  </svg>
+                  <KeyRound className="mr-2 h-4 w-4" aria-hidden="true" />
                   Sign in with {oidcProviderName}
                 </Button>
               </>
@@ -406,11 +398,11 @@ function LoginContent() {
 
       {/* Forgot Password Dialog */}
       <Dialog open={showForgotPassword} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-              Reset Password
+              Reset password
             </DialogTitle>
             <DialogDescription>
               Enter your email address and we&apos;ll send you a link to reset your password.
@@ -445,10 +437,10 @@ function LoginContent() {
                   {forgotLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                      Sending...
+                      Sending…
                     </>
                   ) : (
-                    'Send Reset Link'
+                    'Send reset link'
                   )}
                 </Button>
               )}

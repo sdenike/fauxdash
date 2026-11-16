@@ -7,14 +7,7 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/use-toast'
 import { IconSelector } from '@/components/icon-selector'
 import { MediaLibraryPicker } from '@/components/media-library-picker'
-import {
-  PhotoIcon,
-  ArrowUpTrayIcon,
-  LinkIcon,
-  Squares2X2Icon,
-  FolderIcon,
-  TrashIcon,
-} from '@heroicons/react/24/outline'
+import { Image as ImageIcon, Upload, Link as LinkIcon, LayoutGrid, Folder, Trash2 } from 'lucide-react'
 
 export type ImageIconType = 'upload' | 'library' | 'url' | 'none'
 
@@ -270,7 +263,7 @@ export function ImageIconPicker({
             className="flex items-center justify-center bg-background rounded border"
             style={{ width: previewHeight, height: previewHeight }}
           >
-            <PhotoIcon className="w-6 h-6 text-muted-foreground" />
+            <ImageIcon className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
           </div>
         )}
         <div className="flex-1">
@@ -285,9 +278,10 @@ export function ImageIconPicker({
             variant="ghost"
             size="sm"
             onClick={handleRemove}
+            aria-label="Remove image"
             className="text-destructive hover:text-destructive hover:bg-destructive/10"
           >
-            <TrashIcon className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
           </Button>
         )}
       </div>
@@ -297,7 +291,7 @@ export function ImageIconPicker({
         {showUpload && (
           <div className="p-4 rounded-md border bg-card">
             <div className="flex items-center gap-2 mb-3">
-              <ArrowUpTrayIcon className="h-5 w-5 text-muted-foreground" />
+              <Upload className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
               <span className="font-medium text-sm">Upload</span>
             </div>
             <input
@@ -315,7 +309,7 @@ export function ImageIconPicker({
               disabled={uploading}
               className="w-full"
             >
-              {uploading ? 'Uploading...' : 'Choose file'}
+              {uploading ? 'Uploading…' : 'Choose file'}
             </Button>
             <p className="text-xs text-muted-foreground mt-2">
               {acceptedFileTypes.replace(/\./g, '').toUpperCase().replace(/,/g, ', ')}
@@ -326,7 +320,7 @@ export function ImageIconPicker({
         {showLibrary && (
           <div className="p-4 rounded-md border bg-card">
             <div className="flex items-center gap-2 mb-3">
-              <Squares2X2Icon className="h-5 w-5 text-muted-foreground" />
+              <LayoutGrid className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
               <span className="font-medium text-sm">Library</span>
             </div>
             <IconSelector
@@ -339,7 +333,7 @@ export function ImageIconPicker({
               }
             />
             <p className="text-xs text-muted-foreground mt-2">
-              Choose from HeroIcons or Selfh.st
+              Choose a built-in or Selfh.st icon
             </p>
           </div>
         )}
@@ -347,13 +341,14 @@ export function ImageIconPicker({
         {showUrl && (
           <div className="p-4 rounded-md border bg-card">
             <div className="flex items-center gap-2 mb-3">
-              <LinkIcon className="h-5 w-5 text-muted-foreground" />
+              <LinkIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
               <span className="font-medium text-sm">From URL</span>
             </div>
             <div className="flex gap-2">
               <Input
                 type="url"
-                placeholder="https://..."
+                placeholder="https://example.com/image.png"
+                aria-label="Image URL"
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleFetchUrl()}
@@ -366,7 +361,7 @@ export function ImageIconPicker({
                 onClick={handleFetchUrl}
                 disabled={fetchingUrl || !urlInput.trim()}
               >
-                {fetchingUrl ? '...' : 'Fetch'}
+                {fetchingUrl ? 'Fetching…' : 'Fetch'}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
@@ -378,8 +373,8 @@ export function ImageIconPicker({
         {showMediaLibrary && (
           <div className="p-4 rounded-md border bg-card">
             <div className="flex items-center gap-2 mb-3">
-              <FolderIcon className="h-5 w-5 text-muted-foreground" />
-              <span className="font-medium text-sm">Your Uploads</span>
+              <Folder className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+              <span className="font-medium text-sm">Your uploads</span>
             </div>
             <MediaLibraryPicker onSelect={handleMediaSelect} />
             <p className="text-xs text-muted-foreground mt-2">
