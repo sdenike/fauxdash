@@ -5,6 +5,16 @@ Running work log, newest first. One entry per change: timestamp · what · why �
 
 ---
 
+## 2026-11-16 10:05 EST — committed, PR #65 open
+
+**What:** Commit 59f7aca on `design/bear-standardization`, pushed, PR https://github.com/sdenike/fauxdash/pull/65.
+No `.env`, database or data files in the commit. Prod still runs local tag `fauxdash:bear`.
+
+**If interrupted here:** owner merges PR #65. After GitHub Actions builds `latest`, set compose `image:` back to
+`ghcr.io/sdenike/fauxdash:latest`, `docker compose up -d`, check health.
+
+---
+
 ## 2026-11-16 09:55 EST — lone fields capped at half width
 
 **What:** Owner: "cap lone fields at half width". Log level (General, GeoIP) and site name (Appearance) now take one
