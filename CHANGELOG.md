@@ -5,6 +5,37 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-11-15
+
+### Changed
+- **Bear "Red Graphite" design system.** One palette for the whole app, matching the Obsidian theme and Wausau Billing: graphite primary, a single red accent, oklch tokens for light and dark in `src/app/globals.css`, Geist font served locally. Reference copy in `docs/design/bear-red-graphite.css`. The 28 selectable colour themes are gone (Bear is the palette); light/dark/system stays.
+- **Start page renders on the server.** Session, settings, links, theme default and background are read before the first paint, so a signed-in visitor never sees the signed-out header or a "Loading..." screen, and the page makes no client fetches except weather and the pageview beacon. Links are real `<a>` elements; clicks are tracked with `sendBeacon`.
+- **Admin is one shell.** The admin layout checks the session on the server, every page uses the same header (`AdminPage`), sections, loading and empty states. Navigation renamed: "Configuration" is now "Settings", icons are distinct.
+- **One settings home.** `/settings` redirects to Admin, Settings. The header no longer saves settings. Appearance is reduced to Default theme, Density (compact/comfortable) and Columns (1-6) plus section order and descriptions; the per-section icon/font/spacing sliders and the site-title gradient are removed. Existing installs map to the nearest density and keep their column count.
+- **Dashboard** shows content counts, a single traffic table and favicon storage instead of 16 cards.
+- Content: "Add bookmark" and "Add service" tabs merged into one "Add" tab.
+- Buttons, inputs, selects, switches, tabs (underline style), cards, dialogs and toasts restyled on the tokens. Destructive buttons are red outlines.
+
+### Added
+- `ConfirmDialog` (`useConfirm`) replaces every `window.confirm`; toasts replace `alert`.
+- Press `/` to focus the search box. Skip-to-content link. Labels on all icon-only buttons.
+- `scripts/check-palette.mjs` fails on raw Tailwind palette colours, hex colours or heroicons in UI code.
+
+### iOS and touch
+- Fields are 16px on touch screens so iOS Safari no longer zooms the page on focus; landscape text inflation off.
+- Content runs under the status bar (`black-translucent`) with safe-area padding on the start header, admin top bar,
+  drawer, toasts, sign-in pages and side gutters (notch in landscape). Full-height pages use `dvh`.
+- 44px touch targets on header buttons, link rows, tabs, buttons, switches and admin navigation (`coarse:` variant).
+- Hover styles only apply on devices that can hover (`future.hoverOnlyWhenSupported`), so taps no longer leave links
+  stuck highlighted. Hover-only controls (media delete, toast close) are always visible on touch screens.
+- Weather and clock details open with a tap (iOS fired a fake hover then closed them); a tap outside closes weather.
+- Admin drawer locks the page behind it; dialogs fit the visible screen and scroll when the keyboard is up.
+- Two-column settings forms stack on phones.
+- Admin, settings and analytics use plain sections instead of boxed cards; short fields sit two across on wider screens. PWA splash colour matches the dark theme.
+
+### Removed
+- Dead components: old header, search bar, category/service sections, theme sync, client background image, `bookmark-manager-old`, `bookmark-manager`, `service-manager`, `site-title-settings`, `src/lib/themes.ts`.
+
 ## [0.13.6] - 2026-10-25
 
 ### Security

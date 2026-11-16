@@ -1,19 +1,14 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import {
-  DocumentTextIcon,
-  TrashIcon,
-  ArrowPathIcon,
-  PlayIcon,
-  PauseIcon
-} from '@heroicons/react/24/outline'
+import { Trash2, RefreshCw, Play, Pause } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { AdminPage, AdminSection, AdminLoading } from '@/components/admin/admin-page'
 
 interface LogLine {
   raw: string
@@ -40,24 +35,25 @@ function parseLogLine(line: string): LogLine {
 
 function getLevelColor(level?: string): string {
   switch (level) {
-    case 'error': return 'text-red-500'
-    case 'warn': return 'text-yellow-500'
-    case 'info': return 'text-blue-400'
-    case 'debug': return 'text-gray-500'
-    default: return 'text-gray-300'
+    case 'error': return 'text-destructive'
+    case 'warn': return 'text-warning'
+    case 'info': return 'text-info'
+    case 'debug': return 'text-muted-foreground'
+    default: return 'text-foreground'
   }
 }
 
 function getLevelBgColor(level?: string): string {
   switch (level) {
-    case 'error': return 'bg-red-500/10'
-    case 'warn': return 'bg-yellow-500/10'
+    case 'error': return 'bg-destructive-soft'
+    case 'warn': return 'bg-warning-soft'
     default: return ''
   }
 }
 
 export default function LogsPage() {
   const { toast } = useToast()
+  const confirm = useConfirm()
   const [logs, setLogs] = useState<LogLine[]>([])
   const [loading, setLoading] = useState(true)
   const [autoRefresh, setAutoRefresh] = useState(false)
@@ -105,6 +101,12 @@ export default function LogsPage() {
   }, [autoRefresh, refreshInterval, fetchLogs])
 
   const handleClearLogs = async () => {
+    if (!(await confirm({
+      title: 'Clear all logs?',
+      description: 'Every log entry is deleted. This cannot be undone.',
+      confirmLabel: 'Clear logs',
+      destructive: true,
+    }))) return
     try {
       const response = await fetch('/api/logs', { method: 'DELETE' })
       const data = await response.json()
@@ -114,7 +116,7 @@ export default function LogsPage() {
         toast({
           variant: 'success',
           title: 'Logs cleared',
-          description: 'All log entries have been removed'
+          description: 'All log entries were removed.'
         })
       } else {
         throw new Error(data.error)
@@ -122,8 +124,8 @@ export default function LogsPage() {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to clear logs'
+        title: 'Could not clear logs',
+        description: error.message || 'The server did not respond. Try again.'
       })
     }
   }
@@ -134,38 +136,37 @@ export default function LogsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">
-          Application Logs
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          View real-time application logs with color-coded severity levels
-        </p>
-      </div>
-
-      {/* Controls */}
-      <Card>
-        <CardContent className="pt-6">
+    <AdminPage
+      title="Logs"
+      description="Application logs, colored by severity."
+      actions={
+        <>
+          <Button variant="outline" size="sm" onClick={handleManualRefresh} disabled={loading}>
+            <RefreshCw aria-hidden="true" className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button variant="destructive" size="sm" onClick={handleClearLogs}>
+            <Trash2 aria-hidden="true" className="h-4 w-4 mr-2" />
+            Clear logs
+          </Button>
+        </>
+      }
+    >
+      <AdminSection>
+        <div>
           <div className="flex flex-wrap items-center gap-6">
-            {/* Auto-refresh toggle */}
             <div className="flex items-center gap-2">
-              <Switch
-                id="auto-refresh"
-                checked={autoRefresh}
-                onCheckedChange={setAutoRefresh}
-              />
+              <Switch id="auto-refresh" checked={autoRefresh} onCheckedChange={setAutoRefresh} />
               <Label htmlFor="auto-refresh" className="flex items-center gap-1">
                 {autoRefresh ? (
-                  <PlayIcon className="h-4 w-4 text-green-500" />
+                  <Play aria-hidden="true" className="h-4 w-4 text-success" />
                 ) : (
-                  <PauseIcon className="h-4 w-4 text-muted-foreground" />
+                  <Pause aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
                 )}
                 Auto-refresh
               </Label>
             </div>
 
-            {/* Refresh interval */}
             <div className="flex items-center gap-2">
               <Label>Interval:</Label>
               <Select value={refreshInterval} onValueChange={setRefreshInterval}>
@@ -182,7 +183,6 @@ export default function LogsPage() {
               </Select>
             </div>
 
-            {/* Line count */}
             <div className="flex items-center gap-2">
               <Label>Lines:</Label>
               <Select value={lineCount} onValueChange={setLineCount}>
@@ -198,130 +198,83 @@ export default function LogsPage() {
               </Select>
             </div>
 
-            {/* Auto-scroll toggle */}
             <div className="flex items-center gap-2">
-              <Switch
-                id="auto-scroll"
-                checked={autoScroll}
-                onCheckedChange={setAutoScroll}
-              />
+              <Switch id="auto-scroll" checked={autoScroll} onCheckedChange={setAutoScroll} />
               <Label htmlFor="auto-scroll">Auto-scroll</Label>
             </div>
-
-            <div className="flex-1" />
-
-            {/* Action buttons */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleManualRefresh}
-              disabled={loading}
-            >
-              <ArrowPathIcon className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleClearLogs}
-            >
-              <TrashIcon className="h-4 w-4 mr-2" />
-              Clear Logs
-            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </AdminSection>
 
-      {/* Log viewer */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DocumentTextIcon className="h-5 w-5" />
-            Log Output
-            {autoRefresh && (
-              <span className="ml-2 text-xs font-normal text-green-500 flex items-center gap-1">
-                <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-                Live
-              </span>
-            )}
-          </CardTitle>
-          <CardDescription>
-            {logs.length} log entries loaded
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div
-            ref={logContainerRef}
-            className="bg-background rounded-lg p-4 h-[600px] overflow-auto font-mono text-sm border border-border"
-          >
-            {loading && logs.length === 0 ? (
-              <div className="text-gray-500 animate-pulse">Loading logs...</div>
-            ) : logs.length === 0 ? (
-              <div className="text-gray-500">No log entries found. Logs will appear here as the application runs.</div>
-            ) : (
-              <div className="space-y-0.5">
-                {logs.map((log, index) => (
-                  <div
-                    key={index}
-                    className={`py-0.5 px-1 rounded ${getLevelBgColor(log.level)} hover:bg-white/5`}
-                  >
-                    {log.timestamp ? (
-                      <span className="flex flex-wrap gap-x-2">
-                        <span className="text-gray-500 shrink-0">
-                          [{new Date(log.timestamp).toLocaleString()}]
-                        </span>
-                        <span className={`font-semibold shrink-0 ${getLevelColor(log.level)}`}>
-                          [{log.level?.toUpperCase().padEnd(5)}]
-                        </span>
-                        <span className="text-purple-400 shrink-0">
-                          [{log.category}]
-                        </span>
-                        <span className="text-gray-200 break-all">
-                          {log.message}
-                        </span>
+      <AdminSection
+        title="Log output"
+        description={`${logs.length} log entries loaded`}
+        actions={
+          autoRefresh ? (
+            <span className="text-xs text-success flex items-center gap-1">
+              <span className="h-2 w-2 bg-success rounded-full animate-pulse" />
+              Live
+            </span>
+          ) : undefined
+        }
+      >
+        <div
+          ref={logContainerRef}
+          className="bg-background rounded-lg p-4 h-[600px] overflow-auto font-mono text-sm border border-border"
+        >
+          {loading && logs.length === 0 ? (
+            <AdminLoading rows={5} label="Loading logs" />
+          ) : logs.length === 0 ? (
+            <div className="text-muted-foreground">No log entries yet. Entries appear here as the application runs.</div>
+          ) : (
+            <div className="space-y-0.5">
+              {logs.map((log, index) => (
+                <div key={index} className={`py-0.5 px-1 rounded ${getLevelBgColor(log.level)} hover:bg-muted`}>
+                  {log.timestamp ? (
+                    <span className="flex flex-wrap gap-x-2">
+                      <span className="text-muted-foreground shrink-0">
+                        [{new Date(log.timestamp).toLocaleString()}]
                       </span>
-                    ) : (
-                      <span className="text-gray-300">{log.raw}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                      <span className={`font-semibold shrink-0 ${getLevelColor(log.level)}`}>
+                        [{log.level?.toUpperCase().padEnd(5)}]
+                      </span>
+                      <span className="text-brand shrink-0">[{log.category}]</span>
+                      <span className="text-foreground break-all">{log.message}</span>
+                    </span>
+                  ) : (
+                    <span className="text-foreground">{log.raw}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </AdminSection>
 
-      {/* Legend */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Log Level Legend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-red-500" />
-              <span className="text-red-500 font-mono">ERROR</span>
-              <span className="text-muted-foreground">- Application errors</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-yellow-500" />
-              <span className="text-yellow-500 font-mono">WARN</span>
-              <span className="text-muted-foreground">- Warnings</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-blue-400" />
-              <span className="text-blue-400 font-mono">INFO</span>
-              <span className="text-muted-foreground">- Information</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-gray-500" />
-              <span className="text-gray-500 font-mono">DEBUG</span>
-              <span className="text-muted-foreground">- Debug info</span>
-            </div>
+      <AdminSection title="Log level legend">
+        <div className="flex flex-wrap gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-destructive" />
+            <span className="text-destructive font-mono">ERROR</span>
+            <span className="text-muted-foreground">- Application errors</span>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-warning" />
+            <span className="text-warning font-mono">WARN</span>
+            <span className="text-muted-foreground">- Warnings</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-info" />
+            <span className="text-info font-mono">INFO</span>
+            <span className="text-muted-foreground">- Information</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-muted-foreground" />
+            <span className="text-muted-foreground font-mono">DEBUG</span>
+            <span className="text-muted-foreground">- Debug info</span>
+          </div>
+        </div>
+      </AdminSection>
+    </AdminPage>
   )
 }

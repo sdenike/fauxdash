@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState, useEffect } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -148,15 +148,9 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
   }, [settings.oidcClientId, settings.oidcClientSecret, settings.oidcIssuerUrl, toast])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>OIDC Authentication</CardTitle>
-        <CardDescription>
-          Configure OpenID Connect (OIDC) authentication provider for single sign-on
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
+    <AdminSection title="OIDC Authentication" description="Configure OpenID Connect (OIDC) authentication provider for single sign-on">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+        <div className="flex items-center justify-between sm:col-span-2">
           <div>
             <Label htmlFor="oidcEnabled">Enable OIDC</Label>
             <p className="text-sm text-muted-foreground">
@@ -173,7 +167,7 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
         {settings.oidcEnabled && (
           <>
             <div>
-              <Label htmlFor="oidcProviderName">Provider Name</Label>
+              <Label htmlFor="oidcProviderName">Provider name</Label>
               <Input
                 id="oidcProviderName"
                 value={settings.oidcProviderName}
@@ -199,7 +193,7 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
             </div>
 
             <div>
-              <Label htmlFor="oidcClientSecret">Client Secret</Label>
+              <Label htmlFor="oidcClientSecret">Client secret</Label>
               <Input
                 id="oidcClientSecret"
                 type="password"
@@ -227,7 +221,7 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
               </p>
             </div>
 
-            <div className="pt-4 border-t">
+            <div className="sm:col-span-2">
               <AlertMessage
                 variant="info"
                 message={`Configure this callback URL in your OIDC provider: ${callbackUrl}`}
@@ -235,9 +229,9 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
             </div>
 
             {/* Test OIDC Connection */}
-            <div className="pt-4 border-t bg-muted/50 rounded-lg p-4 space-y-4">
+            <div className="space-y-4 rounded-lg border border-border bg-muted/50 p-4 sm:col-span-2">
               <div>
-                <h4 className="font-medium mb-2">Test Configuration</h4>
+                <h4 className="font-medium mb-2">Test configuration</h4>
                 <p className="text-sm text-muted-foreground mb-3">
                   Validates OIDC settings (issuer URL, scopes, endpoints) without authentication.
                 </p>
@@ -257,8 +251,8 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
                 </Button>
               </div>
 
-              <div className="pt-4 border-t">
-                <h4 className="font-medium mb-2">Test Authentication Flow</h4>
+              <div className="border-t border-border pt-4">
+                <h4 className="font-medium mb-2">Test authentication flow</h4>
                 <p className="text-sm text-muted-foreground mb-3">
                   Opens popup to test full OIDC authentication. Save settings first, then test.
                   <span className="block mt-1 text-xs">
@@ -281,24 +275,24 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
                 </Button>
               </div>
               {authTestResult && (
-                <div className={`mt-2 p-3 rounded-md animate-in fade-in slide-in-from-top-1 duration-200 ${authTestResult.success ? 'bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800'}`}>
+                <div className={`mt-2 p-3 rounded-md animate-in fade-in slide-in-from-top-1 duration-200 ${authTestResult.success ? 'bg-success-soft border border-success/30' : 'bg-destructive-soft border border-destructive/30'}`}>
                   <div className="flex items-center gap-2 text-sm">
                     {authTestResult.success ? (
-                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" aria-hidden="true" />
+                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-success" aria-hidden="true" />
                     ) : (
-                      <XCircle className="h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-400" aria-hidden="true" />
+                      <XCircle className="h-4 w-4 flex-shrink-0 text-destructive" aria-hidden="true" />
                     )}
-                    <span className={authTestResult.success ? 'text-green-700 dark:text-green-300 font-medium' : 'text-red-700 dark:text-red-300 font-medium'}>
+                    <span className={authTestResult.success ? 'text-success font-medium' : 'text-destructive font-medium'}>
                       {authTestResult.success ? 'Authentication test passed!' : 'Authentication test failed'}
                     </span>
                   </div>
                   {authTestResult.success && authTestResult.userEmail && (
-                    <div className="mt-2 pl-6 text-xs text-green-700 dark:text-green-300">
+                    <div className="mt-2 pl-6 text-xs text-success">
                       Successfully authenticated as: <span className="font-mono">{authTestResult.userEmail}</span>
                     </div>
                   )}
                   {authTestResult.error && (
-                    <div className="mt-2 pl-6 text-xs text-red-700 dark:text-red-300">
+                    <div className="mt-2 pl-6 text-xs text-destructive">
                       Error: {authTestResult.error}
                     </div>
                   )}
@@ -306,27 +300,27 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
               )}
 
               {testResult && (
-                <div className={`mt-2 p-3 rounded-md animate-in fade-in slide-in-from-top-1 duration-200 ${testResult.success ? 'bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800'}`}>
+                <div className={`mt-2 p-3 rounded-md animate-in fade-in slide-in-from-top-1 duration-200 ${testResult.success ? 'bg-success-soft border border-success/30' : 'bg-destructive-soft border border-destructive/30'}`}>
                   <div className="flex items-center gap-2 text-sm">
                     {testResult.success ? (
-                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" aria-hidden="true" />
+                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-success" aria-hidden="true" />
                     ) : (
-                      <XCircle className="h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-400" aria-hidden="true" />
+                      <XCircle className="h-4 w-4 flex-shrink-0 text-destructive" aria-hidden="true" />
                     )}
-                    <span className={testResult.success ? 'text-green-700 dark:text-green-300 font-medium' : 'text-red-700 dark:text-red-300 font-medium'}>
+                    <span className={testResult.success ? 'text-success font-medium' : 'text-destructive font-medium'}>
                       {testResult.success ? (testResult.message || 'OIDC configuration is valid') : (testResult.error || 'OIDC test failed')}
                     </span>
                   </div>
                   {testResult.success && testResult.callbackUrl && (
-                    <div className="mt-2 pl-6 text-xs text-green-700 dark:text-green-300 space-y-1">
+                    <div className="mt-2 pl-6 text-xs text-success space-y-1">
                       <div className="font-medium">Callback URL to configure:</div>
-                      <code className="block px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded">
+                      <code className="block px-2 py-1 bg-success-soft rounded">
                         {testResult.callbackUrl.url}
                       </code>
                     </div>
                   )}
                   {testResult.details && testResult.details.stage && (
-                    <div className="mt-2 pl-6 text-xs text-red-700 dark:text-red-300">
+                    <div className="mt-2 pl-6 text-xs text-destructive">
                       Failed at stage: {testResult.details.stage}
                     </div>
                   )}
@@ -335,10 +329,10 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
             </div>
 
             {/* Disable Password Login */}
-            <div className="pt-4 border-t">
+            <div className="border-t border-border pt-5 sm:col-span-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="disablePasswordLogin">OIDC-Only Mode</Label>
+                  <Label htmlFor="disablePasswordLogin">OIDC-only mode</Label>
                   <p className="text-sm text-muted-foreground">
                     Disable password login and require OIDC authentication
                   </p>
@@ -357,13 +351,13 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
           </>
         )}
 
-        <div className="pt-4 border-t">
+        <div className="border-t border-border pt-5 sm:col-span-2">
           <AlertMessage
             variant="info"
             message="✨ OIDC settings now reload automatically! No container restart needed - changes take effect immediately after saving."
           />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
   )
 }

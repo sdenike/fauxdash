@@ -1,4 +1,4 @@
-import * as HeroIcons from '@heroicons/react/24/outline'
+import * as HeroIcons from '@heroicons/react/24/outline' // palette-ok: user-selectable icon library
 import Icon from '@mdi/react'
 import * as MdiPaths from '@mdi/js'
 

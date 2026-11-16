@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,17 +13,15 @@ export function HomepageContentSettings({ settings, onSettingsChange }: Settings
   }, [settings, onSettingsChange])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Homepage Description</CardTitle>
-        <CardDescription>
-          Display a custom description on your homepage visible to all visitors
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <AdminSection
+      title="Homepage Description"
+      description="Display a custom description on your homepage visible to all visitors"
+      className="space-y-6"
+    >
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Label htmlFor="homepageDescriptionEnabled">Enable Homepage Description</Label>
+            <Label htmlFor="homepageDescriptionEnabled">Enable homepage description</Label>
             <p className="text-sm text-muted-foreground">
               Show a custom message on the homepage
             </p>
@@ -37,7 +35,7 @@ export function HomepageContentSettings({ settings, onSettingsChange }: Settings
 
         {settings.homepageDescriptionEnabled && (
           <div>
-            <Label htmlFor="homepageDescription">Description Text</Label>
+            <Label htmlFor="homepageDescription">Description text</Label>
             <Textarea
               id="homepageDescription"
               value={settings.homepageDescription}
@@ -52,7 +50,7 @@ export function HomepageContentSettings({ settings, onSettingsChange }: Settings
             </p>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
   )
 }

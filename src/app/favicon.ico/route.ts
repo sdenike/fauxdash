@@ -114,7 +114,7 @@ export async function GET() {
 
     // Return a simple SVG favicon as final fallback
     const svgFavicon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-      <rect width="100" height="100" rx="20" fill="#3b82f6"/>
+      <rect width="100" height="100" rx="20" fill="#2b2f33"/>
       <text x="50" y="70" font-family="Arial" font-size="50" fill="white" text-anchor="middle" font-weight="bold">F</text>
     </svg>`;
 

@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { CalendarIcon } from '@heroicons/react/24/outline'
+import { Calendar } from 'lucide-react'
 
 export type Period = 'hour' | 'day' | 'week' | 'month' | 'year' | 'custom'
 export type DataType = 'all' | 'bookmarks' | 'services'
@@ -51,6 +51,7 @@ export function TimeFilter({
               key={p}
               variant={period === p ? 'secondary' : 'ghost'}
               size="sm"
+              type="button"
               onClick={() => onPeriodChange(p)}
               className="capitalize"
             >
@@ -63,14 +64,14 @@ export function TimeFilter({
                 variant={period === 'custom' ? 'secondary' : 'ghost'}
                 size="sm"
               >
-                <CalendarIcon className="h-4 w-4 mr-1" />
+                <Calendar aria-hidden="true" className="h-4 w-4 mr-1" />
                 Custom
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="startDate">Start Date</Label>
+                  <Label htmlFor="startDate">Start date</Label>
                   <Input
                     id="startDate"
                     type="date"
@@ -79,7 +80,7 @@ export function TimeFilter({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="endDate">End Date</Label>
+                  <Label htmlFor="endDate">End date</Label>
                   <Input
                     id="endDate"
                     type="date"
@@ -104,7 +105,7 @@ export function TimeFilter({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Activity</SelectItem>
+            <SelectItem value="all">All activity</SelectItem>
             <SelectItem value="bookmarks">Bookmarks</SelectItem>
             <SelectItem value="services">Services</SelectItem>
           </SelectContent>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -13,17 +13,11 @@ export function DateTimeTab({ settings, onSettingsChange }: SettingsTabProps) {
   }, [settings, onSettingsChange])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Date & Time Display</CardTitle>
-        <CardDescription>
-          Display current date and time in the header
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
+    <AdminSection title="Date & Time Display" description="Display current date and time in the header">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+        <div className="flex items-center justify-between sm:col-span-2">
           <div>
-            <Label htmlFor="dateTimeEnabled">Show Date & Time</Label>
+            <Label htmlFor="dateTimeEnabled">Show date & time</Label>
             <p className="text-sm text-muted-foreground">
               Display date and time in header
             </p>
@@ -38,7 +32,7 @@ export function DateTimeTab({ settings, onSettingsChange }: SettingsTabProps) {
         {settings.dateTimeEnabled && (
           <>
             <div>
-              <Label htmlFor="dateTimePosition">Position in Header</Label>
+              <Label htmlFor="dateTimePosition">Position in header</Label>
               <Select
                 value={settings.dateTimePosition}
                 onValueChange={(value: 'left' | 'center' | 'right') => updateSetting('dateTimePosition', value)}
@@ -55,7 +49,7 @@ export function DateTimeTab({ settings, onSettingsChange }: SettingsTabProps) {
             </div>
 
             <div>
-              <Label htmlFor="dateTimeDisplayMode">Display Mode</Label>
+              <Label htmlFor="dateTimeDisplayMode">Display mode</Label>
               <Select
                 value={settings.dateTimeDisplayMode}
                 onValueChange={(value: 'text' | 'icon') => updateSetting('dateTimeDisplayMode', value)}
@@ -65,13 +59,13 @@ export function DateTimeTab({ settings, onSettingsChange }: SettingsTabProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="text">Text (Show full date/time)</SelectItem>
-                  <SelectItem value="icon">Clock Icon (Hover to see details)</SelectItem>
+                  <SelectItem value="icon">Clock icon (Hover to see details)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label htmlFor="dateFormat">Date Format</Label>
+              <Label htmlFor="dateFormat">Date format</Label>
               <Select
                 value={settings.dateFormat}
                 onValueChange={(value) => updateSetting('dateFormat', value)}
@@ -93,9 +87,9 @@ export function DateTimeTab({ settings, onSettingsChange }: SettingsTabProps) {
               </Select>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between sm:col-span-2">
               <div>
-                <Label htmlFor="timeEnabled">Show Time</Label>
+                <Label htmlFor="timeEnabled">Show time</Label>
                 <p className="text-sm text-muted-foreground">
                   Display current time with date
                 </p>
@@ -110,7 +104,7 @@ export function DateTimeTab({ settings, onSettingsChange }: SettingsTabProps) {
             {settings.timeEnabled && (
               <>
                 <div>
-                  <Label htmlFor="timeFormat">Time Format</Label>
+                  <Label htmlFor="timeFormat">Time format</Label>
                   <Select
                     value={settings.timeFormat}
                     onValueChange={(value: '12' | '24') => updateSetting('timeFormat', value)}
@@ -125,9 +119,9 @@ export function DateTimeTab({ settings, onSettingsChange }: SettingsTabProps) {
                   </Select>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between sm:col-span-2">
                   <div>
-                    <Label htmlFor="showSeconds">Show Seconds</Label>
+                    <Label htmlFor="showSeconds">Show seconds</Label>
                     <p className="text-sm text-muted-foreground">
                       Display seconds in time
                     </p>
@@ -142,7 +136,7 @@ export function DateTimeTab({ settings, onSettingsChange }: SettingsTabProps) {
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
   )
 }

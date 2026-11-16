@@ -1,17 +1,13 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/components/ui/use-toast'
-import {
-  PhotoIcon,
-  ArrowUpTrayIcon,
-  TrashIcon,
-} from '@heroicons/react/24/outline'
+import { Image as ImageIcon, Upload, Trash2 } from 'lucide-react'
 import { SettingsTabProps } from './types'
 
 export function HomepageGraphicSettings({ settings, onSettingsChange }: SettingsTabProps) {
@@ -128,17 +124,11 @@ export function HomepageGraphicSettings({ settings, onSettingsChange }: Settings
   }, [toast, updateSetting])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Homepage Graphic</CardTitle>
-        <CardDescription>
-          Display a custom logo or image on your homepage
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
+    <AdminSection title="Homepage Graphic" description="Display a custom logo or image on your homepage">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+        <div className="flex items-center justify-between sm:col-span-2">
           <div>
-            <Label htmlFor="homepageGraphicEnabled">Enable Homepage Graphic</Label>
+            <Label htmlFor="homepageGraphicEnabled">Enable homepage graphic</Label>
             <p className="text-sm text-muted-foreground">
               Show a custom image on the homepage
             </p>
@@ -150,9 +140,9 @@ export function HomepageGraphicSettings({ settings, onSettingsChange }: Settings
           />
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between sm:col-span-2">
           <div>
-            <Label htmlFor="homepageGraphicHideWhenLoggedIn">Hide When Logged In</Label>
+            <Label htmlFor="homepageGraphicHideWhenLoggedIn">Hide when logged in</Label>
             <p className="text-sm text-muted-foreground">
               Only show the graphic to logged-out users
             </p>
@@ -167,8 +157,8 @@ export function HomepageGraphicSettings({ settings, onSettingsChange }: Settings
         {settings.homepageGraphicEnabled && (
           <>
             {/* Preview and Upload */}
-            <div>
-              <Label>Graphic Image</Label>
+            <div className="sm:col-span-2">
+              <Label>Graphic image</Label>
               <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Preview */}
                 <div
@@ -196,14 +186,14 @@ export function HomepageGraphicSettings({ settings, onSettingsChange }: Settings
                           onClick={handleRemove}
                           className="h-8"
                         >
-                          <TrashIcon className="h-4 w-4 mr-1" />
+                          <Trash2 aria-hidden="true" className="h-4 w-4 mr-1" />
                           Remove
                         </Button>
                       </div>
                     </>
                   ) : (
                     <div className="text-center text-muted-foreground">
-                      <PhotoIcon className="h-10 w-10 mx-auto mb-2" />
+                      <ImageIcon aria-hidden="true" className="h-10 w-10 mx-auto mb-2" />
                       <p className="text-sm">No graphic uploaded</p>
                     </div>
                   )}
@@ -219,7 +209,7 @@ export function HomepageGraphicSettings({ settings, onSettingsChange }: Settings
                     className="hidden"
                     id="graphic-upload"
                   />
-                  <ArrowUpTrayIcon className="h-8 w-8 text-muted-foreground mb-2" />
+                  <Upload aria-hidden="true" className="h-8 w-8 text-muted-foreground mb-2" />
                   <Button
                     type="button"
                     variant="outline"
@@ -241,7 +231,7 @@ export function HomepageGraphicSettings({ settings, onSettingsChange }: Settings
               <>
                 {/* Max Width */}
                 <div>
-                  <Label htmlFor="homepageGraphicMaxWidth">Display Width</Label>
+                  <Label htmlFor="homepageGraphicMaxWidth">Display width</Label>
                   <Select
                     value={settings.homepageGraphicMaxWidth.toString()}
                     onValueChange={(value) => updateSetting('homepageGraphicMaxWidth', parseInt(value))}
@@ -265,7 +255,7 @@ export function HomepageGraphicSettings({ settings, onSettingsChange }: Settings
 
                 {/* Horizontal Alignment */}
                 <div>
-                  <Label htmlFor="homepageGraphicHAlign">Horizontal Alignment</Label>
+                  <Label htmlFor="homepageGraphicHAlign">Horizontal alignment</Label>
                   <Select
                     value={settings.homepageGraphicHAlign}
                     onValueChange={(value: 'left' | 'center' | 'right') => updateSetting('homepageGraphicHAlign', value)}
@@ -304,7 +294,7 @@ export function HomepageGraphicSettings({ settings, onSettingsChange }: Settings
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
   )
 }

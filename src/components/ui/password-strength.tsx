@@ -44,11 +44,11 @@ function calculateStrength(password: string): StrengthResult {
   const normalizedScore = Math.max(0, Math.min(4, Math.floor(score / 2)))
 
   const strengthLevels: StrengthResult[] = [
-    { score: 0, label: 'Very Weak', color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-500', icon: <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" /> },
-    { score: 1, label: 'Weak', color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-500', icon: <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" /> },
-    { score: 2, label: 'Fair', color: 'text-yellow-600 dark:text-yellow-400', bgColor: 'bg-yellow-500', icon: <Shield className="h-3.5 w-3.5" aria-hidden="true" /> },
-    { score: 3, label: 'Good', color: 'text-lime-600 dark:text-lime-400', bgColor: 'bg-lime-500', icon: <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> },
-    { score: 4, label: 'Strong', color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-500', icon: <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> },
+    { score: 0, label: 'Very weak', color: 'text-destructive', bgColor: 'bg-destructive', icon: <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" /> },
+    { score: 1, label: 'Weak', color: 'text-warning', bgColor: 'bg-warning', icon: <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" /> },
+    { score: 2, label: 'Fair', color: 'text-warning', bgColor: 'bg-warning', icon: <Shield className="h-3.5 w-3.5" aria-hidden="true" /> },
+    { score: 3, label: 'Good', color: 'text-success', bgColor: 'bg-success', icon: <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> },
+    { score: 4, label: 'Strong', color: 'text-success', bgColor: 'bg-success', icon: <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> },
   ]
 
   return strengthLevels[normalizedScore]

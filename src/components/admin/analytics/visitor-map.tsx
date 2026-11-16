@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, memo, useCallback, useRef, useEffect } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { PlusIcon, MinusIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/outline'
+import { Plus, Minus, Maximize2 } from 'lucide-react'
 
 interface Location {
   name: string
@@ -209,11 +209,11 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
           const pos = latLngToPixel(loc.lat, loc.lng, zoom, center.lat, center.lng, mapWidth, mapHeight)
 
           // Determine color based on visit count
-          let markerColor = 'rgb(96, 165, 250)' // blue-400 for low (1-10)
+          let markerColor = 'var(--info)' // low (1-10)
           if (loc.count > 50) {
-            markerColor = 'rgb(239, 68, 68)' // red-500 for high (51+)
+            markerColor = 'var(--destructive)' // high (51+)
           } else if (loc.count > 10) {
-            markerColor = 'rgb(234, 179, 8)' // yellow-500 for medium (11-50)
+            markerColor = 'var(--warning)' // medium (11-50)
           }
 
           const size = Math.max(10, Math.min(32, 10 + Math.log10(loc.count + 1) * 10))
@@ -234,7 +234,7 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
               }}
             >
               <div
-                className="rounded-full transition-transform hover:scale-125 shadow-lg"
+                className="rounded-full transition-transform hover:scale-125"
                 style={{
                   width: size,
                   height: size,
@@ -244,7 +244,7 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
               />
               {/* Tooltip */}
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20">
-                <div className="bg-popover border rounded px-2 py-1 text-xs whitespace-nowrap shadow-lg">
+                <div className="bg-popover border rounded px-2 py-1 text-xs whitespace-nowrap shadow-sm">
                   <div className="font-medium flex items-center gap-1.5">
                     <span className="text-base">{getCountryFlag(loc.code || loc.country)}</span>
                     <span>{loc.name || loc.code}</span>
@@ -262,51 +262,57 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
         <Button
           variant="secondary"
           size="icon"
-          className="h-8 w-8 shadow-md"
+          className="h-8 w-8"
+          type="button"
+          aria-label="Zoom in"
           onClick={handleZoomIn}
           title="Zoom in"
         >
-          <PlusIcon className="h-4 w-4" />
+          <Plus aria-hidden="true" className="h-4 w-4" />
         </Button>
         <Button
           variant="secondary"
           size="icon"
-          className="h-8 w-8 shadow-md"
+          className="h-8 w-8"
+          type="button"
+          aria-label="Zoom out"
           onClick={handleZoomOut}
           title="Zoom out"
         >
-          <MinusIcon className="h-4 w-4" />
+          <Minus aria-hidden="true" className="h-4 w-4" />
         </Button>
         <Button
           variant="secondary"
           size="icon"
-          className="h-8 w-8 shadow-md"
+          className="h-8 w-8"
+          type="button"
+          aria-label="Reset view"
           onClick={handleReset}
           title="Reset view"
         >
-          <ArrowsPointingOutIcon className="h-4 w-4" />
+          <Maximize2 aria-hidden="true" className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Zoom level indicator */}
-      <div className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs z-20">
+      <div className="absolute top-4 right-4 bg-background border border-border rounded px-2 py-1 text-xs z-20">
         Zoom: {zoom}x
       </div>
 
       {/* Legend with distinct colors */}
-      <div className="absolute bottom-4 right-4 bg-background/90 backdrop-blur-sm rounded-lg p-3 text-xs shadow-lg border z-20">
-        <div className="font-medium mb-2 text-foreground">Visitor Traffic</div>
+      <div className="absolute bottom-4 right-4 bg-background rounded-lg p-3 text-xs border border-border z-20">
+        <div className="font-medium mb-2 text-foreground">Visitor traffic</div>
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-400 flex-shrink-0" />
+            <div className="w-3 h-3 rounded-full bg-info flex-shrink-0" />
             <span className="text-foreground">Low (1-10 visits)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-yellow-500 flex-shrink-0" />
+            <div className="w-3 h-3 rounded-full bg-warning flex-shrink-0" />
             <span className="text-foreground">Medium (11-50 visits)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500 flex-shrink-0" />
+            <div className="w-3 h-3 rounded-full bg-destructive flex-shrink-0" />
             <span className="text-foreground">High (51+ visits)</span>
           </div>
         </div>
@@ -327,38 +333,25 @@ export const VisitorMap = memo(function VisitorMap({
 }: VisitorMapProps) {
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-        </CardHeader>
-        <CardContent>
+      <AdminSection>
+        <Skeleton className="h-6 w-32" />
           <Skeleton className="h-[400px] w-full rounded-lg" />
-        </CardContent>
-      </Card>
+        </AdminSection>
     )
   }
 
   if (!locations.length) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Visitor Locations</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <AdminSection title="Visitor locations">
           <div className="h-[400px] flex items-center justify-center text-muted-foreground">
             No geographic data available yet. Visitor locations will appear here once pageviews are recorded with GeoIP enabled.
           </div>
-        </CardContent>
-      </Card>
+        </AdminSection>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Visitor Locations</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <AdminSection title="Visitor locations">
         <ZoomableMap locations={locations} />
 
         {/* Location list below map */}
@@ -375,44 +368,44 @@ export const VisitorMap = memo(function VisitorMap({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 border rounded-lg p-3 bg-muted/20">
             {locations.map((loc, index) => {
               // Determine color based on visit count
-              let dotColor = 'bg-blue-400'
+              let dotColor = 'bg-info'
               if (loc.count > 50) {
-                dotColor = 'bg-red-500'
+                dotColor = 'bg-destructive'
               } else if (loc.count > 10) {
-                dotColor = 'bg-yellow-500'
+                dotColor = 'bg-warning'
               }
 
               return (
-                <div
+                <button
+                  type="button"
                   key={index}
-                  className="flex items-center gap-2 text-sm p-2 rounded hover:bg-muted transition-colors cursor-pointer border border-transparent hover:border-border"
+                  className="flex w-full items-center gap-2 text-left text-sm p-2 rounded hover:bg-muted transition-colors border border-transparent hover:border-border"
                   onClick={() => onCountryClick?.(loc.code || '')}
                 >
-                  <div className={`w-2.5 h-2.5 rounded-full ${dotColor} flex-shrink-0 shadow-sm`} />
+                  <span aria-hidden="true" className={`w-2.5 h-2.5 rounded-full ${dotColor} flex-shrink-0`} />
                   <span className="text-base flex-shrink-0">{getCountryFlag(loc.code || loc.country)}</span>
                   <span className="flex-1 font-medium">{loc.name || loc.code}</span>
                   <span className="text-muted-foreground flex-shrink-0 font-mono text-xs">{loc.count.toLocaleString()}</span>
-                </div>
+                </button>
               )
             })}
           </div>
 
           <div className="mt-3 text-xs text-muted-foreground flex items-center gap-4">
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-blue-400" />
+              <div className="w-2 h-2 rounded-full bg-info" />
               <span>Low (1-10)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-yellow-500" />
+              <div className="w-2 h-2 rounded-full bg-warning" />
               <span>Medium (11-50)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-red-500" />
+              <div className="w-2 h-2 rounded-full bg-destructive" />
               <span>High (51+)</span>
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </AdminSection>
   )
 })

@@ -29,7 +29,7 @@ export function ChangelogDialog({ open, onOpenChange }: ChangelogDialogProps) {
       setChangelog(data.content || '')
     } catch (error) {
       console.error('Failed to fetch changelog:', error)
-      setChangelog('Failed to load changelog')
+      setChangelog('Failed to load changelog.')
     } finally {
       setLoading(false)
     }
@@ -42,16 +42,16 @@ export function ChangelogDialog({ open, onOpenChange }: ChangelogDialogProps) {
           <DialogTitle>Changelog</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto prose prose-slate dark:prose-invert max-w-none">
+        <div className="flex-1 overflow-y-auto max-w-none">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Loading changelog...</div>
+              <div className="text-muted-foreground">Loading changelog…</div>
             </div>
           ) : (
             <ReactMarkdown
               components={{
-                h1: ({ node, ...props }) => <h1 className="text-3xl font-bold mt-6 mb-4" {...props} />,
-                h2: ({ node, ...props }) => <h2 className="text-2xl font-bold mt-6 mb-3 pb-2 border-b" {...props} />,
+                h1: ({ node, ...props }) => <h1 className="text-2xl font-semibold mt-6 mb-4" {...props} />,
+                h2: ({ node, ...props }) => <h2 className="text-xl font-semibold mt-6 mb-3 pb-2 border-b" {...props} />,
                 h3: ({ node, ...props }) => <h3 className="text-xl font-semibold mt-4 mb-2" {...props} />,
                 ul: ({ node, ...props }) => <ul className="list-disc pl-6 space-y-1" {...props} />,
                 ol: ({ node, ...props }) => <ol className="list-decimal pl-6 space-y-1" {...props} />,

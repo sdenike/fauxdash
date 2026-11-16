@@ -480,13 +480,23 @@ export const authOptions: NextAuthOptions = {
             // nothing else survives the OAuth round-trip. sessionEncode() turns
             // this claim into the real JWT lifetime.
             let rememberDays = DEFAULT_REMEMBER_DAYS;
+            let rememberCookie: string | undefined;
             try {
               const cookieStore = await cookies();
-              rememberDays = clampRememberDays(cookieStore.get(REMEMBER_COOKIE_NAME)?.value);
-            } catch {
-              // No request scope (build/prerender) — keep the default
+              rememberCookie = cookieStore.get(REMEMBER_COOKIE_NAME)?.value;
+              rememberDays = clampRememberDays(rememberCookie);
+            } catch (err) {
+              // Used to be swallowed silently, which would quietly give every OIDC login 2 days.
+              logAuth('warn', 'OIDC remember-me cookie could not be read; using default', {
+                error: err instanceof Error ? err.message : String(err),
+              });
             }
             token.rememberDays = rememberDays;
+            logAuth('info', 'Session length set', {
+              provider: 'oidc',
+              rememberDays,
+              cookiePresent: rememberCookie !== undefined,
+            });
 
             console.log(`[${ts()}] [OIDC] Token created:`, {
               userId: token.id,
@@ -523,6 +533,7 @@ export const authOptions: NextAuthOptions = {
         // JWT lifetime from it. (Setting token.exp here does nothing — default
         // encode overwrites it with session.maxAge.)
         token.rememberDays = clampRememberDays((user as any).rememberDuration);
+        logAuth('info', 'Session length set', { provider: 'credentials', rememberDays: token.rememberDays });
       }
 
       // Refresh user data from database on update trigger
@@ -555,6 +566,8 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email as string;
         session.user.name = token.name as string;
       }
+      // Lets the Profile page say how long this sign-in lasts.
+      (session as any).rememberDays = clampRememberDays(token.rememberDays);
       return session;
     },
   },

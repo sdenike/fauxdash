@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui/card'
+import { AdminSection } from './admin-page'
 import { Button } from '../ui/button'
-import { ArrowUpTrayIcon, DocumentTextIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { Upload, FileText, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { useToast } from '../ui/use-toast'
 import { Switch } from '../ui/switch'
 import { Label } from '../ui/label'
@@ -105,7 +105,7 @@ export function CSVImport({ onImportComplete }: CSVImportProps) {
 
               toast({
                 variant: 'success',
-                title: 'Import Complete',
+                title: 'Import complete',
                 description: `Created ${data.results.bookmarksCreated} bookmarks and ${data.results.servicesCreated} services`,
               })
               onImportComplete()
@@ -118,8 +118,8 @@ export function CSVImport({ onImportComplete }: CSVImportProps) {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Import Failed',
-        description: error.message || 'An error occurred while importing the CSV file',
+        title: 'Could not import CSV',
+        description: error.message || 'The file could not be read. Check that it is a valid CSV and try again.',
       })
     } finally {
       setImporting(false)
@@ -180,7 +180,7 @@ export function CSVImport({ onImportComplete }: CSVImportProps) {
     if (successCount > 0) {
       toast({
         variant: 'success',
-        title: 'Icons Updated',
+        title: 'Icons updated',
         description: `Updated ${successCount} item${successCount !== 1 ? 's' : ''}${errorCount > 0 ? `, ${errorCount} failed` : ''}`,
       })
       // Remove successfully updated items from the list
@@ -189,8 +189,8 @@ export function CSVImport({ onImportComplete }: CSVImportProps) {
     } else {
       toast({
         variant: 'destructive',
-        title: 'Update Failed',
-        description: 'Failed to update icons',
+        title: 'Could not update icons',
+        description: 'No icons were saved. Check your connection and try again.',
       })
     }
   }
@@ -206,14 +206,8 @@ export function CSVImport({ onImportComplete }: CSVImportProps) {
   const progressPercent = progress ? Math.round((progress.current / progress.total) * 100) : 0
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Import from CSV</CardTitle>
-        <CardDescription>
-          Import bookmarks and services from a CSV file
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <AdminSection title="Import from CSV" description="Import bookmarks and services from a CSV file" className="space-y-6">
+      <div className="space-y-6">
         {/* How-to Section */}
         <div className="bg-muted/50 rounded-lg p-4 space-y-3">
           <h4 className="font-medium text-sm">How to Import</h4>
@@ -251,8 +245,8 @@ Services,Monitoring,Uptime Kuma,Uptime monitor,https://uptime.local`}</pre>
         </div>
 
         {/* Upload Area */}
-        <div className="border-2 border-dashed rounded-lg p-8 text-center">
-          <DocumentTextIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+          <FileText aria-hidden="true" className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
 
           {importing && progress ? (
             <div className="space-y-4 max-w-md mx-auto">
@@ -283,38 +277,38 @@ Services,Monitoring,Uptime Kuma,Uptime monitor,https://uptime.local`}</pre>
                 onClick={() => fileInputRef.current?.click()}
                 disabled={importing}
               >
-                <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
-                Select CSV File
+                <Upload aria-hidden="true" className="h-4 w-4 mr-2" />
+                Select CSV file
               </Button>
             </>
           )}
         </div>
 
-        {/* Import Results */}
+        {/* Import results */}
         {results && (
           <div className="bg-muted rounded-lg p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <h4 className="font-medium">Import Results</h4>
+              <CheckCircle2 aria-hidden="true" className="h-5 w-5 text-success" />
+              <h4 className="font-medium">Import results</h4>
             </div>
             <ul className="text-sm space-y-1 ml-7">
               {results.categoriesCreated > 0 && (
-                <li className="text-green-600 dark:text-green-400">
+                <li className="text-success">
                   Created {results.categoriesCreated} bookmark {results.categoriesCreated === 1 ? 'category' : 'categories'}
                 </li>
               )}
               {results.bookmarksCreated > 0 && (
-                <li className="text-green-600 dark:text-green-400">
+                <li className="text-success">
                   Created {results.bookmarksCreated} {results.bookmarksCreated === 1 ? 'bookmark' : 'bookmarks'}
                 </li>
               )}
               {results.serviceCategoriesCreated > 0 && (
-                <li className="text-green-600 dark:text-green-400">
+                <li className="text-success">
                   Created {results.serviceCategoriesCreated} service {results.serviceCategoriesCreated === 1 ? 'category' : 'categories'}
                 </li>
               )}
               {results.servicesCreated > 0 && (
-                <li className="text-green-600 dark:text-green-400">
+                <li className="text-success">
                   Created {results.servicesCreated} {results.servicesCreated === 1 ? 'service' : 'services'}
                 </li>
               )}
@@ -337,19 +331,19 @@ Services,Monitoring,Uptime Kuma,Uptime monitor,https://uptime.local`}</pre>
 
         {/* Failed Favicons - Icon Selection */}
         {failedFavicons.length > 0 && (
-          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 space-y-4">
+          <div className="bg-warning-soft border border-warning/30 rounded-lg p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                <h4 className="font-medium text-amber-900 dark:text-amber-100">
+                <AlertTriangle aria-hidden="true" className="h-5 w-5 text-warning" />
+                <h4 className="font-medium text-warning">
                   {failedFavicons.length} {failedFavicons.length === 1 ? 'item needs' : 'items need'} an icon
                 </h4>
               </div>
               <Button variant="ghost" size="sm" onClick={handleSkipAll}>
-                Skip All
+                Skip all
               </Button>
             </div>
-            <p className="text-sm text-amber-800 dark:text-amber-200">
+            <p className="text-sm text-foreground">
               These items could not fetch a favicon automatically. Select an icon for each or skip.
             </p>
             <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -379,12 +373,12 @@ Services,Monitoring,Uptime Kuma,Uptime monitor,https://uptime.local`}</pre>
                 Skip Remaining
               </Button>
               <Button onClick={handleSaveIcons} disabled={savingIcons}>
-                {savingIcons ? 'Saving...' : 'Save Selected Icons'}
+                {savingIcons ? 'Saving…' : 'Save selected icons'}
               </Button>
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
   )
 }

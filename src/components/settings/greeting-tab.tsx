@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -13,17 +13,11 @@ export function GreetingTab({ settings, onSettingsChange }: SettingsTabProps) {
   }, [settings, onSettingsChange])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Welcome Message</CardTitle>
-        <CardDescription>
-          Customize the welcome message on your homepage
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <AdminSection title="Welcome Message" description="Customize the welcome message on your homepage">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Label htmlFor="welcomeMessageEnabled">Show Welcome Message</Label>
+            <Label htmlFor="welcomeMessageEnabled">Show Welcome message</Label>
             <p className="text-sm text-muted-foreground">
               Display welcome message on homepage
             </p>
@@ -39,7 +33,7 @@ export function GreetingTab({ settings, onSettingsChange }: SettingsTabProps) {
           <>
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="welcomeMessageTimeBased">Use Time-Based Messages</Label>
+                <Label htmlFor="welcomeMessageTimeBased">Use Time-Based messages</Label>
                 <p className="text-sm text-muted-foreground">
                   Show different messages based on time of day
                 </p>
@@ -52,9 +46,9 @@ export function GreetingTab({ settings, onSettingsChange }: SettingsTabProps) {
             </div>
 
             {settings.welcomeMessageTimeBased ? (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
                 <div>
-                  <Label htmlFor="welcomeMessageMorning">Morning Message (5 AM - 12 PM)</Label>
+                  <Label htmlFor="welcomeMessageMorning">Morning message (5 AM - 12 PM)</Label>
                   <Input
                     id="welcomeMessageMorning"
                     value={settings.welcomeMessageMorning}
@@ -63,7 +57,7 @@ export function GreetingTab({ settings, onSettingsChange }: SettingsTabProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="welcomeMessageAfternoon">Afternoon Message (12 PM - 5 PM)</Label>
+                  <Label htmlFor="welcomeMessageAfternoon">Afternoon message (12 PM - 5 PM)</Label>
                   <Input
                     id="welcomeMessageAfternoon"
                     value={settings.welcomeMessageAfternoon}
@@ -72,7 +66,7 @@ export function GreetingTab({ settings, onSettingsChange }: SettingsTabProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="welcomeMessageEvening">Evening Message (5 PM - 5 AM)</Label>
+                  <Label htmlFor="welcomeMessageEvening">Evening message (5 PM - 5 AM)</Label>
                   <Input
                     id="welcomeMessageEvening"
                     value={settings.welcomeMessageEvening}
@@ -80,13 +74,13 @@ export function GreetingTab({ settings, onSettingsChange }: SettingsTabProps) {
                     placeholder="Good evening"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground sm:col-span-2">
                   Use variables: {'{{username}}'}, {'{{email}}'}, {'{{firstname}}'}, {'{{lastname}}'}
                 </p>
               </div>
             ) : (
               <div>
-                <Label htmlFor="welcomeMessage">Welcome Message Text</Label>
+                <Label htmlFor="welcomeMessage">Welcome message text</Label>
                 <Input
                   id="welcomeMessage"
                   value={settings.welcomeMessage}
@@ -100,7 +94,7 @@ export function GreetingTab({ settings, onSettingsChange }: SettingsTabProps) {
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
   )
 }

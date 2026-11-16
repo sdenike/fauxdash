@@ -7,9 +7,10 @@ import { ContentManager } from '@/components/admin/content-manager'
 import { AddBookmarkForm } from '@/components/admin/add-bookmark-form'
 import { AddServiceForm } from '@/components/admin/add-service-form'
 import { CSVImport } from '@/components/admin/csv-import'
+import { AdminPage } from '@/components/admin/admin-page'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-export default function BookmarksPage() {
+export default function ContentPage() {
   const [categories, setCategories] = useState([])
   const [serviceCategories, setServiceCategories] = useState([])
 
@@ -32,63 +33,57 @@ export default function BookmarksPage() {
     }
   }
 
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">
-          Content Management
-        </h1>
-        <p className="text-muted-foreground">
-          Manage your categories, bookmarks, and services
-        </p>
-      </div>
+  const [addKind, setAddKind] = useState<'bookmark' | 'service'>('bookmark')
 
+  return (
+    <AdminPage title="Content" description="Categories, bookmarks and services shown on the start page.">
       <Tabs defaultValue="content" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="content">Content</TabsTrigger>
-          <TabsTrigger value="add-bookmark">Add Bookmark</TabsTrigger>
-          <TabsTrigger value="add-service">Add Service</TabsTrigger>
-          <TabsTrigger value="import">Import</TabsTrigger>
+        <TabsList>
+          <TabsTrigger value="content">Links</TabsTrigger>
+          <TabsTrigger value="add">Add</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="import">Import</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="content" className="mt-6">
-          <ContentManager
-            categories={categories}
-            serviceCategories={serviceCategories}
-            onContentChange={fetchData}
-          />
+        <TabsContent value="content">
+          <ContentManager categories={categories} serviceCategories={serviceCategories} onContentChange={fetchData} />
         </TabsContent>
 
-        <TabsContent value="add-bookmark" className="mt-6">
-          <AddBookmarkForm
-            categories={categories}
-            onBookmarkAdded={fetchData}
-          />
+        <TabsContent value="add" className="space-y-6">
+          <div role="radiogroup" aria-label="What to add" className="inline-flex rounded-md border border-border p-0.5">
+            {(['bookmark', 'service'] as const).map((kind) => (
+              <button
+                key={kind}
+                type="button"
+                role="radio"
+                aria-checked={addKind === kind}
+                onClick={() => setAddKind(kind)}
+                className={
+                  addKind === kind
+                    ? 'h-8 rounded-[5px] bg-accent px-3 text-sm font-medium text-foreground'
+                    : 'h-8 rounded-[5px] px-3 text-sm text-muted-foreground hover:text-foreground'
+                }
+              >
+                {kind === 'bookmark' ? 'Bookmark' : 'Service'}
+              </button>
+            ))}
+          </div>
+          {addKind === 'bookmark' ? (
+            <AddBookmarkForm categories={categories} onBookmarkAdded={fetchData} />
+          ) : (
+            <AddServiceForm serviceCategories={serviceCategories} onServiceAdded={fetchData} />
+          )}
         </TabsContent>
 
-        <TabsContent value="add-service" className="mt-6">
-          <AddServiceForm
-            serviceCategories={serviceCategories}
-            onServiceAdded={fetchData}
-          />
+        <TabsContent value="categories" className="space-y-10">
+          <CategoryManager categories={categories} onCategoriesChange={fetchData} />
+          <ServiceCategoryManager categories={serviceCategories} onCategoriesChange={fetchData} />
         </TabsContent>
 
-        <TabsContent value="import" className="mt-6">
+        <TabsContent value="import">
           <CSVImport onImportComplete={fetchData} />
         </TabsContent>
-
-        <TabsContent value="categories" className="mt-6 space-y-6">
-          <CategoryManager
-            categories={categories}
-            onCategoriesChange={fetchData}
-          />
-          <ServiceCategoryManager
-            categories={serviceCategories}
-            onCategoriesChange={fetchData}
-          />
-        </TabsContent>
       </Tabs>
-    </div>
+    </AdminPage>
   )
 }

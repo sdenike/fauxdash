@@ -1,7 +1,8 @@
 'use client'
 
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useState, useMemo, memo } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card'
+import { AdminSection } from './admin-page'
 import { Button } from '../ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog'
 import { Input } from '../ui/input'
@@ -9,8 +10,7 @@ import { Label } from '../ui/label'
 import { Textarea } from '../ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Checkbox } from '../ui/checkbox'
-import { PlusIcon, PencilIcon, TrashIcon, ArrowsRightLeftIcon, SparklesIcon, ChevronDownIcon, ChevronUpIcon, ArrowPathIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
-import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid'
+import { Pencil, Trash2, ArrowLeftRight, Sparkles, ChevronDown, ChevronUp, RefreshCw, CheckCircle2, Circle, GripVertical, AlertTriangle } from 'lucide-react'
 import { IconSelector } from '../icon-selector'
 import { getIconByName } from '@/lib/icons'
 import { useTheme } from 'next-themes'
@@ -131,13 +131,14 @@ const SortableContentItem = memo(function SortableContentItem({ item, onEdit, on
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative flex flex-col gap-2 p-3 bg-card border rounded-lg hover:shadow-md transition-all ${
+      className={`group relative flex flex-col gap-2 p-3 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors ${
         isSelected ? 'ring-2 ring-primary' : ''
       }`}
     >
       {/* Top row: Checkbox, Drag Handle, Icon, Name */}
       <div className="flex items-center gap-3">
         <Checkbox
+          aria-label={`Select ${item.name}`}
           checked={isSelected}
           onCheckedChange={() => onToggleSelect(item)}
           onClick={(e) => e.stopPropagation()}
@@ -146,16 +147,15 @@ const SortableContentItem = memo(function SortableContentItem({ item, onEdit, on
         <div
           {...attributes}
           {...listeners}
+          aria-label={`Reorder ${item.name}`}
           className="cursor-move text-muted-foreground hover:text-foreground"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-          </svg>
+          <GripVertical className="w-4 h-4" aria-hidden="true" />
         </div>
 
         {(ItemIcon || faviconPath || selfhstPath) && (
           <div className="flex items-center justify-center flex-shrink-0 text-primary w-8 h-8">
-            {ItemIcon && <ItemIcon className="w-6 h-6" />}
+            {ItemIcon && <ItemIcon className="w-6 h-6" aria-hidden="true" />}
             {(faviconPath || selfhstPath) && (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
@@ -176,8 +176,8 @@ const SortableContentItem = memo(function SortableContentItem({ item, onEdit, on
       <div className="flex items-center gap-2 ml-11">
         <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${
           item.type === 'bookmark'
-            ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
-            : 'bg-purple-500/20 text-purple-700 dark:text-purple-300'
+            ? 'bg-info-soft text-info'
+            : 'bg-brand-soft text-brand'
         }`}>
           {item.type === 'bookmark' ? 'Bookmark' : 'Service'}
         </span>
@@ -187,9 +187,10 @@ const SortableContentItem = memo(function SortableContentItem({ item, onEdit, on
           size="icon"
           className="h-7 w-7"
           onClick={() => onConvert(item)}
-          title={`Convert to ${item.type === 'bookmark' ? 'Service' : 'Bookmark'}`}
+          title={`Convert to ${item.type === 'bookmark' ? 'service' : 'bookmark'}`}
+          aria-label={`Convert ${item.name} to ${item.type === 'bookmark' ? 'service' : 'bookmark'}`}
         >
-          <ArrowsRightLeftIcon className="h-4 w-4" />
+          <ArrowLeftRight className="h-4 w-4" aria-hidden="true" />
         </Button>
 
         <Button
@@ -198,8 +199,9 @@ const SortableContentItem = memo(function SortableContentItem({ item, onEdit, on
           className="h-7 w-7"
           onClick={() => onEdit(item)}
           title="Edit"
+          aria-label={`Edit ${item.name}`}
         >
-          <PencilIcon className="h-4 w-4" />
+          <Pencil className="h-4 w-4" aria-hidden="true" />
         </Button>
 
         <Button
@@ -208,8 +210,9 @@ const SortableContentItem = memo(function SortableContentItem({ item, onEdit, on
           className="h-7 w-7 text-destructive hover:text-destructive"
           onClick={() => onDelete(item)}
           title="Delete"
+          aria-label={`Delete ${item.name}`}
         >
-          <TrashIcon className="h-4 w-4" />
+          <Trash2 className="h-4 w-4" aria-hidden="true" />
         </Button>
       </div>
     </div>
@@ -217,6 +220,7 @@ const SortableContentItem = memo(function SortableContentItem({ item, onEdit, on
 })
 
 export function ContentManager({ categories, serviceCategories, onContentChange }: ContentManagerProps) {
+  const confirm = useConfirm()
   const { toast } = useToast()
   const { theme } = useTheme()
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -483,7 +487,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
   }
 
   const handleDelete = async (item: ContentItem) => {
-    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) return
+    if (!(await confirm({ title: `Delete "${item.name}"?`, description: 'This cannot be undone.', confirmLabel: item.type === 'bookmark' ? 'Delete bookmark' : 'Delete service', destructive: true }))) return
 
     const endpoint = item.type === 'bookmark' ? `/api/bookmarks/${item.id}` : `/api/services/${item.id}`
     await fetch(endpoint, { method: 'DELETE' })
@@ -1108,7 +1112,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
       return
     }
 
-    if (!confirm(`Are you sure you want to delete ${itemsToDelete.length} item${itemsToDelete.length !== 1 ? 's' : ''}? This cannot be undone.`)) {
+    if (!(await confirm({ title: `Delete ${itemsToDelete.length} item${itemsToDelete.length !== 1 ? 's' : ''}?`, description: 'This cannot be undone.', confirmLabel: 'Delete', destructive: true }))) {
       return
     }
 
@@ -1346,7 +1350,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
       item.categoryId === categoryId && item.type === fromType
     )
 
-    if (!confirm(`Convert "${category.name}" and all ${categoryItems.length} items to ${toType} category?`)) return
+    if (!(await confirm({ title: `Convert "${category.name}" to a ${toType} category?`, description: `Its ${categoryItems.length} item${categoryItems.length !== 1 ? 's move' : ' moves'} with it.`, confirmLabel: 'Convert' }))) return
 
     try {
       // Create new category in target type
@@ -1409,22 +1413,17 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
   const activeItem = activeId ? allItems.find(item => `${item.type}-${item.id}` === activeId) : null
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Content Manager</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Drag and drop to reorganize or convert between bookmarks and services
-            </p>
-          </div>
+    <AdminSection
+      title="Content manager"
+      description="Drag and drop to reorganize or convert between bookmarks and services"
+      actions={
           <div className="flex gap-2 flex-wrap">
             <Button
               variant="outline"
               size="sm"
               onClick={handleSelectAll}
             >
-              {selectedItems.size === allItems.length ? 'Deselect All' : 'Select All'}
+              {selectedItems.size === allItems.length ? 'Deselect all' : 'Select all'}
             </Button>
             <Button
               variant="outline"
@@ -1432,7 +1431,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
               onClick={() => handleBatchFetch(true)}
               disabled={fetchingFavicon}
             >
-              {fetchingFavicon ? 'Fetching...' : 'Fetch All Favicons'}
+              {fetchingFavicon ? 'Fetching…' : 'Fetch all favicons'}
             </Button>
             {selectedItems.size > 0 && (
               <>
@@ -1442,7 +1441,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                   onClick={() => handleBatchFetch(false)}
                   disabled={fetchingFavicon}
                 >
-                  Fetch Selected ({selectedItems.size})
+                  Fetch selected ({selectedItems.size})
                 </Button>
                 <div className="h-6 w-px bg-border" />
                 <Button
@@ -1451,8 +1450,8 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                   onClick={handleBulkConvertGrayscale}
                   disabled={convertingGrayscale}
                 >
-                  <SparklesIcon className="h-4 w-4 mr-1" />
-                  {convertingGrayscale ? 'Converting...' : 'Grayscale Selected'}
+                  <Sparkles className="h-4 w-4 mr-1" aria-hidden="true" />
+                  {convertingGrayscale ? 'Converting…' : 'Grayscale selected'}
                 </Button>
                 <Button
                   variant="outline"
@@ -1460,8 +1459,8 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                   onClick={handleBulkInvert}
                   disabled={invertingColors}
                 >
-                  <SparklesIcon className="h-4 w-4 mr-1" />
-                  {invertingColors ? 'Inverting...' : 'Invert Selected'}
+                  <Sparkles className="h-4 w-4 mr-1" aria-hidden="true" />
+                  {invertingColors ? 'Inverting…' : 'Invert selected'}
                 </Button>
                 <Button
                   variant="outline"
@@ -1469,8 +1468,8 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                   onClick={handleBulkConvertTheme}
                   disabled={convertingColor}
                 >
-                  <SparklesIcon className="h-4 w-4 mr-1" />
-                  {convertingColor ? 'Converting...' : 'Theme Color Selected'}
+                  <Sparkles className="h-4 w-4 mr-1" aria-hidden="true" />
+                  {convertingColor ? 'Converting…' : 'Theme color selected'}
                 </Button>
                 <Button
                   variant="outline"
@@ -1478,8 +1477,8 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                   onClick={handleBulkRevertOriginal}
                   disabled={revertingOriginal}
                 >
-                  <ArrowPathIcon className="h-4 w-4 mr-1" />
-                  {revertingOriginal ? 'Reverting...' : 'Revert to Original'}
+                  <RefreshCw className="h-4 w-4 mr-1" aria-hidden="true" />
+                  {revertingOriginal ? 'Reverting…' : 'Revert to original'}
                 </Button>
                 <div className="h-6 w-px bg-border" />
                 <Button
@@ -1487,15 +1486,15 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                   size="sm"
                   onClick={handleBulkDelete}
                 >
-                  <TrashIcon className="h-4 w-4 mr-1" />
-                  Delete Selected ({selectedItems.size})
+                  <Trash2 className="h-4 w-4 mr-1" aria-hidden="true" />
+                  Delete selected ({selectedItems.size})
                 </Button>
               </>
             )}
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
+      }
+    >
+      <div>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -1504,17 +1503,15 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
         >
           {/* Uncategorized Items Section */}
           {uncategorizedItems.length > 0 && (
-            <div className="mb-6 p-4 border-2 border-dashed border-amber-500/50 rounded-lg bg-amber-50/50 dark:bg-amber-950/20">
+            <div className="mb-6 p-4 border-2 border-dashed border-warning/30 rounded-lg bg-warning-soft">
               <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <svg className="h-5 w-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                <div className="p-2 rounded-lg bg-warning-soft">
+                  <AlertTriangle className="h-5 w-5 text-warning" aria-hidden="true" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-amber-900 dark:text-amber-100">Uncategorized Items</h3>
-                  <p className="text-sm text-amber-700 dark:text-amber-300">
-                    {uncategorizedItems.length} item{uncategorizedItems.length !== 1 ? 's' : ''} without a category - drag them into a category below
+                  <h3 className="font-semibold text-foreground">Uncategorized items</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {uncategorizedItems.length} item{uncategorizedItems.length !== 1 ? 's' : ''} without a category. Drag them into a category below.
                   </p>
                 </div>
                 <Button
@@ -1533,11 +1530,12 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                     setSelectedItems(newSelected)
                   }}
                   title={uncategorizedItems.every(item => selectedItems.has(`${item.type}-${item.id}`)) ? 'Deselect all uncategorized' : 'Select all uncategorized'}
+                  aria-label={uncategorizedItems.every(item => selectedItems.has(`${item.type}-${item.id}`)) ? 'Deselect all uncategorized' : 'Select all uncategorized'}
                 >
                   {uncategorizedItems.every(item => selectedItems.has(`${item.type}-${item.id}`)) ? (
-                    <CheckCircleSolidIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <CheckCircle2 className="h-4 w-4 text-warning" aria-hidden="true" />
                   ) : (
-                    <CheckCircleIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <Circle className="h-4 w-4 text-warning" aria-hidden="true" />
                   )}
                 </Button>
               </div>
@@ -1576,7 +1574,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
               return (
                 <div
                   key={categoryKey}
-                  className="border rounded-lg p-4 bg-accent/5 min-h-[200px]"
+                  className="border border-border rounded-lg p-4 bg-muted/30 min-h-[200px]"
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <Button
@@ -1585,19 +1583,20 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                       className="h-6 w-6 -ml-1"
                       onClick={() => toggleCategoryCollapse(categoryKey)}
                       title={isCollapsed ? 'Expand category' : 'Collapse category'}
+                      aria-label={isCollapsed ? 'Expand category' : 'Collapse category'}
                     >
                       {isCollapsed ? (
-                        <ChevronUpIcon className="h-4 w-4" />
+                        <ChevronUp className="h-4 w-4" aria-hidden="true" />
                       ) : (
-                        <ChevronDownIcon className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4" aria-hidden="true" />
                       )}
                     </Button>
-                    {CategoryIcon && <CategoryIcon className="h-5 w-5 text-primary" />}
+                    {CategoryIcon && <CategoryIcon className="h-5 w-5 text-primary" aria-hidden="true" />}
                     <h3 className="font-semibold">{category.name}</h3>
                     <span className="text-xs text-muted-foreground">
                       {categoryItems.length} item{categoryItems.length !== 1 ? 's' : ''}
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                    <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
                       {category.columns} col{category.columns !== 1 ? 's' : ''}
                     </span>
                     <div className="ml-auto flex items-center gap-1">
@@ -1608,11 +1607,12 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                           className="h-6 w-6"
                           onClick={() => handleSelectCategory('bookmark', category.id)}
                           title={isCategoryFullySelected('bookmark', category.id) ? 'Deselect all in category' : 'Select all in category'}
+                          aria-label={isCategoryFullySelected('bookmark', category.id) ? 'Deselect all in category' : 'Select all in category'}
                         >
                           {isCategoryFullySelected('bookmark', category.id) ? (
-                            <CheckCircleSolidIcon className="h-4 w-4 text-primary" />
+                            <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />
                           ) : (
-                            <CheckCircleIcon className="h-4 w-4" />
+                            <Circle className="h-4 w-4" aria-hidden="true" />
                           )}
                         </Button>
                       )}
@@ -1621,9 +1621,10 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                         size="icon"
                         className="h-6 w-6"
                         onClick={() => convertCategory(category.id, 'bookmark')}
-                        title="Convert to Service Category"
+                        title="Convert to service category"
+                        aria-label="Convert to service category"
                       >
-                        <ArrowsRightLeftIcon className="h-4 w-4" />
+                        <ArrowLeftRight className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>
@@ -1669,7 +1670,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
               return (
                 <div
                   key={categoryKey}
-                  className="border rounded-lg p-4 bg-purple-500/5 min-h-[200px]"
+                  className="border border-border rounded-lg p-4 bg-muted/30 min-h-[200px]"
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <Button
@@ -1678,22 +1679,23 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                       className="h-6 w-6 -ml-1"
                       onClick={() => toggleCategoryCollapse(categoryKey)}
                       title={isCollapsed ? 'Expand category' : 'Collapse category'}
+                      aria-label={isCollapsed ? 'Expand category' : 'Collapse category'}
                     >
                       {isCollapsed ? (
-                        <ChevronUpIcon className="h-4 w-4" />
+                        <ChevronUp className="h-4 w-4" aria-hidden="true" />
                       ) : (
-                        <ChevronDownIcon className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4" aria-hidden="true" />
                       )}
                     </Button>
-                    {CategoryIcon && <CategoryIcon className="h-5 w-5 text-primary" />}
+                    {CategoryIcon && <CategoryIcon className="h-5 w-5 text-primary" aria-hidden="true" />}
                     <h3 className="font-semibold">{category.name}</h3>
-                    <span className="text-xs bg-purple-500/20 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded">
+                    <span className="text-xs bg-brand-soft text-brand px-2 py-0.5 rounded">
                       Service
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {categoryItems.length} item{categoryItems.length !== 1 ? 's' : ''}
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                    <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
                       {category.columns} col{category.columns !== 1 ? 's' : ''}
                     </span>
                     <div className="ml-auto flex items-center gap-1">
@@ -1704,11 +1706,12 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                           className="h-6 w-6"
                           onClick={() => handleSelectCategory('service', category.id)}
                           title={isCategoryFullySelected('service', category.id) ? 'Deselect all in category' : 'Select all in category'}
+                          aria-label={isCategoryFullySelected('service', category.id) ? 'Deselect all in category' : 'Select all in category'}
                         >
                           {isCategoryFullySelected('service', category.id) ? (
-                            <CheckCircleSolidIcon className="h-4 w-4 text-primary" />
+                            <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />
                           ) : (
-                            <CheckCircleIcon className="h-4 w-4" />
+                            <Circle className="h-4 w-4" aria-hidden="true" />
                           )}
                         </Button>
                       )}
@@ -1717,9 +1720,10 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                         size="icon"
                         className="h-6 w-6"
                         onClick={() => convertCategory(category.id, 'service')}
-                        title="Convert to Bookmark Category"
+                        title="Convert to bookmark category"
+                        aria-label="Convert to bookmark category"
                       >
-                        <ArrowsRightLeftIcon className="h-4 w-4" />
+                        <ArrowLeftRight className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>
@@ -1755,7 +1759,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
 
           <DragOverlay>
             {activeItem ? (
-              <div className="p-3 bg-card border rounded-lg shadow-lg opacity-90">
+              <div className="p-3 bg-card border border-border rounded-lg opacity-90">
                 <p className="font-medium text-sm">{activeItem.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{activeItem.url}</p>
               </div>
@@ -1768,7 +1772,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                Convert {convertingItem?.type === 'bookmark' ? 'Bookmark to Service' : 'Service to Bookmark'}
+                Convert {convertingItem?.type === 'bookmark' ? 'bookmark to service' : 'service to bookmark'}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -1777,13 +1781,13 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                 Select a category or leave uncategorized.
               </p>
               <div>
-                <Label>Target Category</Label>
+                <Label>Target category</Label>
                 <Select
                   value={(selectedTargetCategory ?? 0).toString()}
                   onValueChange={(value) => setSelectedTargetCategory(value === '0' ? null : parseInt(value))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select category..." />
+                    <SelectValue placeholder="Select category…" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="0">Uncategorized</SelectItem>
@@ -1817,7 +1821,7 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                Edit {editingItem?.type === 'bookmark' ? 'Bookmark' : 'Service'}
+                Edit {editingItem?.type === 'bookmark' ? 'bookmark' : 'service'}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit}>
@@ -1858,10 +1862,10 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                       defaultTab={editingItem?.type === 'service' ? 'selfhst' : 'heroicons'}
                     />
 
-                    {/* Favicon Operations */}
+                    {/* Favicon operations */}
                     {formData.icon?.startsWith('favicon:') && (
                       <div className="space-y-2 p-4 border rounded-lg bg-muted/50">
-                        <p className="text-sm font-medium">Favicon Operations</p>
+                        <p className="text-sm font-medium">Favicon operations</p>
                         <div className="grid grid-cols-2 gap-2">
                           <Button
                             type="button"
@@ -1870,8 +1874,8 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                             onClick={handleConvertColor}
                             disabled={convertingColor}
                           >
-                            <SparklesIcon className="h-4 w-4 mr-2" />
-                            {convertingColor ? 'Converting...' : 'Convert to Theme Color'}
+                            <Sparkles className="h-4 w-4 mr-2" aria-hidden="true" />
+                            {convertingColor ? 'Converting…' : 'Convert to theme color'}
                           </Button>
                           <Button
                             type="button"
@@ -1880,8 +1884,8 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                             onClick={handleConvertGrayscale}
                             disabled={convertingGrayscale}
                           >
-                            <SparklesIcon className="h-4 w-4 mr-2" />
-                            {convertingGrayscale ? 'Converting...' : 'Convert to Grayscale'}
+                            <Sparkles className="h-4 w-4 mr-2" aria-hidden="true" />
+                            {convertingGrayscale ? 'Converting…' : 'Convert to grayscale'}
                           </Button>
                           <Button
                             type="button"
@@ -1890,8 +1894,8 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                             onClick={handleInvertColors}
                             disabled={invertingColors}
                           >
-                            <SparklesIcon className="h-4 w-4 mr-2" />
-                            {invertingColors ? 'Inverting...' : 'Invert Colors'}
+                            <Sparkles className="h-4 w-4 mr-2" aria-hidden="true" />
+                            {invertingColors ? 'Inverting…' : 'Invert colors'}
                           </Button>
                           {originalFavicon && (
                             <Button
@@ -1941,15 +1945,15 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                         disabled={fetchingFavicon}
                         className="flex-1"
                       >
-                        {fetchingFavicon ? 'Fetching...' : 'Fetch Favicon'}
+                        {fetchingFavicon ? 'Fetching…' : 'Fetch favicon'}
                       </Button>
                       {formData.icon?.startsWith('favicon:') && (
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            if (confirm('Are you sure you want to remove this favicon?')) {
+                          onClick={async () => {
+                            if (await confirm({ title: 'Remove this favicon?', confirmLabel: 'Remove', destructive: true })) {
                               setFormData({ ...formData, icon: '' })
                               setOriginalFavicon(null)
                               toast({
@@ -1992,12 +1996,12 @@ export function ContentManager({ categories, serviceCategories, onContentChange 
                 </div>
               </div>
               <DialogFooter className="mt-6">
-                <Button type="submit">Save Changes</Button>
+                <Button type="submit">Save changes</Button>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
   )
 }

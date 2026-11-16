@@ -1,23 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
-import {
-  WrenchScrewdriverIcon,
-  PhotoIcon,
-  TrashIcon,
-  CircleStackIcon,
-  GlobeAltIcon,
-  ArrowPathIcon,
-  CloudArrowDownIcon,
-  WrenchIcon,
-  ArrowDownTrayIcon,
-  ArrowUpTrayIcon,
-  ArchiveBoxIcon,
-  BeakerIcon,
-} from '@heroicons/react/24/outline'
+import { Image as ImageIcon, Trash2, Database, Globe, RefreshCw, CloudDownload, Wrench, Download, Upload, FlaskConical } from 'lucide-react'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { AdminPage, AdminSection } from '@/components/admin/admin-page'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -48,6 +36,7 @@ interface Settings {
 
 export default function ToolsPage() {
   const { toast } = useToast()
+  const confirm = useConfirm()
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [results, setResults] = useState<Record<string, ToolResult | null>>({})
   const [importType, setImportType] = useState<string>('full')
@@ -109,7 +98,7 @@ export default function ToolsPage() {
         setResults(prev => ({ ...prev, loadDemo: { success: true, message: data.message, details: data.stats } }))
         toast({
           variant: 'success',
-          title: 'Demo Content Loaded',
+          title: 'Demo content loaded',
           description: data.message,
         })
         fetchDemoStatus()
@@ -117,7 +106,7 @@ export default function ToolsPage() {
         setResults(prev => ({ ...prev, loadDemo: { success: false, message: data.error } }))
         toast({
           variant: 'destructive',
-          title: 'Failed to load demo',
+          title: 'Could not load demo content',
           description: data.error,
         })
       }
@@ -125,8 +114,8 @@ export default function ToolsPage() {
       setResults(prev => ({ ...prev, loadDemo: { success: false, message: error.message } }))
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message,
+        title: 'Something went wrong',
+        description: `${error.message || 'The request failed'}. Try again.`,
       })
     } finally {
       setLoading(prev => ({ ...prev, loadDemo: false }))
@@ -134,6 +123,12 @@ export default function ToolsPage() {
   }
 
   const clearDemo = async () => {
+    if (!(await confirm({
+      title: 'Clear demo content?',
+      description: 'The demo bookmarks, services and sample analytics are deleted. Your own data is not affected.',
+      confirmLabel: 'Clear demo content',
+      destructive: true,
+    }))) return
     setLoading(prev => ({ ...prev, clearDemo: true }))
     setResults(prev => ({ ...prev, clearDemo: null }))
 
@@ -145,7 +140,7 @@ export default function ToolsPage() {
         setResults(prev => ({ ...prev, clearDemo: { success: true, message: data.message, details: data.stats } }))
         toast({
           variant: 'success',
-          title: 'Demo Content Cleared',
+          title: 'Demo content cleared',
           description: data.message,
         })
         fetchDemoStatus()
@@ -153,7 +148,7 @@ export default function ToolsPage() {
         setResults(prev => ({ ...prev, clearDemo: { success: false, message: data.error } }))
         toast({
           variant: 'destructive',
-          title: 'Failed to clear demo',
+          title: 'Could not clear demo content',
           description: data.error,
         })
       }
@@ -161,8 +156,8 @@ export default function ToolsPage() {
       setResults(prev => ({ ...prev, clearDemo: { success: false, message: error.message } }))
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message,
+        title: 'Something went wrong',
+        description: `${error.message || 'The request failed'}. Try again.`,
       })
     } finally {
       setLoading(prev => ({ ...prev, clearDemo: false }))
@@ -170,6 +165,12 @@ export default function ToolsPage() {
   }
 
   const runTool = async (toolName: string, endpoint: string) => {
+    if (toolName === 'prune' && !(await confirm({
+      title: 'Delete orphan favicons?',
+      description: 'Favicon files that no bookmark or service uses are deleted from disk. This cannot be undone.',
+      confirmLabel: 'Delete orphans',
+      destructive: true,
+    }))) return
     setLoading(prev => ({ ...prev, [toolName]: true }))
     setResults(prev => ({ ...prev, [toolName]: null }))
 
@@ -188,7 +189,7 @@ export default function ToolsPage() {
         setResults(prev => ({ ...prev, [toolName]: { success: false, message: data.error } }))
         toast({
           variant: 'destructive',
-          title: 'Tool failed',
+          title: 'Tool did not finish',
           description: data.error,
         })
       }
@@ -196,8 +197,8 @@ export default function ToolsPage() {
       setResults(prev => ({ ...prev, [toolName]: { success: false, message: error.message } }))
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message,
+        title: 'Something went wrong',
+        description: `${error.message || 'The request failed'}. Try again.`,
       })
     } finally {
       setLoading(prev => ({ ...prev, [toolName]: false }))
@@ -225,22 +226,22 @@ export default function ToolsPage() {
 
         toast({
           variant: 'success',
-          title: 'Backup Created',
+          title: 'Backup downloaded',
           description: 'Your backup has been downloaded.',
         })
       } else {
         const data = await response.json()
         toast({
           variant: 'destructive',
-          title: 'Backup Failed',
+          title: 'Could not create backup',
           description: data.error,
         })
       }
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message,
+        title: 'Something went wrong',
+        description: `${error.message || 'The request failed'}. Try again.`,
       })
     } finally {
       setLoading(prev => ({ ...prev, backup: false }))
@@ -252,10 +253,17 @@ export default function ToolsPage() {
       toast({
         variant: 'destructive',
         title: 'No file selected',
-        description: 'Please select a file to import.',
+        description: 'Choose a .zip, .csv or .json file, then try again.',
       })
       return
     }
+
+    if (clearExisting && !(await confirm({
+      title: 'Replace existing data?',
+      description: 'Existing items of the selected type are deleted before the import. Download a backup first if you may need them. This cannot be undone.',
+      confirmLabel: 'Replace and import',
+      destructive: true,
+    }))) return
 
     setLoading(prev => ({ ...prev, import: true }))
     setResults(prev => ({ ...prev, import: null }))
@@ -277,7 +285,7 @@ export default function ToolsPage() {
         setResults(prev => ({ ...prev, import: { success: true, message: data.message, details: data.results } }))
         toast({
           variant: 'success',
-          title: 'Import Complete',
+          title: 'Import complete',
           description: data.message,
         })
         setImportFile(null)
@@ -285,7 +293,7 @@ export default function ToolsPage() {
         setResults(prev => ({ ...prev, import: { success: false, message: data.error } }))
         toast({
           variant: 'destructive',
-          title: 'Import Failed',
+          title: 'Could not import',
           description: data.error,
         })
       }
@@ -293,8 +301,8 @@ export default function ToolsPage() {
       setResults(prev => ({ ...prev, import: { success: false, message: error.message } }))
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message,
+        title: 'Something went wrong',
+        description: `${error.message || 'The request failed'}. Try again.`,
       })
     } finally {
       setLoading(prev => ({ ...prev, import: false }))
@@ -314,7 +322,7 @@ export default function ToolsPage() {
       if (response.ok) {
         toast({
           variant: 'success',
-          title: 'MaxMind Check',
+          title: 'MaxMind status',
           description: data.message,
         })
       }
@@ -344,7 +352,7 @@ export default function ToolsPage() {
       if (data.success) {
         toast({
           variant: 'success',
-          title: 'MaxMind Database Updated',
+          title: 'MaxMind database updated',
           description: data.message,
         })
         // Refresh the MaxMind status
@@ -352,14 +360,14 @@ export default function ToolsPage() {
       } else {
         toast({
           variant: 'destructive',
-          title: 'Download Failed',
+          title: 'Could not download database',
           description: data.message || data.error,
         })
       }
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Download Error',
+        title: 'Could not download database',
         description: error.message,
       })
     } finally {
@@ -379,7 +387,7 @@ export default function ToolsPage() {
       })
       toast({
         variant: 'success',
-        title: newValue ? 'Demo Section Hidden' : 'Demo Section Visible',
+        title: newValue ? 'Demo section hidden' : 'Demo section visible',
         description: newValue
           ? 'The demo content section is now hidden from this page'
           : 'The demo content section is now visible',
@@ -389,45 +397,25 @@ export default function ToolsPage() {
       setSettings(prev => prev ? { ...prev, hideDemoContent: !newValue } : null)
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to save setting',
+        title: 'Could not save setting',
+        description: 'Your change was reverted. Try again.',
       })
     }
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <WrenchScrewdriverIcon className="h-6 w-6" />
-          System Tools
-        </h1>
-        <p className="text-muted-foreground">
-          Maintenance and optimization tools for your dashboard
-        </p>
-      </div>
+    <AdminPage title="Tools" description="Backups, imports, demo content and maintenance for your dashboard.">
 
       {/* Backup & Import Section */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          <ArchiveBoxIcon className="h-5 w-5" />
-          Backup & Import
-        </h2>
-        <div className="grid gap-6 md:grid-cols-2">
+      <AdminSection title="Backup and import">
+        <div className="space-y-8">
           {/* Create Backup */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ArrowDownTrayIcon className="h-5 w-5" />
-                Create Backup
-              </CardTitle>
-              <CardDescription>
-                Download a complete backup of your dashboard including bookmarks, services,
-                categories, settings, and analytics as a ZIP file.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className={`text-sm p-3 rounded ${lastBackupDate ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'}`}>
+          <div className="space-y-4 border-t border-border pt-8 first:border-t-0 first:pt-0">
+<div>
+<h3 className="text-sm font-semibold text-foreground">Create backup</h3>
+<p className="mt-0.5 text-sm text-muted-foreground">Download a complete backup of your dashboard including bookmarks, services, categories, settings, and analytics as a ZIP file.</p>
+</div>
+              <div className={`text-sm p-3 rounded ${lastBackupDate ? 'bg-info-soft text-info border border-info/30' : 'bg-warning-soft text-warning border border-warning/30'}`}>
                 {lastBackupDate ? (
                   <>
                     <span className="font-medium">Last backup:</span>{' '}
@@ -440,7 +428,7 @@ export default function ToolsPage() {
                     })}
                   </>
                 ) : (
-                  'No backups created yet'
+                  'No backups downloaded yet'
                 )}
               </div>
               <Button
@@ -450,33 +438,27 @@ export default function ToolsPage() {
               >
                 {loading.backup ? (
                   <>
-                    <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                    Creating Backup...
+                    <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />
+                    Creating backup…
                   </>
                 ) : (
                   <>
-                    <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
-                    Download Backup
+                    <Download aria-hidden="true" className="h-4 w-4 mr-2" />
+                    Download backup
                   </>
                 )}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
 
           {/* Restore/Import */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ArrowUpTrayIcon className="h-5 w-5" />
-                Restore / Import
-              </CardTitle>
-              <CardDescription>
-                Restore from a backup ZIP file or import individual CSV files for specific sections.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="import-file">Select File</Label>
+          <div className="space-y-4 border-t border-border pt-8 first:border-t-0 first:pt-0">
+<div>
+<h3 className="text-sm font-semibold text-foreground">Restore or import</h3>
+<p className="mt-0.5 text-sm text-muted-foreground">Restore from a backup ZIP file or import individual CSV files for specific sections.</p>
+</div>
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label htmlFor="import-file">Select file</Label>
                 <Input
                   id="import-file"
                   type="file"
@@ -490,26 +472,27 @@ export default function ToolsPage() {
               </div>
 
               <div>
-                <Label htmlFor="import-type">Import Type</Label>
+                <Label htmlFor="import-type">Import type</Label>
                 <Select value={importType} onValueChange={setImportType}>
                   <SelectTrigger id="import-type" className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="full">Full Restore (All Data)</SelectItem>
-                    <SelectItem value="bookmarks">Bookmarks Only</SelectItem>
-                    <SelectItem value="services">Services Only</SelectItem>
-                    <SelectItem value="bookmark-categories">Bookmark Categories Only</SelectItem>
-                    <SelectItem value="service-categories">Service Categories Only</SelectItem>
-                    <SelectItem value="settings">Settings Only</SelectItem>
-                    <SelectItem value="analytics">Analytics Only</SelectItem>
+                    <SelectItem value="full">Full restore (all data)</SelectItem>
+                    <SelectItem value="bookmarks">Bookmarks only</SelectItem>
+                    <SelectItem value="services">Services only</SelectItem>
+                    <SelectItem value="bookmark-categories">Bookmark categories only</SelectItem>
+                    <SelectItem value="service-categories">Service categories only</SelectItem>
+                    <SelectItem value="settings">Settings only</SelectItem>
+                    <SelectItem value="analytics">Analytics only</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="clear-existing">Clear Existing Data</Label>
+                  <Label htmlFor="clear-existing">Clear existing data</Label>
                   <p className="text-xs text-muted-foreground">
                     Delete existing items before importing
                   </p>
@@ -529,19 +512,19 @@ export default function ToolsPage() {
               >
                 {loading.import ? (
                   <>
-                    <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                    Importing...
+                    <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />
+                    Importing…
                   </>
                 ) : (
                   <>
-                    <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
-                    {clearExisting ? 'Replace & Import' : 'Import Data'}
+                    <Upload aria-hidden="true" className="h-4 w-4 mr-2" />
+                    {clearExisting ? 'Replace and import' : 'Import data'}
                   </>
                 )}
               </Button>
 
               {results.import && (
-                <div className={`text-sm p-3 rounded ${results.import.success ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>
+                <div className={`text-sm p-3 rounded ${results.import.success ? 'bg-success-soft text-success border border-success/30' : 'bg-destructive-soft text-destructive border border-destructive/30'}`}>
                   <p>{results.import.message}</p>
                   {results.import.details && (
                     <div className="mt-2 text-xs space-y-1">
@@ -564,7 +547,7 @@ export default function ToolsPage() {
                         <p>Analytics records restored: {results.import.details.analyticsRestored}</p>
                       )}
                       {results.import.details.errors && results.import.details.errors.length > 0 && (
-                        <div className="mt-2 text-red-600">
+                        <div className="mt-2 text-destructive">
                           <p className="font-medium">Errors:</p>
                           <ul className="list-disc list-inside">
                             {results.import.details.errors.slice(0, 5).map((err: string, i: number) => (
@@ -580,18 +563,14 @@ export default function ToolsPage() {
                   )}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
         </div>
-      </div>
+      </AdminSection>
 
       {/* Demo Content Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <BeakerIcon className="h-5 w-5" />
-            Demo Content
-          </h2>
+      <AdminSection
+        title="Demo content"
+        actions={
           <div className="flex items-center gap-2">
             <Label htmlFor="hideDemoContent" className="text-sm text-muted-foreground">
               {settings?.hideDemoContent ? 'Hidden' : 'Visible'}
@@ -602,25 +581,18 @@ export default function ToolsPage() {
               onCheckedChange={() => toggleHideDemoContent()}
             />
           </div>
-        </div>
+        }
+      >
         {!settings?.hideDemoContent && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BeakerIcon className="h-5 w-5" />
-                Sample Bookmarks & Services
-              </CardTitle>
-              <CardDescription>
-                Test drive Faux|Dash with pre-populated demo data including bookmarks, services,
-                and 30 days of sample analytics. Demo content is marked and can be cleared
-                without affecting your real data.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="space-y-4 border-t border-border pt-8 first:border-t-0 first:pt-0">
+<div>
+<h3 className="text-sm font-semibold text-foreground">Sample bookmarks and services</h3>
+<p className="mt-0.5 text-sm text-muted-foreground">Test drive Faux|Dash with pre-populated demo data including bookmarks, services, and 30 days of sample analytics. Demo content is marked and can be cleared without affecting your real data.</p>
+</div>
               {demoStatus && (
                 <div className={`text-sm p-3 rounded ${
                   demoStatus.hasDemo
-                    ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                    ? 'bg-brand-soft text-brand border border-brand/30'
                     : 'bg-muted text-muted-foreground'
                 }`}>
                   {demoStatus.hasDemo ? (
@@ -648,13 +620,13 @@ export default function ToolsPage() {
                 >
                   {loading.loadDemo ? (
                     <>
-                      <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                      Loading Demo...
+                      <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />
+                      Loading demo…
                     </>
                   ) : (
                     <>
-                      <BeakerIcon className="h-4 w-4 mr-2" />
-                      Load Demo Content
+                      <FlaskConical aria-hidden="true" className="h-4 w-4 mr-2" />
+                      Load demo content
                     </>
                   )}
                 </Button>
@@ -667,13 +639,13 @@ export default function ToolsPage() {
                 >
                   {loading.clearDemo ? (
                     <>
-                      <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                      Clearing Demo...
+                      <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />
+                      Clearing demo…
                     </>
                   ) : (
                     <>
-                      <TrashIcon className="h-4 w-4 mr-2" />
-                      Clear Demo Content
+                      <Trash2 aria-hidden="true" className="h-4 w-4 mr-2" />
+                      Clear demo content
                     </>
                   )}
                 </Button>
@@ -682,37 +654,25 @@ export default function ToolsPage() {
               {(results.loadDemo || results.clearDemo) && (
                 <div className={`text-sm p-3 rounded ${
                   (results.loadDemo?.success || results.clearDemo?.success)
-                    ? 'bg-green-500/10 text-green-600'
-                    : 'bg-red-500/10 text-red-600'
+                    ? 'bg-success-soft text-success border border-success/30'
+                    : 'bg-destructive-soft text-destructive border border-destructive/30'
                 }`}>
                   <p>{results.loadDemo?.message || results.clearDemo?.message}</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
         )}
-      </div>
+      </AdminSection>
 
       {/* Maintenance Tools Section */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          <WrenchIcon className="h-5 w-5" />
-          Maintenance Tools
-        </h2>
-        <div className="grid gap-6 md:grid-cols-2">
+      <AdminSection title="Maintenance tools">
+        <div className="space-y-8">
         {/* Reprocess Originals */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PhotoIcon className="h-5 w-5" />
-              Reprocess Favicon Originals
-            </CardTitle>
-            <CardDescription>
-              Ensure every favicon has an original copy saved for transformations.
-              This will scan all favicons and create missing originals.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="space-y-4 border-t border-border pt-8 first:border-t-0 first:pt-0">
+<div>
+<h3 className="text-sm font-semibold text-foreground">Reprocess favicon originals</h3>
+<p className="mt-0.5 text-sm text-muted-foreground">Ensure every favicon has an original copy saved for transformations. This will scan all favicons and create missing originals.</p>
+</div>
             <Button
               onClick={() => runTool('reprocess', '/api/tools/reprocess-originals')}
               disabled={loading.reprocess}
@@ -720,18 +680,18 @@ export default function ToolsPage() {
             >
               {loading.reprocess ? (
                 <>
-                  <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
+                  <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />
+                  Processing…
                 </>
               ) : (
                 <>
-                  <ArrowPathIcon className="h-4 w-4 mr-2" />
-                  Reprocess Originals
+                  <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2" />
+                  Reprocess originals
                 </>
               )}
             </Button>
             {results.reprocess && (
-              <div className={`text-sm p-3 rounded ${results.reprocess.success ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>
+              <div className={`text-sm p-3 rounded ${results.reprocess.success ? 'bg-success-soft text-success border border-success/30' : 'bg-destructive-soft text-destructive border border-destructive/30'}`}>
                 <p>{results.reprocess.message}</p>
                 {results.reprocess.details && (
                   <div className="mt-2 text-xs">
@@ -742,22 +702,14 @@ export default function ToolsPage() {
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
         {/* Download Remote Icons */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CloudArrowDownIcon className="h-5 w-5" />
-              Download Remote Icons
-            </CardTitle>
-            <CardDescription>
-              Download all selfh.st and HeroIcon icons locally so they can be
-              transformed (theme color, monotone, invert). Creates original backups.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="space-y-4 border-t border-border pt-8 first:border-t-0 first:pt-0">
+<div>
+<h3 className="text-sm font-semibold text-foreground">Download remote icons</h3>
+<p className="mt-0.5 text-sm text-muted-foreground">Download all selfh.st and HeroIcon icons locally so they can be transformed (theme color, monotone, invert). Creates original backups.</p>
+</div>
             <Button
               onClick={() => runTool('downloadIcons', '/api/tools/download-remote-icons')}
               disabled={loading.downloadIcons}
@@ -765,18 +717,18 @@ export default function ToolsPage() {
             >
               {loading.downloadIcons ? (
                 <>
-                  <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                  Downloading...
+                  <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />
+                  Downloading…
                 </>
               ) : (
                 <>
-                  <CloudArrowDownIcon className="h-4 w-4 mr-2" />
-                  Download All Remote Icons
+                  <CloudDownload aria-hidden="true" className="h-4 w-4 mr-2" />
+                  Download all remote icons
                 </>
               )}
             </Button>
             {results.downloadIcons && (
-              <div className={`text-sm p-3 rounded ${results.downloadIcons.success ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>
+              <div className={`text-sm p-3 rounded ${results.downloadIcons.success ? 'bg-success-soft text-success border border-success/30' : 'bg-destructive-soft text-destructive border border-destructive/30'}`}>
                 <p>{results.downloadIcons.message}</p>
                 {results.downloadIcons.details && (
                   <div className="mt-2 text-xs">
@@ -785,7 +737,7 @@ export default function ToolsPage() {
                     <p>Skipped: {results.downloadIcons.details.skipped || 0}</p>
                     <p>Failed: {results.downloadIcons.details.failed || 0}</p>
                     {results.downloadIcons.details.errors && results.downloadIcons.details.errors.length > 0 && (
-                      <div className="mt-2 text-red-600">
+                      <div className="mt-2 text-destructive">
                         <p className="font-medium">Errors:</p>
                         <ul className="list-disc list-inside">
                           {results.downloadIcons.details.errors.slice(0, 5).map((err: string, i: number) => (
@@ -801,22 +753,14 @@ export default function ToolsPage() {
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
         {/* Repair Favicons */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <WrenchIcon className="h-5 w-5" />
-              Repair Invalid Favicons
-            </CardTitle>
-            <CardDescription>
-              Scan all favicons and repair any that have unsupported formats.
-              Uses Google&apos;s favicon service to re-fetch problematic icons.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="space-y-4 border-t border-border pt-8 first:border-t-0 first:pt-0">
+<div>
+<h3 className="text-sm font-semibold text-foreground">Repair invalid favicons</h3>
+<p className="mt-0.5 text-sm text-muted-foreground">Scan all favicons and repair any that have unsupported formats. Uses Google&apos;s favicon service to re-fetch problematic icons.</p>
+</div>
             <Button
               onClick={() => runTool('repair', '/api/tools/repair-favicons')}
               disabled={loading.repair}
@@ -824,18 +768,18 @@ export default function ToolsPage() {
             >
               {loading.repair ? (
                 <>
-                  <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                  Repairing...
+                  <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />
+                  Repairing…
                 </>
               ) : (
                 <>
-                  <WrenchIcon className="h-4 w-4 mr-2" />
-                  Repair Invalid Favicons
+                  <Wrench aria-hidden="true" className="h-4 w-4 mr-2" />
+                  Repair invalid favicons
                 </>
               )}
             </Button>
             {results.repair && (
-              <div className={`text-sm p-3 rounded ${results.repair.success ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>
+              <div className={`text-sm p-3 rounded ${results.repair.success ? 'bg-success-soft text-success border border-success/30' : 'bg-destructive-soft text-destructive border border-destructive/30'}`}>
                 <p>{results.repair.message}</p>
                 {results.repair.details && (
                   <div className="mt-2 text-xs">
@@ -844,7 +788,7 @@ export default function ToolsPage() {
                     <p>Skipped (valid): {results.repair.details.skipped || 0}</p>
                     <p>Failed: {results.repair.details.failed || 0}</p>
                     {results.repair.details.errors && results.repair.details.errors.length > 0 && (
-                      <div className="mt-2 text-red-600">
+                      <div className="mt-2 text-destructive">
                         <p className="font-medium">Errors:</p>
                         <ul className="list-disc list-inside">
                           {results.repair.details.errors.slice(0, 5).map((err: string, i: number) => (
@@ -860,22 +804,14 @@ export default function ToolsPage() {
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
         {/* Prune Orphans */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrashIcon className="h-5 w-5" />
-              Prune Orphan Favicons
-            </CardTitle>
-            <CardDescription>
-              Remove favicon files that are no longer referenced by any bookmark or service.
-              This helps free up disk space.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="space-y-4 border-t border-border pt-8 first:border-t-0 first:pt-0">
+<div>
+<h3 className="text-sm font-semibold text-foreground">Prune orphan favicons</h3>
+<p className="mt-0.5 text-sm text-muted-foreground">Remove favicon files that are no longer referenced by any bookmark or service. This helps free up disk space.</p>
+</div>
             <Button
               onClick={() => runTool('prune', '/api/tools/prune-orphans')}
               disabled={loading.prune}
@@ -884,18 +820,18 @@ export default function ToolsPage() {
             >
               {loading.prune ? (
                 <>
-                  <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                  Scanning...
+                  <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />
+                  Scanning…
                 </>
               ) : (
                 <>
-                  <TrashIcon className="h-4 w-4 mr-2" />
-                  Prune Orphan Favicons
+                  <Trash2 aria-hidden="true" className="h-4 w-4 mr-2" />
+                  Prune orphan favicons
                 </>
               )}
             </Button>
             {results.prune && (
-              <div className={`text-sm p-3 rounded ${results.prune.success ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>
+              <div className={`text-sm p-3 rounded ${results.prune.success ? 'bg-success-soft text-success border border-success/30' : 'bg-destructive-soft text-destructive border border-destructive/30'}`}>
                 <p>{results.prune.message}</p>
                 {results.prune.details && (
                   <div className="mt-2 text-xs">
@@ -906,22 +842,14 @@ export default function ToolsPage() {
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
         {/* Database Optimization */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CircleStackIcon className="h-5 w-5" />
-              Database Optimization
-            </CardTitle>
-            <CardDescription>
-              Run VACUUM and optimization on the SQLite database to reclaim space
-              and improve performance.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="space-y-4 border-t border-border pt-8 first:border-t-0 first:pt-0">
+<div>
+<h3 className="text-sm font-semibold text-foreground">Database optimization</h3>
+<p className="mt-0.5 text-sm text-muted-foreground">Run VACUUM and optimization on the SQLite database to reclaim space and improve performance.</p>
+</div>
             <Button
               onClick={() => runTool('vacuum', '/api/tools/vacuum-db')}
               disabled={loading.vacuum}
@@ -930,18 +858,18 @@ export default function ToolsPage() {
             >
               {loading.vacuum ? (
                 <>
-                  <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                  Optimizing...
+                  <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />
+                  Optimizing…
                 </>
               ) : (
                 <>
-                  <CircleStackIcon className="h-4 w-4 mr-2" />
-                  Optimize Database
+                  <Database aria-hidden="true" className="h-4 w-4 mr-2" />
+                  Optimize database
                 </>
               )}
             </Button>
             {results.vacuum && (
-              <div className={`text-sm p-3 rounded ${results.vacuum.success ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>
+              <div className={`text-sm p-3 rounded ${results.vacuum.success ? 'bg-success-soft text-success border border-success/30' : 'bg-destructive-soft text-destructive border border-destructive/30'}`}>
                 <p>{results.vacuum.message}</p>
                 {results.vacuum.details && (
                   <div className="mt-2 text-xs">
@@ -952,21 +880,14 @@ export default function ToolsPage() {
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
         {/* MaxMind Check */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <GlobeAltIcon className="h-5 w-5" />
-              MaxMind GeoIP Database
-            </CardTitle>
-            <CardDescription>
-              Check the status of your MaxMind GeoIP database and download updates.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="space-y-4 border-t border-border pt-8 first:border-t-0 first:pt-0">
+<div>
+<h3 className="text-sm font-semibold text-foreground">MaxMind GeoIP database</h3>
+<p className="mt-0.5 text-sm text-muted-foreground">Check the status of your MaxMind GeoIP database and download updates.</p>
+</div>
             <div className="grid gap-3 sm:grid-cols-2">
               <Button
                 onClick={checkMaxMind}
@@ -976,13 +897,13 @@ export default function ToolsPage() {
               >
                 {loading.maxmind ? (
                   <>
-                    <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                    Checking...
+                    <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />
+                    Checking…
                   </>
                 ) : (
                   <>
-                    <GlobeAltIcon className="h-4 w-4 mr-2" />
-                    Check Status
+                    <Globe aria-hidden="true" className="h-4 w-4 mr-2" />
+                    Check status
                   </>
                 )}
               </Button>
@@ -994,13 +915,13 @@ export default function ToolsPage() {
               >
                 {downloadingMaxmind ? (
                   <>
-                    <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                    Downloading...
+                    <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" />
+                    Downloading…
                   </>
                 ) : (
                   <>
-                    <CloudArrowDownIcon className="h-4 w-4 mr-2" />
-                    Update Database
+                    <CloudDownload aria-hidden="true" className="h-4 w-4 mr-2" />
+                    Update database
                   </>
                 )}
               </Button>
@@ -1019,10 +940,10 @@ export default function ToolsPage() {
             {results.maxmind && (
               <div className={`text-sm p-3 rounded ${
                 !results.maxmind.details?.installed
-                  ? 'bg-red-500/10 text-red-600'
+                  ? 'bg-destructive-soft text-destructive border border-destructive/30'
                   : results.maxmind.details?.isOutdated
-                    ? 'bg-yellow-500/10 text-yellow-600'
-                    : 'bg-green-500/10 text-green-600'
+                    ? 'bg-warning-soft text-warning border border-warning/30'
+                    : 'bg-success-soft text-success border border-success/30'
               }`}>
                 <p>{results.maxmind.message}</p>
                 {results.maxmind.details && results.maxmind.details.installed && (
@@ -1034,10 +955,9 @@ export default function ToolsPage() {
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
         </div>
-      </div>
-    </div>
+      </AdminSection>
+    </AdminPage>
   )
 }

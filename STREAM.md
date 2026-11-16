@@ -5,6 +5,128 @@ Running work log, newest first. One entry per change: timestamp · what · why �
 
 ---
 
+## 2026-11-16 10:05 EST — committed, PR #65 open
+
+**What:** Commit 59f7aca on `design/bear-standardization`, pushed, PR https://github.com/sdenike/fauxdash/pull/65.
+No `.env`, database or data files in the commit. Prod still runs local tag `fauxdash:bear`.
+
+**If interrupted here:** owner merges PR #65. After GitHub Actions builds `latest`, set compose `image:` back to
+`ghcr.io/sdenike/fauxdash:latest`, `docker compose up -d`, check health.
+
+---
+
+## 2026-11-16 09:55 EST — lone fields capped at half width
+
+**What:** Owner: "cap lone fields at half width". Log level (General, GeoIP) and site name (Appearance) now take one
+column of the two-across grid; GeoIP log legend moved to its own full-width row. Current password was already half.
+Rebuilt `fauxdash:bear`, redeployed, health ok.
+
+**If interrupted here:** owner reviews on prod. Then commit, PR, merge, switch compose `image:` back.
+
+---
+
+## 2026-11-16 09:40 EST — plain sections everywhere, fields two across
+
+**What:** Owner: "Use plain sections everywhere, and fields two across." Every Card in admin, settings and analytics
+is now an `AdminSection` (sections separated by `border-t`/`divide-y`); short fields sit in
+`grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2`, long ones span both columns. Analytics KPI tiles became one plain
+stat row. Boxes kept only for content that needs one (test results, previews, drop zones, warnings). tsc 0, palette
+clean, rebuilt `fauxdash:bear`, redeployed, health ok.
+
+**If interrupted here:** owner reviews on prod. Then commit, PR, merge, switch compose `image:` back.
+
+---
+
+## 2026-11-16 09:10 EST — remember-me confirmed; uniform admin width
+
+**What:** Owner signed in again; Profile shows "1 month", so the remember choice now reaches the session token.
+Profile and Settings had their own narrower content widths (max-w-2xl, max-w-3xl); removed so every admin page uses
+the shell's one width. Profile cards now sit two across on large screens, with "This sign-in" as a card below.
+Rebuilt `fauxdash:bear`, redeployed, health ok.
+
+**If interrupted here:** owner keeps testing on prod. Then commit, PR, merge, switch compose `image:` back.
+
+---
+
+## 2026-11-16 08:45 EST — live on prod; remember-me diagnostics
+
+**What:** Owner asked to test on production instead of the side container. DB backup
+`fauxdash-2026-11-16_0836-pre-bear-deploy.db` (integrity ok). Prod compose `image:` now points at local tag
+`fauxdash:bear` (Watchtower cannot pull it). Test container removed. Owner also reports "stay signed in for X" still
+does not hold. Probe against prod: a minted 30-day token is refreshed with a 30-day JWT exp, so the server side works
+for a token that carries `rememberDays`. Added: "Session length set" auth log line on every sign-in (with
+`cookiePresent` for OIDC), a "This sign-in" section on Profile, and the login page now remembers the last choice.
+
+**If interrupted here:** owner signs out, signs in with remember me, then check the auth log line and the Profile
+page. If OIDC shows `cookiePresent:false`, the remember cookie is lost across the Pocket-ID redirect. After testing:
+commit, PR, merge, switch compose `image:` back to `ghcr.io/sdenike/fauxdash:latest`.
+
+---
+
+## 2026-11-15 23:30 EST — iOS / touch pass (uncommitted)
+
+**What:** Owner: "This needs better iOS mobile support." 16px fields on touch (no focus zoom), black-translucent status
+bar + safe-area padding everywhere, `coarse:` and `standalone:` variants in `tailwind.config.js`,
+`hoverOnlyWhenSupported`, 44px targets, tap-to-open weather/clock, drawer scroll lock, dvh, dialogs scroll, stacked
+two-column forms. tsc + build ok, test container rebuilt on :8099. Not tested on a real iPhone.
+
+**If interrupted here:** wait for owner's iPhone test. Then commit, PR.
+
+---
+
+## 2026-11-15 23:00 EST — Verified; test container up on :8099 (uncommitted)
+
+**What:** `tsc` 0 errors, `next build` ok, `check-palette` clean (565 to 0), `impeccable detect src` clean,
+`docker build -t fauxdash:test .` ok (Alpine). `fauxdash-test` runs on <host>:8099 with `REDIS_ENABLED=false`,
+`NEXTAUTH_URL=http://<host>:8099`, data `~/Development/fauxdash-testdata`, favicons mounted read-only. Health ok;
+`/admin` and `/settings` redirect correctly signed out; signed-out start page is empty because every category
+requires sign-in (expected).
+
+**If interrupted here:** wait for owner's test feedback. Then commit on the branch, PR to master. Remove the test
+container with `docker rm -f fauxdash-test` when done.
+
+---
+
+## 2026-11-15 22:50 EST — Phases 1-6 implemented on `design/bear-standardization` (uncommitted, v0.14.0)
+
+**What:** Bear tokens + Geist; server-rendered start page (`src/app/page.tsx`, `src/lib/server/start-page.ts`,
+`src/components/start/*`); server admin guard + `AdminShell`/`AdminPage`/`ConfirmDialog`; `/settings` redirect;
+Appearance reduced to theme/density/columns; dashboard rewrite; base UI restyle; dead components removed;
+`scripts/check-palette.mjs`. Token sweep of settings tabs, admin pages and content/auth pages done by three Sonnet
+subagents in parallel. DB backup `data/backups/fauxdash-2026-11-15_2245-pre-bear-test.db` (integrity ok); test data
+copy at `~/Development/fauxdash-testdata` (never point a test container at `/docker/fauxdash/data`).
+
+**Why:** Owner asked to proceed with all phases and be told when it can be tested.
+
+**If interrupted here:** run tsc + `npm run build` in a `node:20` container (host node_modules is root-owned and stale:
+`npm ci --legacy-peer-deps` inside the container first), `node scripts/check-palette.mjs`, then
+`docker build -t fauxdash:test .` and run it on port 8099 against the test data copy. Do not merge or deploy.
+
+---
+
+## 2026-11-15 22:15 EST — Design critique + Bear "Red Graphite" theme file (no behaviour change)
+
+**What:** Ran `/impeccable critique` on the start page and admin pages: 19/40. Snapshot in
+`.impeccable/critique/2026-11-16T03-11-08Z__src-app.md`. Added `docs/design/bear-red-graphite.css` (light + dark
+tokens copied unchanged from Wausau Billing, plus the Tailwind 3.4 `color-mix` config snippet). Nothing imports it.
+
+**Why:** Owner wants the app standardized, clean, minimal, and on the same Bear palette as the other projects.
+
+**Decisions (owner, 2026-11-15):** all six phases, one release each, in this order:
+1. Bear theme: tokens, `tailwind.config.js`, early-paint colours, blocking theme script in `layout.tsx`.
+2. No flash: `src/app/page.tsx` becomes a server component; session + settings + content read once on the server.
+3. One shell: `AdminPage`, `ConfirmDialog`, one toast path, one loading/empty state, on all 7 admin pages.
+4. One settings home: only `/admin/settings`; `/settings` redirects; header theme toggle writes a cookie only.
+   Appearance: per-section size/spacing replaced by one Density + one Columns; gradient title removed;
+   background image, graphic and logo stay.
+5. Token sweep: replace the ~486 hardcoded palette classes; add a test that fails on new ones.
+6. Accessibility + cleanup: aria-labels, headings, focus ring, `/` shortcut, keyboard reorder, delete
+   `bookmark-manager-old.tsx`, merge the two add-forms, lucide only.
+
+**If interrupted here:** nothing is in progress. Start phase 1 from `docs/design/bear-red-graphite.css`.
+
+---
+
 ## 2026-07-28 09:15 EDT — Drop the unused `shadcn` devDependency
 
 **What:** Removed `shadcn` (^3.7.0) from devDependencies. `package.json` + `package-lock.json` only.

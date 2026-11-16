@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,10 +11,10 @@ import { PasswordConfirmInput } from '@/components/ui/password-confirm-input'
 import { AlertMessage } from '@/components/ui/alert-message'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Loader2 } from 'lucide-react'
+import { AdminPage, AdminSection, AdminLoading } from '@/components/admin/admin-page'
 
 function ProfileContent() {
   const { data: session, status, update } = useSession()
-  const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -39,12 +37,6 @@ function ProfileContent() {
     if (!passwordData.confirmPassword) return null
     return passwordData.newPassword === passwordData.confirmPassword
   }, [passwordData.newPassword, passwordData.confirmPassword])
-
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
-    }
-  }, [status, router])
 
   useEffect(() => {
     if (session) {
@@ -97,14 +89,14 @@ function ProfileContent() {
       toast({
         variant: 'success',
         title: 'Profile updated',
-        description: 'Your profile has been updated successfully.',
+        description: 'Your profile changes were saved.',
       })
     } catch (error) {
       console.error('Failed to save profile:', error)
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to update profile. Please try again.',
+        title: 'Could not update profile',
+        description: 'Your changes were not saved. Check your connection and try again.',
       })
     } finally {
       setSaving(false)
@@ -145,7 +137,7 @@ function ProfileContent() {
       toast({
         variant: 'success',
         title: 'Password changed',
-        description: 'Your password has been updated successfully.',
+        description: 'Your password was changed.',
       })
 
       setPasswordData({
@@ -163,12 +155,9 @@ function ProfileContent() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" role="status" aria-live="polite">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-          <span>Loading...</span>
-        </div>
-      </div>
+      <AdminPage title="Profile" description="Manage your account settings.">
+        <AdminLoading rows={4} label="Loading profile" />
+      </AdminPage>
     )
   }
 
@@ -177,27 +166,12 @@ function ProfileContent() {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">
-          Profile
-        </h1>
-        <p className="text-muted-foreground">
-          Manage your account settings
-        </p>
-      </div>
-
-      <div className="max-w-2xl space-y-6">
-        {/* Account Information Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Information</CardTitle>
-            <CardDescription>
-              Update your personal information
-            </CardDescription>
-          </CardHeader>
+    <AdminPage title="Profile" description="Manage your account settings.">
+      <div className="divide-y divide-border [&>section]:py-8 [&>section:first-child]:pt-0 [&>section:last-child]:pb-0">
+        {/* Account information Form */}
+        <AdminSection title="Account information" description="Update your personal information.">
           <form onSubmit={handleSaveProfile}>
-            <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -214,7 +188,7 @@ function ProfileContent() {
               </div>
 
               <div>
-                <Label htmlFor="username">Display Name</Label>
+                <Label htmlFor="username">Display name</Label>
                 <Input
                   id="username"
                   value={formData.username}
@@ -227,68 +201,62 @@ function ProfileContent() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="firstname">First Name</Label>
-                  <Input
-                    id="firstname"
-                    value={formData.firstname}
-                    onChange={handleFormChange('firstname')}
-                    placeholder="John"
-                    autoComplete="given-name"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Used for {'{{firstname}}'} template variable
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="lastname">Last Name</Label>
-                  <Input
-                    id="lastname"
-                    value={formData.lastname}
-                    onChange={handleFormChange('lastname')}
-                    placeholder="Doe"
-                    autoComplete="family-name"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Used for {'{{lastname}}'} template variable
-                  </p>
-                </div>
+              <div>
+                <Label htmlFor="firstname">First name</Label>
+                <Input
+                  id="firstname"
+                  value={formData.firstname}
+                  onChange={handleFormChange('firstname')}
+                  placeholder="John"
+                  autoComplete="given-name"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Used for {'{{firstname}}'} template variable
+                </p>
               </div>
 
-              <div className="pt-4 flex justify-end">
+              <div>
+                <Label htmlFor="lastname">Last name</Label>
+                <Input
+                  id="lastname"
+                  value={formData.lastname}
+                  onChange={handleFormChange('lastname')}
+                  placeholder="Doe"
+                  autoComplete="family-name"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Used for {'{{lastname}}'} template variable
+                </p>
+              </div>
+
+              <div className="sm:col-span-2 flex justify-end">
                 <Button type="submit" disabled={saving} aria-busy={saving}>
                   {saving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                      Saving...
+                      Saving…
                     </>
                   ) : (
-                    'Save Changes'
+                    'Save changes'
                   )}
                 </Button>
               </div>
-            </CardContent>
+            </div>
           </form>
-        </Card>
+        </AdminSection>
 
         {/* Change Password Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Change Password</CardTitle>
-            <CardDescription>
-              Update your account password
-            </CardDescription>
-          </CardHeader>
+        <AdminSection title="Change password" description="Update your account password.">
           <form onSubmit={handleChangePassword}>
-            <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
               {passwordError && (
-                <AlertMessage variant="error" message={passwordError} />
+                <div className="sm:col-span-2">
+                  <AlertMessage variant="error" message={passwordError} />
+                </div>
               )}
 
-              <div>
-                <Label htmlFor="currentPassword">Current Password</Label>
+              <div className="sm:col-span-2 sm:max-w-[calc(50%-0.75rem)]">
+                <Label htmlFor="currentPassword">Current password</Label>
                 <Input
                   id="currentPassword"
                   type="password"
@@ -300,7 +268,7 @@ function ProfileContent() {
               </div>
 
               <div>
-                <Label htmlFor="newPassword">New Password</Label>
+                <Label htmlFor="newPassword">New password</Label>
                 <Input
                   id="newPassword"
                   type="password"
@@ -320,11 +288,11 @@ function ProfileContent() {
                 password={passwordData.newPassword}
                 confirmPassword={passwordData.confirmPassword}
                 onConfirmPasswordChange={handleConfirmPasswordChange}
-                label="Confirm New Password"
+                label="Confirm new password"
                 placeholder="Confirm new password"
               />
 
-              <div className="pt-4 flex justify-end">
+              <div className="sm:col-span-2 flex justify-end">
                 <Button
                   type="submit"
                   disabled={savingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword || passwordsMatch === false}
@@ -333,18 +301,30 @@ function ProfileContent() {
                   {savingPassword ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                      Changing...
+                      Changing…
                     </>
                   ) : (
-                    'Change Password'
+                    'Change password'
                   )}
                 </Button>
               </div>
-            </CardContent>
+            </div>
           </form>
-        </Card>
+        </AdminSection>
+
+        <AdminSection title="This sign-in" description="A visit to the start page or admin restarts the clock.">
+          <p className="text-sm text-foreground">
+            {(() => {
+              const days = (session as any)?.rememberDays as number | undefined
+              if (!days) return 'Unknown. Sign out and in again to set it.'
+              const until = new Date(Date.now() + days * 86400000).toLocaleDateString(undefined, { dateStyle: 'medium' })
+              const label = days === 365 ? '1 year' : days === 90 ? '3 months' : days === 30 ? '1 month' : days === 7 ? '1 week' : `${days} days`
+              return `Stays signed in for ${label} without a visit, so at least until ${until}.`
+            })()}
+          </p>
+        </AdminSection>
       </div>
-    </div>
+    </AdminPage>
   )
 }
 

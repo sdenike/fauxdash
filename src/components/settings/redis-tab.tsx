@@ -1,13 +1,13 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { SettingsTabProps } from './types'
-import { CheckCircleIcon, ExclamationCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import { CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react'
 
 export function RedisTab({ settings, onSettingsChange }: SettingsTabProps) {
   const [testing, setTesting] = useState(false)
@@ -46,17 +46,11 @@ export function RedisTab({ settings, onSettingsChange }: SettingsTabProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Redis Cache</CardTitle>
-        <CardDescription>
-          Configure an external Redis server for improved performance caching
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
+    <AdminSection title="Redis Cache" description="Configure an external Redis server for improved performance caching">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+        <div className="flex items-center justify-between sm:col-span-2">
           <div>
-            <Label htmlFor="redisEnabled">Enable Redis Cache</Label>
+            <Label htmlFor="redisEnabled">Enable Redis cache</Label>
             <p className="text-sm text-muted-foreground">
               Use Redis for caching API responses and session data
             </p>
@@ -70,7 +64,7 @@ export function RedisTab({ settings, onSettingsChange }: SettingsTabProps) {
 
         {settings.redisEnabled && (
           <>
-            <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="rounded-lg bg-muted/50 p-4 sm:col-span-2">
               <p className="text-sm text-muted-foreground">
                 Redis is not included with Faux|Dash. You need to provide your own Redis server.
                 You can run Redis locally, use a managed service, or deploy with Docker:
@@ -81,7 +75,7 @@ export function RedisTab({ settings, onSettingsChange }: SettingsTabProps) {
             </div>
 
             <div>
-              <Label htmlFor="redisHost">Redis Host</Label>
+              <Label htmlFor="redisHost">Redis host</Label>
               <Input
                 id="redisHost"
                 value={settings.redisHost}
@@ -94,7 +88,7 @@ export function RedisTab({ settings, onSettingsChange }: SettingsTabProps) {
             </div>
 
             <div>
-              <Label htmlFor="redisPort">Redis Port</Label>
+              <Label htmlFor="redisPort">Redis port</Label>
               <Input
                 id="redisPort"
                 type="number"
@@ -109,7 +103,7 @@ export function RedisTab({ settings, onSettingsChange }: SettingsTabProps) {
             </div>
 
             <div>
-              <Label htmlFor="redisPassword">Redis Password (Optional)</Label>
+              <Label htmlFor="redisPassword">Redis password (optional)</Label>
               <Input
                 id="redisPassword"
                 type="password"
@@ -123,7 +117,7 @@ export function RedisTab({ settings, onSettingsChange }: SettingsTabProps) {
             </div>
 
             <div>
-              <Label htmlFor="redisDatabase">Redis Database</Label>
+              <Label htmlFor="redisDatabase">Redis database</Label>
               <Input
                 id="redisDatabase"
                 type="number"
@@ -137,7 +131,7 @@ export function RedisTab({ settings, onSettingsChange }: SettingsTabProps) {
               </p>
             </div>
 
-            <div className="pt-4 border-t">
+            <div className="border-t border-border pt-5 sm:col-span-2">
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
@@ -145,19 +139,19 @@ export function RedisTab({ settings, onSettingsChange }: SettingsTabProps) {
                   disabled={testing}
                   className="gap-2"
                 >
-                  <ArrowPathIcon className={`h-4 w-4 ${testing ? 'animate-spin' : ''}`} />
+                  <RefreshCw aria-hidden="true" className={`h-4 w-4 ${testing ? 'animate-spin' : ''}`} />
                   {testing ? 'Testing...' : 'Test Connection'}
                 </Button>
               </div>
               {testResult && (
-                <div className={`mt-3 p-3 rounded-lg ${testResult.success ? 'bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800'}`}>
+                <div className={`mt-3 p-3 rounded-lg ${testResult.success ? 'bg-success-soft border border-success/30' : 'bg-destructive-soft border border-destructive/30'}`}>
                   <div className="flex items-center gap-2">
                     {testResult.success ? (
-                      <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <CheckCircle2 aria-hidden="true" className="h-5 w-5 text-success" />
                     ) : (
-                      <ExclamationCircleIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      <AlertCircle aria-hidden="true" className="h-5 w-5 text-destructive" />
                     )}
-                    <span className={`font-medium ${testResult.success ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                    <span className={`font-medium ${testResult.success ? 'text-success' : 'text-destructive'}`}>
                       {testResult.message}
                     </span>
                   </div>
@@ -168,14 +162,14 @@ export function RedisTab({ settings, onSettingsChange }: SettingsTabProps) {
         )}
 
         {!settings.redisEnabled && (
-          <div className="p-4 bg-muted/30 rounded-lg">
+          <div className="rounded-lg bg-muted/30 p-4 sm:col-span-2">
             <p className="text-sm text-muted-foreground">
               Redis caching is disabled. The application will use in-memory caching which works fine for most use cases.
               Enable Redis if you need persistent caching or are running multiple instances.
             </p>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
   )
 }

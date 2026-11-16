@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { TrashIcon } from '@heroicons/react/24/outline'
+import { Trash2 } from 'lucide-react'
 
 interface MediaLibraryItem {
   filename: string
@@ -121,12 +121,12 @@ export function MediaLibraryPicker({ onSelect, trigger }: MediaLibraryPickerProp
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Your Uploads</DialogTitle>
+          <DialogTitle>Your uploads</DialogTitle>
         </DialogHeader>
 
         {/* Confirmation overlay */}
         {confirmDelete && (
-          <div className="p-4 rounded-md border border-destructive bg-destructive/10 space-y-3">
+          <div className="p-4 rounded-md border border-destructive/30 bg-destructive-soft space-y-3">
             <p className="text-sm font-medium">
               This image is currently in use:
             </p>
@@ -140,14 +140,16 @@ export function MediaLibraryPicker({ onSelect, trigger }: MediaLibraryPickerProp
             </p>
             <div className="flex gap-2">
               <Button
+                type="button"
                 variant="destructive"
                 size="sm"
                 onClick={handleForceDelete}
                 disabled={deleting === confirmDelete.filename}
               >
-                {deleting === confirmDelete.filename ? 'Deleting...' : 'Delete anyway'}
+                {deleting === confirmDelete.filename ? 'Deleting…' : 'Delete anyway'}
               </Button>
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setConfirmDelete(null)}
@@ -160,7 +162,7 @@ export function MediaLibraryPicker({ onSelect, trigger }: MediaLibraryPickerProp
 
         {loading ? (
           <div className="py-12 text-center text-sm text-muted-foreground">
-            Loading...
+            Loading…
           </div>
         ) : items.length === 0 ? (
           <div className="py-12 text-center text-sm text-muted-foreground">
@@ -189,21 +191,22 @@ export function MediaLibraryPicker({ onSelect, trigger }: MediaLibraryPickerProp
                   <p className="text-xs truncate text-muted-foreground" title={item.filename}>
                     {item.filename.replace(/^\d+-/, '')}
                   </p>
-                  <p className="text-xs text-muted-foreground/60">
+                  <p className="text-xs text-muted-foreground">
                     {formatSize(item.size)}
                   </p>
                 </div>
                 {/* Delete button on hover */}
                 <button
                   type="button"
-                  className="absolute top-1 right-1 p-1 rounded bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
+                  className="absolute top-1 right-1 p-1 rounded bg-background/80 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 coarse:opacity-100 transition-opacity hover:bg-destructive-soft"
+                  aria-label={`Delete ${item.filename.replace(/^\d+-/, '')}`}
                   onClick={(e) => {
                     e.stopPropagation()
                     handleDelete(item.filename)
                   }}
                   disabled={deleting === item.filename}
                 >
-                  <TrashIcon className="h-3.5 w-3.5 text-destructive" />
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" aria-hidden="true" />
                 </button>
               </div>
             ))}

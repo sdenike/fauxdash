@@ -13,7 +13,7 @@ A modern, self-hosted homepage dashboard for managing bookmarks and services. Bu
 - **Weather** — Multiple providers (WeatherAPI, OpenWeather, Tempest) with multi-location support
 - **PWA** — Install as a native app on mobile and desktop
 - **Auth** — Local login + OIDC/SSO (Authentik, Keycloak, Okta, etc.)
-- **Themes** — Light/Dark modes with multiple color accents
+- **Bear "Red Graphite" design** — one calm graphite palette with a red accent, light and dark, rendered before first paint
 - **Analytics** — Click tracking with GeoIP visitor mapping
 - **Backup** — Full backup/restore with CSV import/export
 - **Redis Cache** — Optional external Redis for improved performance
@@ -53,7 +53,7 @@ All settings are configured in **Admin > Settings** — no config files needed:
 |-----|----------|
 | **General** | Search engine, welcome messages |
 | **Weather** | Provider, API keys, locations, display options |
-| **Appearance** | Theme, colors, layout, custom favicon, logo, background |
+| **Appearance** | Default theme, density, columns, section order, logo, background, favicon, app icon |
 | **Email** | SMTP for password reset emails |
 | **Auth** | OIDC/SSO configuration |
 | **GeoIP** | MaxMind or IPInfo for visitor location analytics |

@@ -1,9 +1,9 @@
 'use client'
 
 import { memo } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowUpIcon, ArrowDownIcon, MinusIcon } from '@heroicons/react/24/outline'
+import { ArrowUp, ArrowDown, Minus } from 'lucide-react'
 
 interface TopItem {
   id: number
@@ -22,19 +22,19 @@ function TrendBadge({ trend }: { trend: number }) {
   if (trend === 0) {
     return (
       <span className="flex items-center gap-1 text-muted-foreground text-xs">
-        <MinusIcon className="h-3 w-3" />
+        <Minus aria-hidden="true" className="h-3 w-3" />
         0%
       </span>
     )
   }
 
   const isPositive = trend > 0
-  const Icon = isPositive ? ArrowUpIcon : ArrowDownIcon
-  const bgClass = isPositive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+  const Icon = isPositive ? ArrowUp : ArrowDown
+  const bgClass = isPositive ? 'bg-success-soft text-success border border-success/30' : 'bg-destructive-soft text-destructive border border-destructive/30'
 
   return (
     <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded ${bgClass}`}>
-      <Icon className="h-3 w-3" />
+      <Icon aria-hidden="true" className="h-3 w-3" />
       {Math.abs(trend)}%
     </span>
   )
@@ -45,15 +45,12 @@ export const TopItemsTable = memo(function TopItemsTable({
   type,
   isLoading,
 }: TopItemsTableProps) {
-  const title = type === 'bookmarks' ? 'Top Bookmarks' : 'Top Services'
+  const title = type === 'bookmarks' ? 'Top bookmarks' : 'Top services'
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-        </CardHeader>
-        <CardContent>
+      <AdminSection>
+        <Skeleton className="h-6 w-32" />
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center gap-4">
@@ -64,32 +61,22 @@ export const TopItemsTable = memo(function TopItemsTable({
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </AdminSection>
     )
   }
 
   if (!items.length) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <AdminSection title={title}>
           <div className="h-[200px] flex items-center justify-center text-muted-foreground">
             No clicks recorded this period
           </div>
-        </CardContent>
-      </Card>
+        </AdminSection>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <AdminSection title={title}>
         <div className="space-y-2">
           {items.map((item, index) => (
             <div
@@ -114,7 +101,6 @@ export const TopItemsTable = memo(function TopItemsTable({
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </AdminSection>
   )
 })

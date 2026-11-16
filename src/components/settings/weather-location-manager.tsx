@@ -4,13 +4,7 @@ import { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  PlusIcon,
-  TrashIcon,
-  Bars3Icon,
-  StarIcon,
-} from '@heroicons/react/24/outline'
-import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
+import { Plus, Trash2, GripVertical, Star } from 'lucide-react'
 
 interface WeatherLocationManagerProps {
   locations: string[]
@@ -91,7 +85,7 @@ export function WeatherLocationManager({ locations, onChange }: WeatherLocationM
   return (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="addLocation">Add Location</Label>
+        <Label htmlFor="addLocation">Add location</Label>
         <div className="flex gap-2 mt-1">
           <Input
             id="addLocation"
@@ -107,8 +101,9 @@ export function WeatherLocationManager({ locations, onChange }: WeatherLocationM
             disabled={!newLocation.trim()}
             size="icon"
             variant="outline"
+            aria-label="Add location"
           >
-            <PlusIcon className="h-4 w-4" />
+            <Plus aria-hidden="true" className="h-4 w-4" />
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-1">
@@ -139,11 +134,11 @@ export function WeatherLocationManager({ locations, onChange }: WeatherLocationM
                   transition-colors cursor-move
                 `}
               >
-                <Bars3Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <GripVertical aria-hidden="true" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="flex-1 text-sm truncate">{location}</span>
                 {index === 0 ? (
                   <span className="flex items-center gap-1 text-xs text-primary">
-                    <StarIconSolid className="h-4 w-4" />
+                    <Star aria-hidden="true" className="h-4 w-4 fill-current" />
                     Default
                   </span>
                 ) : (
@@ -155,18 +150,19 @@ export function WeatherLocationManager({ locations, onChange }: WeatherLocationM
                     className="h-7 px-2 text-xs"
                     title="Set as default"
                   >
-                    <StarIcon className="h-3 w-3 mr-1" />
-                    Set Default
+                    <Star aria-hidden="true" className="h-3 w-3 mr-1" />
+                    Set default
                   </Button>
                 )}
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
+                  aria-label={`Remove ${location}`}
                   onClick={() => handleRemoveLocation(index)}
                   className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
-                  <TrashIcon className="h-4 w-4" />
+                  <Trash2 aria-hidden="true" className="h-4 w-4" />
                 </Button>
               </div>
             ))}

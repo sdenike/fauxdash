@@ -1,8 +1,8 @@
 'use client'
 
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowUpIcon, ArrowDownIcon, GlobeAltIcon, EyeIcon, CursorArrowRaysIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { ArrowUp, ArrowDown } from 'lucide-react'
 
 interface StatsData {
   pageviews: { value: number; trend: number }
@@ -32,12 +32,12 @@ function TrendIndicator({ trend }: { trend: number }) {
   }
 
   const isPositive = trend > 0
-  const Icon = isPositive ? ArrowUpIcon : ArrowDownIcon
-  const colorClass = isPositive ? 'text-green-600' : 'text-red-600'
+  const Icon = isPositive ? ArrowUp : ArrowDown
+  const colorClass = isPositive ? 'text-success' : 'text-destructive'
 
   return (
     <span className={`flex items-center gap-1 text-sm ${colorClass}`}>
-      <Icon className="h-3 w-3" />
+      <Icon aria-hidden="true" className="h-3 w-3" />
       {Math.abs(trend)}%
     </span>
   )
@@ -47,85 +47,69 @@ function StatCard({
   title,
   value,
   trend,
-  icon: Icon,
   subtitle,
   isLoading,
 }: {
   title: string
   value?: number | string
   trend?: number
-  icon: React.ComponentType<{ className?: string }>
   subtitle?: string
   isLoading?: boolean
 }) {
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-4" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-8 w-20 mb-1" />
-          <Skeleton className="h-4 w-16" />
-        </CardContent>
-      </Card>
+      <div>
+        <Skeleton className="mb-2 h-4 w-24" />
+        <Skeleton className="mb-1 h-8 w-20" />
+        <Skeleton className="h-4 w-16" />
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">
-          {typeof value === 'number' ? formatNumber(value) : value}
-        </div>
-        {trend !== undefined ? (
-          <TrendIndicator trend={trend} />
-        ) : subtitle ? (
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
-        ) : null}
-      </CardContent>
-    </Card>
+    <div className="min-w-0">
+      <div className="text-sm text-muted-foreground">{title}</div>
+      <div className="truncate text-2xl font-semibold tabular-nums text-foreground">
+        {typeof value === 'number' ? formatNumber(value) : value}
+      </div>
+      {trend !== undefined ? (
+        <TrendIndicator trend={trend} />
+      ) : subtitle ? (
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
+      ) : null}
+    </div>
   )
 }
 
 export function StatsCards({ data, isLoading }: StatsCardsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <AdminSection>
+    <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
       <StatCard
-        title="Total Pageviews"
+        title="Total pageviews"
         value={data?.pageviews.value}
         trend={data?.pageviews.trend}
-        icon={EyeIcon}
         isLoading={isLoading}
       />
       <StatCard
-        title="Unique Visitors"
+        title="Unique visitors"
         value={data?.uniqueVisitors.value}
         trend={data?.uniqueVisitors.trend}
-        icon={UsersIcon}
         isLoading={isLoading}
       />
       <StatCard
-        title="Total Clicks"
+        title="Total clicks"
         value={data?.totalClicks.value}
         trend={data?.totalClicks.trend}
-        icon={CursorArrowRaysIcon}
         isLoading={isLoading}
       />
       <StatCard
-        title="Top Country"
+        title="Top country"
         value={data?.topCountry.name || 'Unknown'}
         subtitle={data?.topCountry.count ? `${formatNumber(data.topCountry.count)} visits` : undefined}
-        icon={GlobeAltIcon}
         isLoading={isLoading}
       />
     </div>
+    </AdminSection>
   )
 }

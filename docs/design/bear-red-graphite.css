@@ -1,0 +1,218 @@
+/*
+  Bear "Red Graphite" theme for fauxdash, light and dark.
+
+  PROPOSED, NOT YET WIRED IN. Nothing imports this file. To adopt it, replace the two token blocks in
+  src/app/globals.css with the ":root, .light" and ".dark" blocks below, add the base rules, and change
+  tailwind.config.js as shown at the bottom of this file.
+
+  Source of truth: the token values are copied unchanged from Wausau Billing
+  (/docker/wausau-bills/assets/css/input.css, "Red Graphite", v4.20.0+), so both apps share one palette.
+
+  Palette: white paper, graphite ink with a faint cool cast (hue 230), and one red accent (hue 25).
+  Red is the accent, not a surface. Buttons stay graphite. Red marks where you are (active navigation,
+  focus ring, selection, links) and leads the charts. Dark mode is the same graphite turned down, with the
+  red lifted so it stays readable. Dark mode is our own derivation, not an official Bear palette.
+
+  Contrast rule for every colour: the colour itself reads at 4.5:1 or better on --background, --card and
+  its own "-soft" tint, and its "-foreground" reads at 4.5:1 on it as a solid fill.
+
+  Each accent or status colour has three parts:
+    --x             text, icons, solid fills
+    --x-foreground  text on a solid fill          (bg-success text-success-foreground)
+    --x-soft        tint the colour stays readable on (bg-warning-soft text-warning)
+
+  Tokens carry their own dark value, so components need no "dark:" colour variants and no Tailwind
+  palette classes (bg-gray-100, text-red-500 and so on).
+*/
+
+@layer base {
+  :root,
+  .light {
+    color-scheme: light;
+
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.29 0.008 230);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.29 0.008 230);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.29 0.008 230);
+    --primary: oklch(0.29 0.008 230);
+    --primary-foreground: oklch(0.985 0.002 230);
+    --secondary: oklch(0.962 0.003 230);
+    --secondary-foreground: oklch(0.29 0.008 230);
+    --muted: oklch(0.962 0.003 230);
+    --muted-foreground: oklch(0.49 0.01 230);
+    --accent: oklch(0.962 0.003 230);
+    --accent-foreground: oklch(0.29 0.008 230);
+    --border: oklch(0.915 0.004 230);
+    --input: oklch(0.87 0.006 230);
+    --ring: oklch(0.55 0.17 25);
+
+    --brand: oklch(0.55 0.17 25);
+    --brand-foreground: oklch(1 0 0);
+    --brand-soft: oklch(0.962 0.018 25);
+    --destructive: oklch(0.52 0.2 27);
+    --destructive-foreground: oklch(1 0 0);
+    --destructive-soft: oklch(0.962 0.02 27);
+    --success: oklch(0.5 0.12 155);
+    --success-foreground: oklch(1 0 0);
+    --success-soft: oklch(0.962 0.03 155);
+    --warning: oklch(0.5 0.105 70);
+    --warning-foreground: oklch(1 0 0);
+    --warning-soft: oklch(0.962 0.045 88);
+    --info: oklch(0.5 0.09 245);
+    --info-foreground: oklch(1 0 0);
+    --info-soft: oklch(0.962 0.015 245);
+
+    --chart-1: oklch(0.58 0.17 25);
+    --chart-2: oklch(0.45 0.02 230);
+    --chart-3: oklch(0.62 0.09 245);
+    --chart-4: oklch(0.74 0.12 80);
+    --chart-5: oklch(0.62 0.1 160);
+
+    --sidebar: oklch(0.975 0.003 230);
+    --sidebar-foreground: oklch(0.29 0.008 230);
+    --sidebar-primary: oklch(0.55 0.17 25);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(0.935 0.004 230);
+    --sidebar-accent-foreground: oklch(0.29 0.008 230);
+    --sidebar-border: oklch(0.915 0.004 230);
+    --sidebar-ring: oklch(0.55 0.17 25);
+
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --background: oklch(0.215 0.006 230);
+    --foreground: oklch(0.93 0.004 230);
+    --card: oklch(0.25 0.006 230);
+    --card-foreground: oklch(0.93 0.004 230);
+    --popover: oklch(0.25 0.006 230);
+    --popover-foreground: oklch(0.93 0.004 230);
+    --primary: oklch(0.93 0.004 230);
+    --primary-foreground: oklch(0.215 0.006 230);
+    --secondary: oklch(0.305 0.007 230);
+    --secondary-foreground: oklch(0.93 0.004 230);
+    --muted: oklch(0.305 0.007 230);
+    --muted-foreground: oklch(0.74 0.008 230);
+    --accent: oklch(0.305 0.007 230);
+    --accent-foreground: oklch(0.93 0.004 230);
+    --border: oklch(0.33 0.007 230);
+    --input: oklch(0.38 0.008 230);
+    --ring: oklch(0.7 0.15 25);
+
+    --brand: oklch(0.72 0.14 25);
+    --brand-foreground: oklch(0.18 0.01 25);
+    --brand-soft: oklch(0.31 0.045 25);
+    --destructive: oklch(0.72 0.16 27);
+    --destructive-foreground: oklch(0.18 0.01 27);
+    --destructive-soft: oklch(0.31 0.05 27);
+    --success: oklch(0.76 0.13 155);
+    --success-foreground: oklch(0.18 0.01 155);
+    --success-soft: oklch(0.31 0.04 155);
+    --warning: oklch(0.8 0.12 85);
+    --warning-foreground: oklch(0.18 0.01 85);
+    --warning-soft: oklch(0.32 0.04 85);
+    --info: oklch(0.76 0.08 245);
+    --info-foreground: oklch(0.18 0.01 245);
+    --info-soft: oklch(0.31 0.03 245);
+
+    --chart-1: oklch(0.7 0.15 25);
+    --chart-2: oklch(0.78 0.01 230);
+    --chart-3: oklch(0.7 0.09 245);
+    --chart-4: oklch(0.8 0.12 85);
+    --chart-5: oklch(0.72 0.11 160);
+
+    --sidebar: oklch(0.19 0.006 230);
+    --sidebar-foreground: oklch(0.93 0.004 230);
+    --sidebar-primary: oklch(0.72 0.14 25);
+    --sidebar-primary-foreground: oklch(0.18 0.01 25);
+    --sidebar-accent: oklch(0.285 0.007 230);
+    --sidebar-accent-foreground: oklch(0.93 0.004 230);
+    --sidebar-border: oklch(0.3 0.007 230);
+    --sidebar-ring: oklch(0.7 0.15 25);
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  /* The parts of the page the browser draws take the palette too. */
+  :root {
+    accent-color: var(--brand);
+    caret-color: var(--brand);
+    scrollbar-color: var(--input) transparent;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklch, var(--brand) 22%, transparent);
+  }
+
+  /* One focus treatment everywhere: a 2px red ring, offset from the control. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Links inside text: red, underlined on hover. Navigation and buttons style themselves. */
+  .prose-link,
+  p a,
+  li a {
+    color: var(--brand);
+    text-decoration: none;
+  }
+  .prose-link:hover,
+  p a:hover,
+  li a:hover {
+    text-decoration: underline;
+  }
+}
+
+/*
+  tailwind.config.js (Tailwind 3.4). The tokens are full oklch colours, so the existing
+  "hsl(var(--x))" wrappers must go: hsl() around an oklch value is invalid and the colour silently drops.
+  color-mix keeps opacity modifiers (bg-brand/20, border-border/60) working.
+
+    const token = (name) =>
+      `color-mix(in oklch, var(--${name}) calc(<alpha-value> * 100%), transparent)`
+
+    colors: {
+      border: token('border'),
+      input: token('input'),
+      ring: token('ring'),
+      background: token('background'),
+      foreground: token('foreground'),
+      primary:     { DEFAULT: token('primary'),     foreground: token('primary-foreground') },
+      secondary:   { DEFAULT: token('secondary'),   foreground: token('secondary-foreground') },
+      muted:       { DEFAULT: token('muted'),       foreground: token('muted-foreground') },
+      accent:      { DEFAULT: token('accent'),      foreground: token('accent-foreground') },
+      popover:     { DEFAULT: token('popover'),     foreground: token('popover-foreground') },
+      card:        { DEFAULT: token('card'),        foreground: token('card-foreground') },
+      brand:       { DEFAULT: token('brand'),       foreground: token('brand-foreground'),       soft: token('brand-soft') },
+      destructive: { DEFAULT: token('destructive'), foreground: token('destructive-foreground'), soft: token('destructive-soft') },
+      success:     { DEFAULT: token('success'),     foreground: token('success-foreground'),     soft: token('success-soft') },
+      warning:     { DEFAULT: token('warning'),     foreground: token('warning-foreground'),     soft: token('warning-soft') },
+      info:        { DEFAULT: token('info'),        foreground: token('info-foreground'),        soft: token('info-soft') },
+      chart:       { 1: token('chart-1'), 2: token('chart-2'), 3: token('chart-3'), 4: token('chart-4'), 5: token('chart-5') },
+      sidebar: {
+        DEFAULT: token('sidebar'), foreground: token('sidebar-foreground'),
+        primary: token('sidebar-primary'), 'primary-foreground': token('sidebar-primary-foreground'),
+        accent: token('sidebar-accent'), 'accent-foreground': token('sidebar-accent-foreground'),
+        border: token('sidebar-border'), ring: token('sidebar-ring'),
+      },
+    }
+
+  Also change when adopting:
+    - src/components/settings/background-image-settings.tsx:158 uses 'hsl(var(--muted))' inline: make it 'var(--muted)'.
+    - Early paint: the blocking theme script and <meta name="theme-color"> in src/app/layout.tsx must use the
+      same backgrounds as the tokens: light #ffffff, dark oklch(21.5% 0.006 230) (theme-color #171a1c).
+*/

@@ -13,10 +13,10 @@ import {
   Tooltip,
   Legend,
 } from 'recharts'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { ChartBarIcon, ChartBarSquareIcon } from '@heroicons/react/24/outline'
+import { BarChart3, LineChart as LineChartIcon } from 'lucide-react'
 
 interface ClicksChartProps {
   labels: string[]
@@ -26,13 +26,8 @@ interface ClicksChartProps {
   isLoading?: boolean
 }
 
-// Chart colors - use actual values since CSS vars don't work in SVG context
-const COLORS = [
-  '#3b82f6', // Blue (primary)
-  '#22c55e', // Green
-  '#f59e0b', // Orange/Amber
-  '#8b5cf6', // Purple
-]
+// Chart colors come from the design tokens (CSS variables resolve in SVG presentation attributes)
+const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)']
 
 // Memoize to prevent unnecessary re-renders
 export const ClicksChart = memo(function ClicksChart({
@@ -57,61 +52,48 @@ export const ClicksChart = memo(function ClicksChart({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <AdminSection>
+        <div className="flex items-center justify-between">
           <Skeleton className="h-6 w-32" />
           <Skeleton className="h-8 w-20" />
-        </CardHeader>
-        <CardContent>
+        </div>
           <Skeleton className="h-[300px] w-full" />
-        </CardContent>
-      </Card>
+        </AdminSection>
     )
   }
 
   if (!chartData.length) {
     return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Clicks Over Time</CardTitle>
-          <ChartTypeToggle chartType={chartType} onChange={onChartTypeChange} />
-        </CardHeader>
-        <CardContent>
+      <AdminSection title="Clicks over time" actions={<ChartTypeToggle chartType={chartType} onChange={onChartTypeChange} />}>
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-            No click data available for this period
+            No clicks recorded for this period
           </div>
-        </CardContent>
-      </Card>
+        </AdminSection>
     )
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Clicks Over Time</CardTitle>
-        <ChartTypeToggle chartType={chartType} onChange={onChartTypeChange} />
-      </CardHeader>
-      <CardContent>
+    <AdminSection title="Clicks over time" actions={<ChartTypeToggle chartType={chartType} onChange={onChartTypeChange} />}>
         <ResponsiveContainer width="100%" height={300}>
           {chartType === 'line' ? (
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => value.toLocaleString()}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'var(--popover, #ffffff)',
-                  border: '1px solid var(--border, #e5e7eb)',
+                  backgroundColor: 'var(--popover)',
+                  border: '1px solid var(--border)',
                   borderRadius: '6px',
                 }}
               />
@@ -130,23 +112,23 @@ export const ClicksChart = memo(function ClicksChart({
             </LineChart>
           ) : (
             <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => value.toLocaleString()}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'var(--popover, #ffffff)',
-                  border: '1px solid var(--border, #e5e7eb)',
+                  backgroundColor: 'var(--popover)',
+                  border: '1px solid var(--border)',
                   borderRadius: '6px',
                 }}
               />
@@ -161,8 +143,7 @@ export const ClicksChart = memo(function ClicksChart({
             </BarChart>
           )}
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </AdminSection>
   )
 })
 
@@ -178,16 +159,22 @@ function ChartTypeToggle({
       <Button
         variant={chartType === 'line' ? 'secondary' : 'ghost'}
         size="icon"
+        type="button"
+        aria-label="Line chart"
+        aria-pressed={chartType === 'line'}
         onClick={() => onChange('line')}
       >
-        <ChartBarSquareIcon className="h-4 w-4" />
+        <LineChartIcon aria-hidden="true" className="h-4 w-4" />
       </Button>
       <Button
         variant={chartType === 'bar' ? 'secondary' : 'ghost'}
         size="icon"
+        type="button"
+        aria-label="Bar chart"
+        aria-pressed={chartType === 'bar'}
         onClick={() => onChange('bar')}
       >
-        <ChartBarIcon className="h-4 w-4" />
+        <BarChart3 aria-hidden="true" className="h-4 w-4" />
       </Button>
     </div>
   )

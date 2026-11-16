@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState, useEffect, useRef } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { AdminSection } from '@/components/admin/admin-page'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -198,26 +198,21 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
   }, [toast])
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Email / SMTP Configuration</CardTitle>
-            <CardDescription>
-              Configure email settings for password resets and notifications
-            </CardDescription>
+    <AdminSection
+      title="Email / SMTP Configuration"
+      description="Configure email settings for password resets and notifications"
+      actions={
+        hasUnsavedChanges ? (
+          <div className="flex items-center gap-2 text-sm text-warning">
+            <AlertTriangle className="h-4 w-4" />
+            <span>Unsaved changes (auto-saving...)</span>
           </div>
-          {hasUnsavedChanges && (
-            <div className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400">
-              <AlertTriangle className="h-4 w-4" />
-              <span>Unsaved changes (auto-saving...)</span>
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        ) : undefined
+      }
+    >
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
         <div>
-          <Label htmlFor="smtpProvider">Email Provider</Label>
+          <Label htmlFor="smtpProvider">Email provider</Label>
           <Select
             value={settings.smtpProvider}
             onValueChange={handleProviderChange}
@@ -239,19 +234,19 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
         {settings.smtpProvider !== 'none' && (
           <>
             {settings.smtpProvider === 'google' && (
-              <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Google / Gmail Setup</h4>
-                <p className="text-xs text-blue-800 dark:text-blue-200 mb-2">
+              <div className="rounded-lg border border-info/30 bg-info-soft p-4 sm:col-span-2">
+                <h4 className="text-sm font-semibold text-info mb-2">Google / gmail setup</h4>
+                <p className="text-xs text-info mb-2">
                   To use Gmail SMTP, you need to create an App Password:
                 </p>
-                <ol className="text-xs text-blue-800 dark:text-blue-200 list-decimal list-inside space-y-1">
+                <ol className="text-xs text-info list-decimal list-inside space-y-1">
                   <li>Go to your Google Account settings</li>
                   <li>Navigate to Security → 2-Step Verification (must be enabled)</li>
                   <li>At the bottom, select App passwords</li>
                   <li>Create a new app password for &quot;Mail&quot;</li>
                   <li>Use that 16-character password below</li>
                 </ol>
-                <p className="text-xs text-blue-800 dark:text-blue-200 mt-2">
+                <p className="text-xs text-info mt-2">
                   <a
                     href="https://support.google.com/accounts/answer/185833"
                     target="_blank"
@@ -266,9 +261,9 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
 
             {settings.smtpProvider === 'custom' && (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <>
                   <div>
-                    <Label htmlFor="smtpHost">SMTP Host</Label>
+                    <Label htmlFor="smtpHost">SMTP host</Label>
                     <Input
                       id="smtpHost"
                       value={settings.smtpHost}
@@ -277,7 +272,7 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="smtpPort">SMTP Port</Label>
+                    <Label htmlFor="smtpPort">SMTP port</Label>
                     <Input
                       id="smtpPort"
                       type="number"
@@ -286,7 +281,7 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
                       placeholder="587"
                     />
                   </div>
-                </div>
+                </>
 
                 <div>
                   <Label htmlFor="smtpEncryption">Encryption</Label>
@@ -307,9 +302,8 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
               </>
             )}
 
-            <div className="pt-4 border-t">
-              <div className="flex items-center gap-2 pb-2">
-                <div className="w-1 h-5 bg-primary rounded-full" />
+            <div className="border-t border-border pt-5 sm:col-span-2">
+              <div className="flex items-center gap-2">
                 <h3 className="text-base font-semibold text-foreground">Authentication</h3>
               </div>
             </div>
@@ -340,16 +334,15 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
               />
             </div>
 
-            <div className="pt-4 border-t">
-              <div className="flex items-center gap-2 pb-2">
-                <div className="w-1 h-5 bg-primary rounded-full" />
-                <h3 className="text-base font-semibold text-foreground">Sender Information</h3>
+            <div className="border-t border-border pt-5 sm:col-span-2">
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-semibold text-foreground">Sender information</h3>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <>
               <div>
-                <Label htmlFor="smtpFromEmail">From Email</Label>
+                <Label htmlFor="smtpFromEmail">From email</Label>
                 <Input
                   id="smtpFromEmail"
                   type="email"
@@ -362,7 +355,7 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
                 </p>
               </div>
               <div>
-                <Label htmlFor="smtpFromName">From Name</Label>
+                <Label htmlFor="smtpFromName">From name</Label>
                 <Input
                   id="smtpFromName"
                   value={settings.smtpFromName}
@@ -370,30 +363,30 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
                   placeholder="Faux|Dash"
                 />
               </div>
-            </div>
+            </>
 
             {/* Verification Status Banner */}
             {!settings.smtpVerified ? (
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
-                <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" aria-hidden="true" />
+              <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive-soft p-4 sm:col-span-2">
+                <XCircle className="h-5 w-5 text-destructive flex-shrink-0" aria-hidden="true" />
                 <div>
-                  <p className="text-sm font-medium text-red-800 dark:text-red-200">SMTP Not Verified</p>
-                  <p className="text-xs text-red-600 dark:text-red-400">Send a test email and click the verification link to activate.</p>
+                  <p className="text-sm font-medium text-destructive">SMTP Not Verified</p>
+                  <p className="text-xs text-destructive">Send a test email and click the verification link to activate.</p>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
-                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" aria-hidden="true" />
+              <div className="flex items-center gap-3 rounded-lg border border-success/30 bg-success-soft p-4 sm:col-span-2">
+                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" aria-hidden="true" />
                 <div>
-                  <p className="text-sm font-medium text-green-800 dark:text-green-200">SMTP Verified</p>
-                  <p className="text-xs text-green-600 dark:text-green-400">Your email configuration is active and working.</p>
+                  <p className="text-sm font-medium text-success">SMTP Verified</p>
+                  <p className="text-xs text-success">Your email configuration is active and working.</p>
                 </div>
               </div>
             )}
 
-            <div className="pt-4 border-t bg-muted/50 rounded-lg p-4 space-y-4">
+            <div className="space-y-4 rounded-lg border border-border bg-muted/50 p-4 sm:col-span-2">
               <div>
-                <h4 className="font-medium mb-2">Test Connection</h4>
+                <h4 className="font-medium mb-2">Test connection</h4>
                 <p className="text-sm text-muted-foreground mb-3">
                   Test your SMTP connection to verify your settings are working correctly.
                 </p>
@@ -412,7 +405,7 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
                   )}
                 </Button>
                 {testResult && (
-                  <div className={`mt-2 p-2 rounded-md flex items-center gap-2 text-sm animate-in fade-in slide-in-from-top-1 duration-200 ${testResult.success ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'}`}>
+                  <div className={`mt-2 p-2 rounded-md flex items-center gap-2 text-sm animate-in fade-in slide-in-from-top-1 duration-200 ${testResult.success ? 'bg-success-soft text-success border border-success/30' : 'bg-destructive-soft text-destructive border border-destructive/30'}`}>
                     {testResult.success ? (
                       <CheckCircle2 className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                     ) : (
@@ -423,8 +416,8 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
                 )}
               </div>
 
-              <div className="pt-4 border-t">
-                <h4 className="font-medium mb-2">Send Test Email & Verify</h4>
+              <div className="border-t border-border pt-4">
+                <h4 className="font-medium mb-2">Send test email & verify</h4>
                 <p className="text-sm text-muted-foreground mb-3">
                   Send a test email to your admin email address. You must click the verification link in the email to activate SMTP.
                 </p>
@@ -448,7 +441,7 @@ export function EmailTab({ settings, onSettingsChange }: SettingsTabProps) {
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </AdminSection>
   )
 }
