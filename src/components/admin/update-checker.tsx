@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { ExternalLink } from 'lucide-react'
 
 interface UpdateInfo {
@@ -21,11 +21,7 @@ export function UpdateChecker({ onChangelogClick }: UpdateCheckerProps) {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    checkForUpdates()
-  }, [])
-
-  const checkForUpdates = async () => {
+  const checkForUpdates = useCallback(async () => {
     try {
       const response = await fetch('/api/version/check')
       const data = await response.json()
@@ -35,7 +31,11 @@ export function UpdateChecker({ onChangelogClick }: UpdateCheckerProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    checkForUpdates()
+  }, [checkForUpdates])
 
   if (loading || !updateInfo) {
     return (

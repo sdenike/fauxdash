@@ -176,7 +176,6 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])  // Only run on mount/unmount
 
   return {

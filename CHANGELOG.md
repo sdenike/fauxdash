@@ -5,6 +5,20 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.1] - 2026-11-16
+
+### Fixed
+- Weather settings "Use my location" works again: the Permissions-Policy header blocked geolocation on the site itself
+  (`geolocation=()` changed to `geolocation=(self)`).
+- Analytics heatmap and visitor-map details open with a tap on touch screens. Heatmap details on the top rows and edge
+  hours no longer get cut off.
+- Hook-order and stale-dependency lint errors in content, category, update-check, changelog, add-item and icon-picker
+  components; Profile no longer calls `Date.now()` during render.
+- `package-lock.json` version was stuck at 0.13.3.
+
+### Performance
+- Self-hosted fonts are cached for a year (`immutable`) instead of revalidated on every load.
+
 ## [0.14.0] - 2026-11-15
 
 ### Changed

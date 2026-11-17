@@ -199,7 +199,7 @@ export function ImageIconPicker({
     } finally {
       setFetchingUrl(false)
     }
-  }, [urlInput, onChange, toast])
+  }, [urlInput, onChange, toast, uploadEndpoint, urlFetchEndpoint])
 
   const handleMediaSelect = useCallback((filename: string) => {
     if (onMediaSelect) {

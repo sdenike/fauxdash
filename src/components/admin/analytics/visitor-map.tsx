@@ -67,6 +67,8 @@ function getCountryFlag(countryCode?: string): string {
 // Map component with zoom controls
 function ZoomableMap({ locations }: { locations: Location[] }) {
   const [zoom, setZoom] = useState(2)
+  // Touch screens have no hover, so a tap pins a marker's tooltip.
+  const [pickedMarker, setPickedMarker] = useState<number | null>(null)
   const [center, setCenter] = useState({ lat: 30, lng: 0 }) // Default center
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
@@ -206,6 +208,7 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
 
         {/* Location markers */}
         {locations.slice(0, 50).map((loc, index) => {
+          const isPicked = pickedMarker === index
           const pos = latLngToPixel(loc.lat, loc.lng, zoom, center.lat, center.lng, mapWidth, mapHeight)
 
           // Determine color based on visit count
@@ -227,6 +230,7 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
             <div
               key={index}
               className="absolute transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer pointer-events-auto"
+              onClick={() => setPickedMarker(isPicked ? null : index)}
               style={{
                 left: pos.x,
                 top: pos.y,
@@ -243,7 +247,7 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
                 }}
               />
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20">
+              <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 group-hover:block z-20 ${isPicked ? 'block' : 'hidden'}`}>
                 <div className="bg-popover border rounded px-2 py-1 text-xs whitespace-nowrap shadow-sm">
                   <div className="font-medium flex items-center gap-1.5">
                     <span className="text-base">{getCountryFlag(loc.code || loc.country)}</span>
