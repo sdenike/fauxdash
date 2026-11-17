@@ -40,7 +40,9 @@ function ProfileContent() {
   }, [passwordData.newPassword, passwordData.confirmPassword])
 
   // Populate the form when the session arrives or changes (adjust state during render).
-  const [prevSession, setPrevSession] = useState(session)
+  // Starts as null, not the current session: the session is already present on the first render
+  // (server-provided), and starting equal meant the form never filled and loading never ended.
+  const [prevSession, setPrevSession] = useState<typeof session | null>(null)
   if (session && session !== prevSession) {
     setPrevSession(session)
     setFormData({
