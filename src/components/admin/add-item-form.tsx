@@ -93,14 +93,16 @@ export function AddItemForm({ kind, categories, onAdded }: AddItemFormProps) {
   }, [cfg.enabledKey, cfg.authKey])
 
   useEffect(() => {
-    fetchDefaults()
+    const run = async () => {
+      await fetchDefaults()
+    }
+    run()
   }, [fetchDefaults])
 
-  useEffect(() => {
-    if (categories.length > 0 && formData.categoryId === cfg.emptyCategory) {
-      setFormData(prev => ({ ...prev, categoryId: categories[0].id }))
-    }
-  }, [categories, formData.categoryId, cfg.emptyCategory])
+  // Adjust state during render: pick the first category once categories are available.
+  if (categories.length > 0 && formData.categoryId === cfg.emptyCategory) {
+    setFormData(prev => ({ ...prev, categoryId: categories[0].id }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

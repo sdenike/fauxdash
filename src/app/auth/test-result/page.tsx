@@ -1,15 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 
 export default function AuthTestResultPage() {
   const { data: session, status } = useSession()
-  const [sent, setSent] = useState(false)
+  const sent = useRef(false)
 
   useEffect(() => {
-    if (status === 'loading' || sent) return
+    if (status === 'loading' || sent.current) return
 
     // Send result to parent window
     if (window.opener && !window.opener.closed) {
@@ -27,7 +27,7 @@ export default function AuthTestResultPage() {
           error: 'Authentication failed - no session created',
         }, window.location.origin)
       }
-      setSent(true)
+      sent.current = true
 
       // Close window after short delay
       setTimeout(() => {
@@ -35,9 +35,9 @@ export default function AuthTestResultPage() {
       }, 2000)
     } else {
       // No opener, just show result
-      setSent(true)
+      sent.current = true
     }
-  }, [session, status, sent])
+  }, [session, status])
 
   return (
     <div className="min-h-dvh flex items-center justify-center bg-background p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">

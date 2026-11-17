@@ -33,10 +33,12 @@ export function BackgroundImageSettings({
   const [localOpacity, setLocalOpacity] = useState(opacity)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Sync local opacity with prop
-  useEffect(() => {
+  // Sync local opacity with prop (adjust state during render)
+  const [prevOpacity, setPrevOpacity] = useState(opacity)
+  if (prevOpacity !== opacity) {
+    setPrevOpacity(opacity)
     setLocalOpacity(opacity)
-  }, [opacity])
+  }
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

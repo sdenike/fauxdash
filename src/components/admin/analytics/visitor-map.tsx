@@ -69,7 +69,20 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
   const [zoom, setZoom] = useState(2)
   // Touch screens have no hover, so a tap pins a marker's tooltip.
   const [pickedMarker, setPickedMarker] = useState<number | null>(null)
-  const [center, setCenter] = useState({ lat: 30, lng: 0 }) // Default center
+  const locationsCenter = (locs: typeof locations) =>
+    locs.length > 0
+      ? {
+          lat: locs.reduce((sum, l) => sum + l.lat, 0) / locs.length,
+          lng: locs.reduce((sum, l) => sum + l.lng, 0) / locs.length,
+        }
+      : { lat: 30, lng: 0 } // Default center
+  const [center, setCenter] = useState(() => locationsCenter(locations))
+  const [prevLocations, setPrevLocations] = useState(locations)
+  // Recentre when the locations change (adjust state during render)
+  if (locations !== prevLocations) {
+    setPrevLocations(locations)
+    if (locations.length > 0) setCenter(locationsCenter(locations))
+  }
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const mapRef = useRef<HTMLDivElement>(null)
@@ -79,15 +92,6 @@ function ZoomableMap({ locations }: { locations: Location[] }) {
   const tileSize = 256
 
   const maxCount = Math.max(...locations.map(l => l.count), 1)
-
-  // Calculate the center based on locations if we have any
-  useEffect(() => {
-    if (locations.length > 0) {
-      const avgLat = locations.reduce((sum, l) => sum + l.lat, 0) / locations.length
-      const avgLng = locations.reduce((sum, l) => sum + l.lng, 0) / locations.length
-      setCenter({ lat: avgLat, lng: avgLng })
-    }
-  }, [locations])
 
   const handleZoomIn = useCallback(() => {
     setZoom(z => Math.min(16, z + 1))

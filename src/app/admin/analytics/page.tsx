@@ -171,11 +171,10 @@ export default function AnalyticsPage() {
 
   // Fetch all data when filters change
   useEffect(() => {
-    fetchStats()
-    fetchClicks()
-    fetchGeo()
-    fetchTopItems()
-    fetchHeatmap()
+    const run = async () => {
+      await Promise.all([fetchStats(), fetchClicks(), fetchGeo(), fetchTopItems(), fetchHeatmap()])
+    }
+    run()
   }, [fetchStats, fetchClicks, fetchGeo, fetchTopItems, fetchHeatmap])
 
   return (

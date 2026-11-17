@@ -39,17 +39,18 @@ function ProfileContent() {
     return passwordData.newPassword === passwordData.confirmPassword
   }, [passwordData.newPassword, passwordData.confirmPassword])
 
-  useEffect(() => {
-    if (session) {
-      setFormData({
-        email: (session.user as any)?.email || '',
-        username: (session.user as any)?.name || '',
-        firstname: (session.user as any)?.firstname || '',
-        lastname: (session.user as any)?.lastname || '',
-      })
-      setLoading(false)
-    }
-  }, [session])
+  // Populate the form when the session arrives or changes (adjust state during render).
+  const [prevSession, setPrevSession] = useState(session)
+  if (session && session !== prevSession) {
+    setPrevSession(session)
+    setFormData({
+      email: (session.user as any)?.email || '',
+      username: (session.user as any)?.name || '',
+      firstname: (session.user as any)?.firstname || '',
+      lastname: (session.user as any)?.lastname || '',
+    })
+    setLoading(false)
+  }
 
   // Form data handlers with useCallback
   const handleFormChange = useCallback((field: keyof typeof formData) => {

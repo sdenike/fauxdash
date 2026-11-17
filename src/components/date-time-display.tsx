@@ -24,13 +24,16 @@ export function DateTimeDisplay({
 
   useEffect(() => {
     // The server rendered its own clock; switch to the browser's straight away (time zone may differ).
-    setCurrentDateTime(new Date())
+    const initial = setTimeout(() => setCurrentDateTime(new Date()), 0)
     // Update time regularly (every second if showing seconds, otherwise every minute)
     const interval = setInterval(() => {
       setCurrentDateTime(new Date())
     }, showSeconds && timeEnabled ? 1000 : 60000)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearTimeout(initial)
+      clearInterval(interval)
+    }
   }, [timeEnabled, showSeconds])
 
   const dateText = formatDate(currentDateTime, dateFormat)

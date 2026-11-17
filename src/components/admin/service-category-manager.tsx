@@ -144,7 +144,8 @@ export function ServiceCategoryManager({ categories, onCategoriesChange }: Servi
     sortBy: 'order' as string,
   })
 
-  const fetchDefaults = useCallback(async () => {
+  useEffect(() => {
+  const fetchDefaults = async () => {
     try {
       const response = await fetch('/api/settings')
       const data = await response.json()
@@ -160,11 +161,9 @@ export function ServiceCategoryManager({ categories, onCategoriesChange }: Servi
     } catch (error) {
       console.error('Failed to fetch defaults:', error)
     }
-  }, [])
-
-  useEffect(() => {
+  }
     fetchDefaults()
-  }, [fetchDefaults])
+  }, [])
 
   const sensors = useSensors(
     useSensor(PointerSensor),

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
@@ -15,11 +15,50 @@ import { ErrorBoundary } from '@/components/error-boundary'
 import { Loader2, Mail, KeyRound } from 'lucide-react'
 import { REMEMBER_COOKIE_NAME } from '@/lib/session-constants'
 
+const subscribeNoop = () => () => {}
+const getSearch = () => window.location.search
+const getServerSearch = () => ''
+
+// Last remember-me choice. A string snapshot is stable by value, so no cache is needed.
+function getSavedRemember() {
+  try {
+    return localStorage.getItem('fauxdash-remember')
+  } catch {
+    return null
+  }
+}
+const getServerSavedRemember = () => null
+
+function persistRemember(me: boolean, duration: string) {
+  try {
+    localStorage.setItem('fauxdash-remember', me ? duration : 'off')
+  } catch {}
+}
+
+function oauthErrorMessage(search: string): string {
+  const params = new URLSearchParams(search)
+  const oauthError = params.get('error')
+  if (!oauthError) return ''
+  const reason = params.get('reason')
+  if (oauthError === 'OAuthCallback') {
+    return reason === 'missing_sub'
+      ? 'Authentication failed: Your identity provider did not return a user identifier. Please contact your administrator.'
+      : reason === 'missing_email'
+      ? 'Authentication failed: Your identity provider did not return an email address. Please contact your administrator.'
+      : 'Authentication failed: There was a problem completing sign-in with your identity provider. Please try again.'
+  }
+  if (oauthError === 'OAuthSignin') return 'Could not start the sign-in process. Please try again.'
+  if (oauthError === 'Callback') return 'Authentication callback failed. Please try again.'
+  return `Authentication error: ${oauthError}. Please try again.`
+}
+
 function LoginContent() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [submitError, setError] = useState<string | null>(null)
+  const search = useSyncExternalStore(subscribeNoop, getSearch, getServerSearch)
+  const error = submitError ?? oauthErrorMessage(search)
   const [loading, setLoading] = useState(false)
   const [oidcEnabled, setOidcEnabled] = useState(false)
   const [oidcProviderName, setOidcProviderName] = useState('OIDC')
@@ -30,51 +69,15 @@ function LoginContent() {
   const [forgotLoading, setForgotLoading] = useState(false)
   const [forgotMessage, setForgotMessage] = useState('')
   const [forgotError, setForgotError] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
-  const [rememberDuration, setRememberDuration] = useState('7')
-
-  // Keep the visitor's last remember-me choice, so a re-login does not silently drop to 2 days.
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('fauxdash-remember')
-      if (saved && ['7', '30', '90', '365'].includes(saved)) {
-        setRememberMe(true)
-        setRememberDuration(saved)
-      } else if (saved === 'off') {
-        setRememberMe(false)
-      }
-    } catch {}
-  }, [])
-  useEffect(() => {
-    try {
-      localStorage.setItem('fauxdash-remember', rememberMe ? rememberDuration : 'off')
-    } catch {}
-  }, [rememberMe, rememberDuration])
+  const saved = useSyncExternalStore(subscribeNoop, getSavedRemember, getServerSavedRemember)
+  const savedDuration = saved && ['7', '30', '90', '365'].includes(saved) ? saved : null
+  const [rememberMeOverride, setRememberMe] = useState<boolean | null>(null)
+  const [rememberDurationOverride, setRememberDuration] = useState<string | null>(null)
+  const rememberMe = rememberMeOverride ?? savedDuration !== null
+  const rememberDuration = rememberDurationOverride ?? savedDuration ?? '7'
 
   useEffect(() => {
     const controller = new AbortController()
-
-    // Check for OAuth error in URL params
-    const params = new URLSearchParams(window.location.search)
-    const oauthError = params.get('error')
-    if (oauthError) {
-      const reason = params.get('reason')
-      if (oauthError === 'OAuthCallback') {
-        setError(
-          reason === 'missing_sub'
-            ? 'Authentication failed: Your identity provider did not return a user identifier. Please contact your administrator.'
-            : reason === 'missing_email'
-            ? 'Authentication failed: Your identity provider did not return an email address. Please contact your administrator.'
-            : 'Authentication failed: There was a problem completing sign-in with your identity provider. Please try again.'
-        )
-      } else if (oauthError === 'OAuthSignin') {
-        setError('Could not start the sign-in process. Please try again.')
-      } else if (oauthError === 'Callback') {
-        setError('Authentication callback failed. Please try again.')
-      } else {
-        setError(`Authentication error: ${oauthError}. Please try again.`)
-      }
-    }
 
     // Check if setup is needed first
     fetch('/api/setup/status', { signal: controller.signal })
@@ -133,11 +136,13 @@ function LoginContent() {
 
   const handleRememberMeChange = useCallback((checked: boolean | 'indeterminate') => {
     setRememberMe(checked === true)
-  }, [])
+    persistRemember(checked === true, rememberDuration)
+  }, [rememberDuration])
 
   const handleRememberDurationChange = useCallback((value: string) => {
     setRememberDuration(value)
-  }, [])
+    persistRemember(rememberMe, value)
+  }, [rememberMe])
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()

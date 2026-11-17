@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import ReactMarkdown from 'react-markdown'
 
@@ -11,29 +11,25 @@ interface ChangelogDialogProps {
 
 export function ChangelogDialog({ open, onOpenChange }: ChangelogDialogProps) {
   const [changelog, setChangelog] = useState<string>('')
-  const [loading, setLoading] = useState(false)
-
-  const fetchChangelog = useCallback(async () => {
-    setLoading(true)
-    try {
-      const response = await fetch('/api/changelog')
-      const data = await response.json()
-      setChangelog(data.content || '')
-    } catch (error) {
-      console.error('Failed to fetch changelog:', error)
-      setChangelog('Failed to load changelog.')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const [loaded, setLoaded] = useState(false)
+  const loading = open && !loaded
 
   useEffect(() => {
-    if (open && !changelog) {
-      fetchChangelog()
+    if (!open || loaded) return
+    const fetchChangelog = async () => {
+      try {
+        const response = await fetch('/api/changelog')
+        const data = await response.json()
+        setChangelog(data.content || '')
+      } catch (error) {
+        console.error('Failed to fetch changelog:', error)
+        setChangelog('Failed to load changelog.')
+      } finally {
+        setLoaded(true)
+      }
     }
-    // changelog is intentionally omitted - we only want to fetch once when dialog opens and changelog is empty
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, fetchChangelog])
+    fetchChangelog()
+  }, [open, loaded])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

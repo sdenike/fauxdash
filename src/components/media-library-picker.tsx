@@ -35,7 +35,6 @@ export function MediaLibraryPicker({ onSelect, trigger }: MediaLibraryPickerProp
   } | null>(null)
 
   const fetchItems = useCallback(async () => {
-    setLoading(true)
     try {
       const res = await fetch('/api/media-library')
       if (res.ok) {
@@ -49,11 +48,13 @@ export function MediaLibraryPicker({ onSelect, trigger }: MediaLibraryPickerProp
     }
   }, [])
 
-  useEffect(() => {
-    if (open) {
+  const handleOpenChange = useCallback((next: boolean) => {
+    setOpen(next)
+    if (next) {
+      setLoading(true)
       fetchItems()
     }
-  }, [open, fetchItems])
+  }, [fetchItems])
 
   const handleSelect = useCallback((filename: string) => {
     onSelect(filename)
@@ -111,7 +112,7 @@ export function MediaLibraryPicker({ onSelect, trigger }: MediaLibraryPickerProp
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
           <Button type="button" variant="outline" size="sm" className="w-full">

@@ -41,11 +41,15 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
   const [showLeftArrow, setShowLeftArrow] = useState(false)
   const [showRightArrow, setShowRightArrow] = useState(false)
   const [selfhstIcons, setSelfhstIcons] = useState<SelfhstIcon[]>([])
-  const [loadingSelfhst, setLoadingSelfhst] = useState(false)
+  const [selfhstLoaded, setSelfhstLoaded] = useState(false)
+  const selfhstStarted = useRef(false)
+  const loadingSelfhst = selectedTab === 'selfhst' && !selfhstLoaded
   const [faviconUrl, setFaviconUrl] = useState('')
   const [fetchingFavicon, setFetchingFavicon] = useState(false)
   const [mediaItems, setMediaItems] = useState<MediaLibraryItem[]>([])
-  const [loadingMedia, setLoadingMedia] = useState(false)
+  const [mediaLoaded, setMediaLoaded] = useState(false)
+  const mediaStarted = useRef(false)
+  const loadingMedia = selectedTab === 'uploads' && !mediaLoaded
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const mediaFileInputRef = useRef<HTMLInputElement>(null)
@@ -53,8 +57,10 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
 
   // Fetch selfh.st icons when tab is selected with caching
   useEffect(() => {
-    if (selectedTab === 'selfhst' && selfhstIcons.length === 0 && !loadingSelfhst) {
-      setLoadingSelfhst(true)
+    if (selectedTab === 'selfhst' && !selfhstStarted.current) {
+      selfhstStarted.current = true
+      const loadSelfhst = async () => {
+      await Promise.resolve() // keep state updates out of the effect's synchronous body
 
       // Check cache first (24 hour TTL)
       const CACHE_KEY = 'selfhst_icons_cache'
@@ -73,7 +79,7 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
           if (now - timestamp < CACHE_TTL) {
             const icons: SelfhstIcon[] = JSON.parse(cachedData)
             setSelfhstIcons(icons)
-            setLoadingSelfhst(false)
+            setSelfhstLoaded(true)
             return
           }
         }
@@ -105,22 +111,24 @@ export function IconSelector({ value, onChange, trigger, defaultTab = 'heroicons
           console.error('Failed to load selfh.st icons:', err)
         })
         .finally(() => {
-          setLoadingSelfhst(false)
+          setSelfhstLoaded(true)
         })
+      }
+      loadSelfhst()
     }
-  }, [selectedTab, selfhstIcons.length, loadingSelfhst])
+  }, [selectedTab])
 
   // Load media library when uploads tab is opened
   useEffect(() => {
-    if (selectedTab === 'uploads' && mediaItems.length === 0 && !loadingMedia) {
-      setLoadingMedia(true)
+    if (selectedTab === 'uploads' && !mediaStarted.current) {
+      mediaStarted.current = true
       fetch('/api/media-library')
         .then(res => res.json())
         .then(data => setMediaItems(data.items || []))
         .catch(err => console.error('Failed to load media library:', err))
-        .finally(() => setLoadingMedia(false))
+        .finally(() => setMediaLoaded(true))
     }
-  }, [selectedTab, mediaItems.length, loadingMedia])
+  }, [selectedTab])
 
   const handleUploadMedia = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

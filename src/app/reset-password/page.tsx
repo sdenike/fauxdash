@@ -18,9 +18,11 @@ function ResetPasswordContent() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
 
-  const [validatingToken, setValidatingToken] = useState(true)
+  const [validatingTokenState, setValidatingToken] = useState(true)
+  const validatingToken = validatingTokenState && !!token
   const [tokenValid, setTokenValid] = useState(false)
-  const [tokenError, setTokenError] = useState('')
+  const [tokenErrorState, setTokenError] = useState('')
+  const tokenError = token ? tokenErrorState : 'No reset token provided'
 
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -35,11 +37,7 @@ function ResetPasswordContent() {
   }, [newPassword, confirmPassword])
 
   useEffect(() => {
-    if (!token) {
-      setValidatingToken(false)
-      setTokenError('No reset token provided')
-      return
-    }
+    if (!token) return
 
     const controller = new AbortController()
 

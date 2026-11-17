@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useSyncExternalStore } from 'react'
 import { AdminSection } from '@/components/admin/admin-page'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,8 @@ import { useToast } from '@/components/ui/use-toast'
 import { AlertMessage } from '@/components/ui/alert-message'
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { SettingsTabProps } from './types'
+
+const subscribeNoop = () => () => {}
 
 export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabProps) {
   const { toast } = useToast()
@@ -28,12 +30,12 @@ export function AuthenticationTab({ settings, onSettingsChange }: SettingsTabPro
     error?: string;
     userEmail?: string;
   } | null>(null)
-  const [callbackUrl, setCallbackUrl] = useState('/api/auth/callback/oidc')
-
-  useEffect(() => {
-    // Set callback URL on client side only
-    setCallbackUrl(`${window.location.origin}/api/auth/callback/oidc`)
-  }, [])
+  // Callback URL needs window.location; server snapshot is the relative path.
+  const callbackUrl = useSyncExternalStore(
+    subscribeNoop,
+    () => `${window.location.origin}/api/auth/callback/oidc`,
+    () => '/api/auth/callback/oidc'
+  )
 
   const updateSetting = useCallback(<K extends keyof typeof settings>(key: K, value: typeof settings[K]) => {
     onSettingsChange({ ...settings, [key]: value })
