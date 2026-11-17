@@ -5,6 +5,13 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.2] - 2026-11-17
+
+### Security
+- Next.js 16.4.3 to 16.4.6 (Dependabot #199, information disclosure via `unstable_cache`; fauxdash does not use it,
+  upgraded anyway). `eslint-config-next` to match.
+- typescript-eslint updated so its `minimatch` is 11.0.9 (Dependabot #198, development-only denial of service).
+
 ## [0.14.1] - 2026-11-16
 
 ### Fixed
