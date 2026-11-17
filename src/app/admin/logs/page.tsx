@@ -89,7 +89,10 @@ export default function LogsPage() {
 
   // Initial fetch
   useEffect(() => {
-    fetchLogs()
+    const run = async () => {
+      await fetchLogs()
+    }
+    run()
   }, [fetchLogs])
 
   // Auto-refresh

@@ -146,7 +146,8 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
     showDescriptions: null as number | null, // null = inherit, 0 = hide, 1 = show
   })
 
-  const fetchDefaults = useCallback(async () => {
+  useEffect(() => {
+  const fetchDefaults = async () => {
     try {
       const response = await fetch('/api/settings')
       const data = await response.json()
@@ -162,11 +163,9 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
     } catch (error) {
       console.error('Failed to fetch defaults:', error)
     }
-  }, [])
-
-  useEffect(() => {
+  }
     fetchDefaults()
-  }, [fetchDefaults])
+  }, [])
 
   const sensors = useSensors(
     useSensor(PointerSensor),

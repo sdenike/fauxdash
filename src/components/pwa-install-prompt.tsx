@@ -36,11 +36,13 @@ export function PWAInstallPrompt() {
 
     // Detect iOS
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
-    setIsIOS(isIOSDevice)
 
     if (isIOSDevice) {
       // Show iOS-specific prompt after a delay
-      const timer = setTimeout(() => setShowPrompt(true), 3000)
+      const timer = setTimeout(() => {
+        setIsIOS(true)
+        setShowPrompt(true)
+      }, 3000)
       return () => clearTimeout(timer)
     }
 

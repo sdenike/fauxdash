@@ -30,7 +30,10 @@ export default function ContentPage() {
   }, [])
 
   useEffect(() => {
-    fetchData()
+    const run = async () => {
+      await fetchData()
+    }
+    run()
   }, [fetchData])
 
   const [addKind, setAddKind] = useState<'bookmark' | 'service'>('bookmark')

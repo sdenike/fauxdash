@@ -38,7 +38,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
-  useEffect(() => setOpen(false), [pathname])
+  // Close the drawer when the route changes (adjust state during render).
+  const [prevPathname, setPrevPathname] = useState(pathname)
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname)
+    setOpen(false)
+  }
 
   // Lock the page behind the drawer so iOS does not scroll it underneath.
   useEffect(() => {

@@ -21,7 +21,8 @@ export function UpdateChecker({ onChangelogClick }: UpdateCheckerProps) {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const checkForUpdates = useCallback(async () => {
+  useEffect(() => {
+  const checkForUpdates = async () => {
     try {
       const response = await fetch('/api/version/check')
       const data = await response.json()
@@ -31,11 +32,9 @@ export function UpdateChecker({ onChangelogClick }: UpdateCheckerProps) {
     } finally {
       setLoading(false)
     }
-  }, [])
-
-  useEffect(() => {
+  }
     checkForUpdates()
-  }, [checkForUpdates])
+  }, [])
 
   if (loading || !updateInfo) {
     return (

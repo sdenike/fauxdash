@@ -5,6 +5,14 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.3] - 2026-11-17
+
+### Fixed
+- All 24 `react-hooks/set-state-in-effect` lint errors, without disabling the rule: loading flags derived instead of
+  set at effect start, state that mirrored props adjusted during render, browser-only values (URL error, remember-me
+  choice, OIDC callback URL) read with `useSyncExternalStore`, and fetches run from async functions inside effects.
+  The login page now saves the remember-me choice when it is changed instead of on every render.
+
 ## [0.14.2] - 2026-11-17
 
 ### Security

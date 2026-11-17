@@ -64,19 +64,21 @@ export function ImageIconPicker({
   const [uploading, setUploading] = useState(false)
   const [fetchingUrl, setFetchingUrl] = useState(false)
   const [urlInput, setUrlInput] = useState('')
-  const [imageExists, setImageExists] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Verify image exists on mount
+  // Verify image exists: remote HEAD check with a serve endpoint, otherwise just whether a value is set
+  const [imageExists, setImageExists] = useState(!!value && !serveEndpoint)
+  const [checkedKey, setCheckedKey] = useState(`${serveEndpoint ?? ''}|${value ?? ''}`)
+  const currentKey = `${serveEndpoint ?? ''}|${value ?? ''}`
+  if (checkedKey !== currentKey) {
+    setCheckedKey(currentKey)
+    if (!(serveEndpoint && value)) setImageExists(!!value)
+  }
   useEffect(() => {
     if (serveEndpoint && value) {
       fetch(serveEndpoint, { method: 'HEAD' })
         .then(res => setImageExists(res.ok))
         .catch(() => setImageExists(false))
-    } else if (value) {
-      setImageExists(true)
-    } else {
-      setImageExists(false)
     }
   }, [serveEndpoint, value])
 
