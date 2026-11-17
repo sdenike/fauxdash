@@ -1,7 +1,7 @@
 'use client'
 
 import { useConfirm } from '@/components/ui/confirm-dialog'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { AdminSection } from './admin-page'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -146,11 +146,7 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
     showDescriptions: null as number | null, // null = inherit, 0 = hide, 1 = show
   })
 
-  useEffect(() => {
-    fetchDefaults()
-  }, [])
-
-  const fetchDefaults = async () => {
+  const fetchDefaults = useCallback(async () => {
     try {
       const response = await fetch('/api/settings')
       const data = await response.json()
@@ -166,7 +162,11 @@ export function CategoryManager({ categories, onCategoriesChange }: CategoryMana
     } catch (error) {
       console.error('Failed to fetch defaults:', error)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchDefaults()
+  }, [fetchDefaults])
 
   const sensors = useSensors(
     useSensor(PointerSensor),

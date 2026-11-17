@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { AdminSection } from '@/components/admin/admin-page'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -42,6 +42,8 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({
   isLoading,
 }: ActivityHeatmapProps) {
   // Create a map for quick lookup
+  // Touch screens have no hover, so a tap pins a cell's tooltip.
+  const [picked, setPicked] = useState<string | null>(null)
   const dataMap = useMemo(() => {
     const map = new Map<string, number>()
     data.forEach(d => {
@@ -102,15 +104,17 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({
                     {HOURS.map(hour => {
                       const value = dataMap.get(`${dayIndex}-${hour}`) || 0
                       const colorClass = getColorIntensity(value, maxValue)
+                      const key = `${dayIndex}-${hour}`
 
                       return (
                         <div
                           key={hour}
-                          className={`flex-1 h-6 rounded-sm ${colorClass} transition-colors cursor-pointer hover:ring-1 hover:ring-primary group relative`}
+                          className={`flex-1 h-6 coarse:h-8 rounded-sm ${colorClass} transition-colors cursor-pointer hover:ring-1 hover:ring-primary group relative ${picked === key ? 'ring-1 ring-primary' : ''}`}
                           title={`${day} ${formatHour(hour)}: ${value} actions`}
+                          onClick={() => setPicked(picked === key ? null : key)}
                         >
                           {/* Tooltip */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 pointer-events-none">
+                          <div className={`absolute ${hour < 2 ? 'left-0' : hour > 21 ? 'right-0' : 'left-1/2 -translate-x-1/2'} group-hover:block z-10 pointer-events-none ${dayIndex < 2 ? 'top-full mt-2' : 'bottom-full mb-2'} ${picked === key ? 'block' : 'hidden'}`}>
                             <div className="bg-popover border rounded px-2 py-1 text-xs whitespace-nowrap shadow-sm">
                               <div className="font-medium">{day} {formatHour(hour)}</div>
                               <div className="text-muted-foreground">{value.toLocaleString()} actions</div>

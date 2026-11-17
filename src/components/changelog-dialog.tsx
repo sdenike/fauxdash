@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import ReactMarkdown from 'react-markdown'
 
@@ -13,15 +13,7 @@ export function ChangelogDialog({ open, onOpenChange }: ChangelogDialogProps) {
   const [changelog, setChangelog] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (open && !changelog) {
-      fetchChangelog()
-    }
-    // changelog is intentionally omitted - we only want to fetch once when dialog opens and changelog is empty
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
-
-  const fetchChangelog = async () => {
+  const fetchChangelog = useCallback(async () => {
     setLoading(true)
     try {
       const response = await fetch('/api/changelog')
@@ -33,7 +25,15 @@ export function ChangelogDialog({ open, onOpenChange }: ChangelogDialogProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (open && !changelog) {
+      fetchChangelog()
+    }
+    // changelog is intentionally omitted - we only want to fetch once when dialog opens and changelog is empty
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, fetchChangelog])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

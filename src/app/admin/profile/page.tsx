@@ -16,6 +16,7 @@ import { AdminPage, AdminSection, AdminLoading } from '@/components/admin/admin-
 function ProfileContent() {
   const { data: session, status, update } = useSession()
   const { toast } = useToast()
+  const [now] = useState(() => Date.now())
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
@@ -317,7 +318,7 @@ function ProfileContent() {
             {(() => {
               const days = (session as any)?.rememberDays as number | undefined
               if (!days) return 'Unknown. Sign out and in again to set it.'
-              const until = new Date(Date.now() + days * 86400000).toLocaleDateString(undefined, { dateStyle: 'medium' })
+              const until = new Date(now + days * 86400000).toLocaleDateString(undefined, { dateStyle: 'medium' })
               const label = days === 365 ? '1 year' : days === 90 ? '3 months' : days === 30 ? '1 month' : days === 7 ? '1 week' : `${days} days`
               return `Stays signed in for ${label} without a visit, so at least until ${until}.`
             })()}

@@ -78,8 +78,15 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          // geolocation=(self): the weather settings "use my location" button needs it;
+          // an empty list blocked it everywhere, including on this site.
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
         ],
+      },
+      {
+        // Self-hosted fonts never change under the same name; cache them for a year.
+        source: '/fonts/:file*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
     ]
   },

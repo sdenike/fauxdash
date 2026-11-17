@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { CategoryManager } from '@/components/admin/category-manager'
 import { ServiceCategoryManager } from '@/components/admin/service-category-manager'
 import { ContentManager } from '@/components/admin/content-manager'
@@ -14,11 +14,7 @@ export default function ContentPage() {
   const [categories, setCategories] = useState([])
   const [serviceCategories, setServiceCategories] = useState([])
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [categoriesRes, serviceCategoriesRes] = await Promise.all([
         fetch('/api/categories'),
@@ -31,7 +27,11 @@ export default function ContentPage() {
     } catch (error) {
       console.error('Failed to fetch data:', error)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const [addKind, setAddKind] = useState<'bookmark' | 'service'>('bookmark')
 

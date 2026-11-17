@@ -5,6 +5,17 @@ Running work log, newest first. One entry per change: timestamp · what · why �
 
 ---
 
+## 2026-11-16 16:30 EST — v0.14.1 polish live on prod (uncommitted)
+
+**What:** Owner: "proceed with other optimization and fixes". Branch `fix/post-0.14-polish`: geolocation
+Permissions-Policy fix, font cache headers, tap tooltips on heatmap and visitor map, targeted lint fixes, lockfile
+version. Measured: signed-in start page ~105 ms warm, 21 KB gzipped HTML; JS is mostly the Next/React baseline.
+Prod runs local tag `fauxdash:polish`. Deepmerge Dependabot alert #197 is a withdrawn advisory with no fix.
+
+**If interrupted here:** owner tests, then commit, PR, merge, switch compose `image:` back to `latest`.
+
+---
+
 ## 2026-11-16 10:05 EST — committed, PR #65 open
 
 **What:** Commit 59f7aca on `design/bear-standardization`, pushed, PR https://github.com/sdenike/fauxdash/pull/65.

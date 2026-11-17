@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { AdminSection } from './admin-page'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -73,17 +73,7 @@ export function AddItemForm({ kind, categories, onAdded }: AddItemFormProps) {
     requiresAuth: false,
   })
 
-  useEffect(() => {
-    fetchDefaults()
-  }, [])
-
-  useEffect(() => {
-    if (categories.length > 0 && formData.categoryId === cfg.emptyCategory) {
-      setFormData(prev => ({ ...prev, categoryId: categories[0].id }))
-    }
-  }, [categories, formData.categoryId])
-
-  const fetchDefaults = async () => {
+  const fetchDefaults = useCallback(async () => {
     try {
       const response = await fetch('/api/settings')
       const data = await response.json()
@@ -100,7 +90,17 @@ export function AddItemForm({ kind, categories, onAdded }: AddItemFormProps) {
     } catch (error) {
       console.error('Failed to fetch defaults:', error)
     }
-  }
+  }, [cfg.enabledKey, cfg.authKey])
+
+  useEffect(() => {
+    fetchDefaults()
+  }, [fetchDefaults])
+
+  useEffect(() => {
+    if (categories.length > 0 && formData.categoryId === cfg.emptyCategory) {
+      setFormData(prev => ({ ...prev, categoryId: categories[0].id }))
+    }
+  }, [categories, formData.categoryId, cfg.emptyCategory])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
