@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 
 # The base image lags behind Alpine's security fixes (OpenSSL, musl, zlib). Take the current
 # packages on every build; all later stages inherit them.
