@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Image now upgrades Alpine packages at build time. Clears 54 scanner findings in OpenSSL (3.5.6 → 3.5.9),
   musl and zlib, including CVE-2026-45447, CVE-2026-14456, CVE-2026-107891 and CVE-2026-85091 (#71).
+- npm, npx, corepack and yarn are no longer shipped in the runtime image; the app only runs `node`. Clears 39
+  scanner findings in npm's bundled packages (tar, brace-expansion, minimatch, glob, cross-spawn, ip-address,
+  pacote, sigstore), including CVE-2026-59873 (#72).
 
 ## [0.14.5] - 2026-11-19
 
