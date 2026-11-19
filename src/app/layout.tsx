@@ -3,6 +3,7 @@ import './globals.css'
 import { Providers } from './providers'
 import { DynamicFavicon } from '@/components/dynamic-favicon'
 import { getSession, getSettingsMap } from '@/lib/server/start-page'
+import { themeColorScript } from '@/lib/theme-color'
 
 export const metadata: Metadata = {
   title: 'Faux|Dash',
@@ -19,16 +20,12 @@ export const metadata: Metadata = {
   },
 }
 
-// Must match --background in globals.css (Bear "Red Graphite").
+// theme-color is not set here: it follows the theme the page shows, see src/lib/theme-color.ts.
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' }, // palette-ok: must match --background
-    { media: '(prefers-color-scheme: dark)', color: '#171a1c' }, // palette-ok: must match --background
-  ],
   viewportFit: 'cover',
 }
 
@@ -50,6 +47,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="preload" href="/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="icon" type="image/png" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/api/pwa-icons/serve/192" />
+        {/* Blocking: the title bar / browser chrome colour is right before the first paint. */}
+        <script dangerouslySetInnerHTML={{ __html: themeColorScript(defaultTheme) }} />
       </head>
       <body className="font-sans antialiased">
         <a

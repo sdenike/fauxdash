@@ -2,8 +2,11 @@
 
 // Tokens in src/app/globals.css are complete oklch colours (Bear "Red Graphite"), so they are not
 // wrapped in hsl(). color-mix keeps opacity modifiers working: bg-brand/20, border-border/60.
+// Mix in oklab, never oklch: the build rewrites the tokens to lab(), and Chrome treats a near-grey colour
+// converted to oklch as having no hue, then takes the hue from `transparent` (0, red). Every graphite
+// surface came out warm grey (#1c1819) instead of blue grey (#171a1c). oklab has no hue channel.
 const token = (name) =>
-  `color-mix(in oklch, var(--${name}) calc(<alpha-value> * 100%), transparent)`
+  `color-mix(in oklab, var(--${name}) calc(<alpha-value> * 100%), transparent)`
 
 const tone = (name) => ({
   DEFAULT: token(name),

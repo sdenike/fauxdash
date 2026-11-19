@@ -40,7 +40,7 @@
   Tokens carry their own dark value: components never need dark: colour variants, and never use Tailwind
   palette classes (bg-gray-100, text-red-500). scripts/check-palette.mjs fails on new ones.
 
-  The early-paint backgrounds in src/app/layout.tsx (theme-color) must match --background:
+  The early-paint backgrounds in src/lib/theme-color.ts (theme-color) must match --background:
   light #ffffff, dark #171a1c.
 */
 @layer base {
@@ -177,7 +177,7 @@
     min-height: 100dvh;
   }
   ::selection {
-    background-color: color-mix(in oklch, var(--brand) 22%, transparent);
+    background-color: color-mix(in oklab, var(--brand) 22%, transparent);
   }
   /* One focus treatment everywhere. */
   :focus-visible {

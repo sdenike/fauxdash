@@ -5,6 +5,7 @@ import { SessionProvider } from 'next-auth/react'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/toaster'
 import { PWAInstallPrompt } from '@/components/pwa-install-prompt'
+import { ThemeColor } from '@/components/theme-color'
 
 /*
   session and defaultTheme come from the server (src/app/layout.tsx), so useSession() is 'authenticated'
@@ -23,6 +24,7 @@ export function Providers({
   return (
     <SessionProvider session={session}>
       <ThemeProvider attribute="class" defaultTheme={defaultTheme} enableSystem disableTransitionOnChange>
+        <ThemeColor />
         {children}
         <Toaster />
         <PWAInstallPrompt />

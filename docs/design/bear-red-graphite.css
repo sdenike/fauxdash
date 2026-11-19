@@ -154,7 +154,7 @@
   }
 
   ::selection {
-    background-color: color-mix(in oklch, var(--brand) 22%, transparent);
+    background-color: color-mix(in oklab, var(--brand) 22%, transparent);
   }
 
   /* One focus treatment everywhere: a 2px red ring, offset from the control. */
@@ -183,7 +183,7 @@
   color-mix keeps opacity modifiers (bg-brand/20, border-border/60) working.
 
     const token = (name) =>
-      `color-mix(in oklch, var(--${name}) calc(<alpha-value> * 100%), transparent)`
+      `color-mix(in oklab, var(--${name}) calc(<alpha-value> * 100%), transparent)`
 
     colors: {
       border: token('border'),
@@ -213,6 +213,6 @@
 
   Also change when adopting:
     - src/components/settings/background-image-settings.tsx:158 uses 'hsl(var(--muted))' inline: make it 'var(--muted)'.
-    - Early paint: the blocking theme script and <meta name="theme-color"> in src/app/layout.tsx must use the
+    - Early paint: the blocking theme script and <meta name="theme-color"> in src/lib/theme-color.ts must use the
       same backgrounds as the tokens: light #ffffff, dark oklch(21.5% 0.006 230) (theme-color #171a1c).
 */
