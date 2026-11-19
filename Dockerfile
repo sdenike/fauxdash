@@ -35,7 +35,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # Install shadow for usermod/groupmod and su-exec for dropping privileges
 # Then set up user in same layer to reduce image size
+# npm, npx, corepack and yarn are build tools: the running app only calls `node`. Their bundled
+# dependencies (tar, glob, minimatch, ...) carry known CVEs, so they are removed from this stage.
 RUN apk add --no-cache shadow su-exec && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+           /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+           /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg /root/.npm && \
     deluser --remove-home node 2>/dev/null || true && \
     delgroup node 2>/dev/null || true && \
     addgroup -g 1000 fauxdash && \
