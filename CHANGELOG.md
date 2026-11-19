@@ -5,7 +5,7 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.14.6] - 2026-11-19
 
 ### Security
 - Image now upgrades Alpine packages at build time. Clears 54 scanner findings in OpenSSL (3.5.6 → 3.5.9),
@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - npm, npx, corepack and yarn are no longer shipped in the runtime image; the app only runs `node`. Clears 39
   scanner findings in npm's bundled packages (tar, brace-expansion, minimatch, glob, cross-spawn, ip-address,
   pacote, sigstore), including CVE-2026-59873 (#72).
+- Image moved from Node.js 20 (end-of-life since 2026-04-30, no more security fixes) to Node.js 24 LTS
+  (supported until 2028-04-30). Base is now Alpine 3.24 (#73).
+
+### Changed
+- `better-sqlite3` 9.6 → 12.11 (first line with Node 24 support; bundled SQLite 3.53), `@types/node` 20 → 24.
 
 ## [0.14.5] - 2026-11-19
 

@@ -5,6 +5,21 @@ Running work log, newest first. One entry per change: timestamp · what · why �
 
 ---
 
+## 2026-11-19 — CVE sweep: issues #71 #72 #73, three stacked PRs (v0.14.6)
+
+**What:** Owner asked for all open CVEs in the image to be fixed and tracked as issues + PRs. Trivy on
+`latest` 0.14.5: 54 Alpine findings (OpenSSL, musl, zlib), 39 in the npm CLI bundled in the runtime image; app
+deps clean (`npm audit` 0, Dependabot 0). Node 20 is EOL. Branches, stacked in this order:
+`security/alpine-package-upgrade` (#71) → `security/remove-npm-from-runtime` (#72) → `security/node-24` (#73,
+better-sqlite3 12, version 0.14.6). Rescan of the final image: 0 findings. Prod runs local tag
+`fauxdash:security` (Node 24.22.3), health ok, backup `*-pre-node24.db`.
+
+**If interrupted here:** merge the PRs in stack order (squash; retarget the next one to master after each).
+After Actions builds `latest`, set compose `image:` back to `ghcr.io/sdenike/fauxdash:latest`, check health.
+Local `node_modules/@emnapi` is root-owned (blocks `npm install`; `--package-lock-only` works).
+
+---
+
 ## 2026-11-19 — v0.14.5 committed, PR open
 
 **What:** Owner confirmed header colour fixed on Windows Chrome. Version 0.14.5, committed on
