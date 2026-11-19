@@ -1,5 +1,9 @@
 FROM node:20-alpine AS base
 
+# The base image lags behind Alpine's security fixes (OpenSSL, musl, zlib). Take the current
+# packages on every build; all later stages inherit them.
+RUN apk upgrade --no-cache
+
 # Install dependencies only when needed
 FROM base AS deps
 RUN apk add --no-cache libc6-compat python3 make g++

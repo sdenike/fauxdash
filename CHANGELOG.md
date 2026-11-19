@@ -5,6 +5,12 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+- Image now upgrades Alpine packages at build time. Clears 54 scanner findings in OpenSSL (3.5.6 → 3.5.9),
+  musl and zlib, including CVE-2026-45447, CVE-2026-14456, CVE-2026-107891 and CVE-2026-85091 (#71).
+
 ## [0.14.5] - 2026-11-19
 
 ### Fixed
