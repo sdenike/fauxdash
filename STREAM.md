@@ -5,6 +5,32 @@ Running work log, newest first. One entry per change: timestamp · what · why �
 
 ---
 
+## 2026-11-19 — v0.14.5 committed, PR open
+
+**What:** Owner confirmed header colour fixed on Windows Chrome. Version 0.14.5, committed on
+`fix/header-and-title-bar-color`, PR opened. Prod still runs local tag `fauxdash:header-color`.
+
+**If interrupted here:** owner merges the PR. After GitHub Actions builds `latest`, set compose `image:` back to
+`ghcr.io/sdenike/fauxdash:latest`, `docker compose up -d`, check health.
+
+---
+
+## 2026-11-19 — Chrome header colour fix live on prod (uncommitted)
+
+**What:** Owner: on Windows Chrome the top header is greyer than the dark page. First guess (blurred header
+layer) was wrong and is reverted. Reproduced in headless Chromium: header `#1c1819`, page `#171a1c`. Cause:
+`tailwind.config.js` token helper used `color-mix(in oklch, var(--x) ..., transparent)`; the build turns tokens
+into `lab()`, Chrome drops the hue of near-grey colours in oklch and takes hue 0 from `transparent`. Fix: mix in
+`oklab` (also `::selection` in `globals.css`). After: header `#16191c`, page `#171a1c` (1 step, from the 75%
+frosted blend). Also kept: `theme-color` now follows the page theme (`src/lib/theme-color.ts`,
+`src/components/theme-color.tsx`). Branch `fix/header-and-title-bar-color`. Prod runs local tag
+`fauxdash:header-color`, health ok. Backup `*-pre-header-color.db`.
+
+**If interrupted here:** owner confirms on Windows Chrome (hard refresh). Then bump version, commit, PR, merge,
+switch compose `image:` back to `ghcr.io/sdenike/fauxdash:latest`.
+
+---
+
 ## 2026-11-16 16:30 EST — v0.14.1 polish live on prod (uncommitted)
 
 **What:** Owner: "proceed with other optimization and fixes". Branch `fix/post-0.14-polish`: geolocation

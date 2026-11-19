@@ -5,6 +5,17 @@ All notable changes to Faux|Dash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.5] - 2026-11-19
+
+### Fixed
+- Chrome drew every surface coloured through a Tailwind token class (header, cards, borders, muted fills) in a
+  warm grey (`#1c1819`) instead of the blue-grey graphite (`#171a1c`), so the header did not match the page.
+  The token helper mixed colours in `oklch`; the build rewrites tokens to `lab()`, and Chrome treats a near-grey
+  colour converted to `oklch` as having no hue and takes the hue from `transparent`. Tokens now mix in `oklab`.
+- Installed-app title bar and phone browser chrome followed the operating system's light/dark setting instead of
+  the theme the page shows. `theme-color` is now written before first paint from the visitor's theme choice, then
+  the site default, then the system setting, and updates when the theme is toggled.
+
 ## [0.14.4] - 2026-11-17
 
 ### Fixed
