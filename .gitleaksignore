@@ -1,0 +1,4 @@
+# Reviewed gitleaks findings that are not live secrets (format: commit:file:rule:line).
+a8019818e9d49be53fbd65c601e7b2feeb3c7a38:scripts/test-session-duration.ts:generic-api-key:18
+b7ccefad342a8b89a0d0b4474e7c80c87f6eae13:docs/OIDC-SETUP-GUIDE.md:generic-api-key:385
+b7ccefad342a8b89a0d0b4474e7c80c87f6eae13:docs/OIDC-SETUP-GUIDE.md:generic-api-key:404
